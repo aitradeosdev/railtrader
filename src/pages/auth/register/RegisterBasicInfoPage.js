@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Mail, ArrowRight, ArrowLeft } from 'lucide-react';
+import { User, Mail, ArrowRight } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 
 const RegisterBasicInfoPage = ({ onContinue, onSwitchToLogin }) => {
@@ -81,7 +81,7 @@ const RegisterBasicInfoPage = ({ onContinue, onSwitchToLogin }) => {
 
           <button
             type="submit"
-            className="w-full py-4 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-4 bg-gradient-to-r from-blue-500/90 to-blue-600/90 backdrop-blur-xl text-white rounded-2xl font-medium hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 shadow-2xl shadow-blue-500/30 border border-white/20"
           >
             Continue
             <ArrowRight size={20} />

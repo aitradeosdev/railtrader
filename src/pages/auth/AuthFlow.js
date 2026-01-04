@@ -2,8 +2,8 @@ import { useState } from 'react';
 import LoginFlow from './login/LoginFlow';
 import RegisterFlow from './register/RegisterFlow';
 
-const AuthFlow = ({ onAuthSuccess }) => {
-  const [currentFlow, setCurrentFlow] = useState('login');
+const AuthFlow = ({ onAuthSuccess, initialMode = 'login' }) => {
+  const [currentFlow, setCurrentFlow] = useState(initialMode);
 
   const handleLogin = (credentials) => {
     // Simulate login - in real app, this would call an API

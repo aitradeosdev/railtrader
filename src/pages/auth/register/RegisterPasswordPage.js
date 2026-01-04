@@ -47,11 +47,8 @@ const RegisterPasswordPage = ({ basicInfo, onRegister, onBack }) => {
   const strengthLabels = ['Weak', 'Fair', 'Good', 'Strong'];
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-[#020202]' : 'bg-gray-100'} flex items-center justify-center p-6`}>
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className={`absolute top-[-20%] left-[-10%] w-[80%] h-[60%] ${isDark ? 'bg-blue-600/10' : 'bg-blue-600/5'} blur-[150px] rounded-full animate-pulse`} />
-        <div className={`absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] ${isDark ? 'bg-purple-600/5' : 'bg-purple-600/3'} blur-[150px] rounded-full`} />
-      </div>
+    <div className={`min-h-screen ${isDark ? 'bg-[#020202]' : 'bg-gray-100'} flex items-center justify-center p-6`} style={{backgroundImage: `url(${isDark ? '/5523744-dark.jpg' : '/5523744.jpg'})`, backgroundSize: 'cover', backgroundPosition: 'center'}}>
+
 
       <div className={`relative z-10 w-full max-w-md p-8 rounded-[2rem] ${isDark ? 'bg-white/10' : 'bg-white/80'} backdrop-blur-2xl ${isDark ? 'border-white/20' : 'border-white/60'} border shadow-[0_8px_32px_0_rgba(0,0,0,0.15)]`}>
         <div className="flex items-center mb-6">
@@ -61,7 +58,7 @@ const RegisterPasswordPage = ({ basicInfo, onRegister, onBack }) => {
         </div>
 
         <div className="text-center mb-8">
-          <img src={isDark ? "/white-logo.png" : "/dark-logo.png"} alt="RailTrader" className="w-16 h-16 mx-auto mb-4" />
+          <img src={isDark ? "/white-logo.png" : "/dark-logo.png"} alt="RailTrader" className="mx-auto mb-4" />
           <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Secure Your Account</h1>
           <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} text-sm`}>Create a strong password for {basicInfo.email}</p>
         </div>
@@ -147,7 +144,7 @@ const RegisterPasswordPage = ({ basicInfo, onRegister, onBack }) => {
 
           <button
             type="submit"
-            className="w-full py-4 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+            className="w-full py-4 bg-gradient-to-r from-blue-500/90 to-blue-600/90 backdrop-blur-xl text-white rounded-2xl font-medium hover:scale-105 active:scale-95 transition-all duration-200 shadow-2xl shadow-blue-500/30 border border-white/20"
           >
             Create Account
           </button>
