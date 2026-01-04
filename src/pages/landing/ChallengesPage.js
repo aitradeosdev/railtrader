@@ -1,4 +1,4 @@
-import { Check, Star, Zap, Crown, ArrowLeft } from 'lucide-react';
+import { Star, Zap, Crown, ArrowLeft } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { GlassCard } from '../../components/UIComponents';
 import { useState } from 'react';
@@ -22,11 +22,6 @@ const ChallengesPage = ({ onGetStarted, onNavigate, onAuthRequest }) => {
 
   const handleConfigContinue = (config) => {
     // Redirect to signup after configuration instead of going to payment
-    onAuthRequest('register');
-  };
-
-  const handlePaymentContinue = () => {
-    // Redirect to signup when user tries to pay
     onAuthRequest('register');
   };
 
