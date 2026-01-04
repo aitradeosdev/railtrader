@@ -1,10 +1,16 @@
-import { ArrowLeft, Shield, Key, Smartphone } from 'lucide-react';
+import { ArrowLeft, Shield, Key, Smartphone, Monitor, Sun, Moon } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const AccountSettingsPage = ({ onBack }) => {
-  const { isDark } = useTheme();
+  const { isDark, themeMode, setTheme } = useTheme();
+
+  const themeOptions = [
+    { value: 'light', label: 'Light', icon: Sun },
+    { value: 'dark', label: 'Dark', icon: Moon },
+    { value: 'system', label: 'System', icon: Monitor }
+  ];
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-20 md:pb-0">
@@ -17,6 +23,45 @@ const AccountSettingsPage = ({ onBack }) => {
           <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} text-sm`}>Security and preferences</p>
         </div>
       </div>
+
+      <GlassCard className="p-6">
+        <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Appearance</h2>
+        <div className="space-y-4">
+          <div>
+            <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-3`}>Theme</p>
+            <div className="grid grid-cols-3 gap-3">
+              {themeOptions.map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  onClick={() => setTheme(value)}
+                  className={`p-4 rounded-xl border-2 transition-all ${
+                    themeMode === value
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : isDark
+                      ? 'border-white/10 bg-white/5 hover:bg-white/10'
+                      : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <Icon className={`mx-auto mb-2 ${
+                    themeMode === value
+                      ? 'text-blue-500'
+                      : isDark
+                      ? 'text-white/60'
+                      : 'text-gray-600'
+                  }`} size={24} />
+                  <p className={`text-sm font-medium ${
+                    themeMode === value
+                      ? 'text-blue-500'
+                      : isDark
+                      ? 'text-white'
+                      : 'text-gray-900'
+                  }`}>{label}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </GlassCard>
 
       <GlassCard className="p-6">
         <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Security</h2>

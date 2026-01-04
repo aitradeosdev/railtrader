@@ -10,6 +10,7 @@ import {
   Moon
 } from 'lucide-react';
 import { useTheme } from './contexts/ThemeContext';
+import AuthFlow from './pages/auth/AuthFlow';
 import OverviewPage from './pages/OverviewPage';
 import ChallengeFlow from './pages/challenges/ChallengeFlow';
 import PayoutFlow from './pages/payout/PayoutFlow';
@@ -20,7 +21,16 @@ import NotificationPage from './pages/NotificationPage';
 export default function App() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { isDark, toggleTheme } = useTheme();
+
+  const handleAuthSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
+  if (!isAuthenticated) {
+    return <AuthFlow onAuthSuccess={handleAuthSuccess} />;
+  }
 
   const handleNavClick = (tab) => {
     setActiveTab(tab);
