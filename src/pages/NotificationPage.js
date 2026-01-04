@@ -8,10 +8,7 @@ const NotificationPage = () => {
   
   const notifications = [
     { id: 1, type: 'success', title: 'Payout Processed', message: '$2,500 has been sent to your wallet', time: '2 min ago', read: false },
-    { id: 2, type: 'warning', title: 'Risk Alert', message: 'Daily loss limit approaching 80%', time: '15 min ago', read: false },
-    { id: 3, type: 'info', title: 'New Challenge Available', message: '$250k Elite tier is now open', time: '1 hour ago', read: true },
-    { id: 4, type: 'success', title: 'Trade Executed', message: 'EURUSD position closed with +$450 profit', time: '2 hours ago', read: true },
-    { id: 5, type: 'warning', title: 'Margin Call', message: 'Please add funds to maintain positions', time: '1 day ago', read: true }
+    { id: 2, type: 'info', title: 'New Challenge Available', message: '$250k Elite tier is now open', time: '1 hour ago', read: true }
   ];
 
   const getIcon = (type) => {
