@@ -1,6 +1,7 @@
 import { Users, Award, Globe, TrendingUp, ArrowLeft, ChevronDown } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { GlassCard } from '../../components/UIComponents';
+import Footer from '../../components/Footer';
 import { useState } from 'react';
 
 const AboutPage = ({ onNavigate }) => {
@@ -101,6 +102,8 @@ const AboutPage = ({ onNavigate }) => {
           </div>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import { Shield, Clock, ArrowLeft, ChevronDown } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { GlassCard } from '../../components/UIComponents';
+import Footer from '../../components/Footer';
 import { useState } from 'react';
 
 const RulesPage = ({ onNavigate }) => {
@@ -85,6 +86,8 @@ const RulesPage = ({ onNavigate }) => {
           </div>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 };

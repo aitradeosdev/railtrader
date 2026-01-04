@@ -2,6 +2,7 @@ import { Mail, Phone, MapPin, Send, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { GlassCard } from '../../components/UIComponents';
+import Footer from '../../components/Footer';
 
 const ContactPage = ({ onNavigate }) => {
   const { isDark } = useTheme();
@@ -150,6 +151,8 @@ const ContactPage = ({ onNavigate }) => {
           </div>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 };

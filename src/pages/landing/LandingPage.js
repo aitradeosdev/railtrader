@@ -1,6 +1,7 @@
 import { ArrowRight, TrendingUp, Shield, Zap, Users, ChevronDown } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { GlassCard } from '../../components/UIComponents';
+import Footer from '../../components/Footer';
 import { useState } from 'react';
 
 const LandingPage = ({ onGetStarted, onNavigate }) => {
@@ -202,6 +203,8 @@ const LandingPage = ({ onGetStarted, onNavigate }) => {
           </div>
         </section>
       </div>
+      
+      <Footer />
     </div>
   );
 };
