@@ -20,6 +20,12 @@ const RulesPage = ({ onNavigate }) => {
       title: 'Trading Activity Rule',
       desc: 'Open at least 1 trade within 7 days to keep account active',
       details: 'You must execute at least one trade within 7 calendar days of receiving your funded account to maintain active status. Failure to meet this requirement will result in immediate account closure without refund. This rule ensures active participation and prevents dormant accounts. The 7-day period starts from the moment you receive your funded account credentials, not from the evaluation completion date.'
+    },
+    {
+      icon: Shield,
+      title: 'Maximum Drawdown and Target',
+      desc: 'Choose your challenge structure - different rewards, different limits',
+      details: 'Pick your path to funding: Go with our 2-Phase Challenge for higher rewards (85% profit split) but tighter limits (20% max drawdown, 15% target), or choose the 1-Phase Challenge for more breathing room (25% max drawdown, 20% target) with 80% profit split. Your choice determines your journey to getting funded - both lead to the same destination: a funded trading account.'
     }
   ];
 
@@ -77,10 +83,10 @@ const RulesPage = ({ onNavigate }) => {
           <div className="mt-12">
             <GlassCard className="p-8 text-center">
               <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4 tracking-tight`}>
-                Important Notice
+                Ready to Trade?
               </h2>
               <p className={`${isDark ? 'text-white/70' : 'text-gray-700'} leading-relaxed`}>
-                These are the only two mandatory rules for all RailTrader funded accounts. Violation of either rule may result in account termination. All other trading decisions are at your discretion, giving you maximum flexibility to implement your trading strategy.
+                That's it. No complex rules, no hidden requirements. Focus on what matters: your trading strategy and growing your account. Everything else is designed to give you maximum freedom to trade your way.
               </p>
             </GlassCard>
           </div>

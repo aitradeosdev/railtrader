@@ -107,7 +107,6 @@ export default function App() {
                 {isDark ? <Sun size={18} /> : <Moon size={18} />}
               </button>
               <button onClick={() => setActiveTab('notifications')} className={`p-2.5 rounded-xl ${isDark ? 'bg-white/5 border-white/10 text-white/50' : 'bg-gray-100 border-gray-200 text-gray-500'} border`}><Bell size={18} /></button>
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 border border-white/20 shadow-lg shadow-blue-500/20" />
             </div>
           </header>
 

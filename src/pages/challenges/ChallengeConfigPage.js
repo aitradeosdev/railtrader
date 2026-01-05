@@ -24,7 +24,7 @@ const ChallengeConfigPage = ({ challenge, onBack, onContinue }) => {
     );
   };
 
-  const totalPrice = challenge.price + selectedAddons.reduce((sum, addonId) => {
+  const totalPrice = challenge.phases[1].price + selectedAddons.reduce((sum, addonId) => {
     const addon = addons.find(a => a.id === addonId);
     return sum + (addon ? addon.price : 0);
   }, 0);

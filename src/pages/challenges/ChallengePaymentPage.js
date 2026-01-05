@@ -86,7 +86,7 @@ const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className={isDark ? 'text-white/70' : 'text-gray-600'}>{challenge.name}</span>
-              <span className={isDark ? 'text-white' : 'text-gray-900'}>${challenge.price}</span>
+              <span className={isDark ? 'text-white' : 'text-gray-900'}>${challenge.phases[1].price}</span>
             </div>
             <div className="flex justify-between">
               <span className={isDark ? 'text-white/70' : 'text-gray-600'}>Leverage</span>
