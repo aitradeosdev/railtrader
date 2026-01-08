@@ -23,10 +23,5 @@
       "dest": "/$1"
     }
   ],
-  "env": {
-    "MONGODB_URI": "@mongodb_uri",
-    "JWT_SECRET": "@jwt_secret",
-    "FMP_API_KEY": "@fmp_api_key",
-    "ENCRYPTION_KEY": "@encryption_key"
-  }
+
 }
