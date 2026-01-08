@@ -3,19 +3,49 @@ import { ArrowLeft, CreditCard, Wallet } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
   const { isDark } = useTheme();
+  const { token } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [processing, setProcessing] = useState(false);
 
   const handlePayment = async () => {
     setProcessing(true);
-    // Simulate payment processing
-    setTimeout(() => {
+    try {
+      const response = await fetch('http://localhost:5000/api/user/challenge', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          challengeType: challenge.phases && Object.keys(challenge.phases).length === 1 ? '1-phase' : '2-phase',
+          accountSize: challenge.accountSize || challenge.name.split(' ')[0],
+          amount: config.totalPrice
+        })
+      });
+      
+      if (response.ok) {
+        // Update user account balance
+        await fetch('http://localhost:5000/api/user/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            accountBalance: challenge.accountSize || 10000
+          })
+        });
+        onSuccess(challenge);
+      }
+    } catch (error) {
+      console.error('Error submitting challenge:', error);
+    } finally {
       setProcessing(false);
-      onSuccess();
-    }, 2000);
+    }
   };
 
   return (
@@ -97,17 +127,17 @@ const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
                 <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Add-ons:</p>
                 {config.addons.map(addonId => {
                   const addon = [
-                    { id: 'reset', name: 'Reset Protection', price: 49 },
-                    { id: 'extend', name: 'Time Extension', price: 29 },
-                    { id: 'boost', name: 'Profit Boost', price: 99 }
+                    { id: 'resetProtection', name: 'Reset Protection', price: challenge.addOns?.resetProtection?.price || 49 },
+                    { id: 'timeExtension', name: 'Time Extension', price: challenge.addOns?.timeExtension?.price || 29 },
+                    { id: 'profitBoost', name: 'Profit Boost', price: challenge.addOns?.profitBoost?.price || 99 }
                   ].find(a => a.id === addonId);
-                  return (
+                  return addon ? (
                     <div key={addonId} className="flex justify-between ml-4">
                       <span className={isDark ? 'text-white/70' : 'text-gray-600'}>{addon.name}</span>
                       <span className={isDark ? 'text-white' : 'text-gray-900'}>${addon.price}</span>
                     </div>
-                  );
-                })}
+                  ) : null;
+                })}}
               </div>
             )}
             <div className={`border-t ${isDark ? 'border-white/10' : 'border-gray-200'} pt-3 flex justify-between font-bold`}>

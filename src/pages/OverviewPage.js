@@ -1,22 +1,91 @@
+import { useState, useEffect } from 'react';
 import { GlassCard, MetricCard } from '../components/UIComponents';
 import Footer from '../components/Footer';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const OverviewPage = () => {
   const { isDark } = useTheme();
+  const { user, token } = useAuth();
+  const { currency } = useCurrency();
+  const [challengeBalances, setChallengeBalances] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  
+  const fetchDashboardStats = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/user/dashboard-stats', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setChallengeBalances(data.challengeBalances || []);
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  if (!user) return null;
+  
+  const totalFundedBalance = challengeBalances
+    .filter(c => c.isFunded)
+    .reduce((sum, c) => sum + c.amount, 0);
+    
+  const totalChallengeBalance = challengeBalances
+    .filter(c => !c.isFunded)
+    .reduce((sum, c) => sum + c.amount, 0);
+  
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 md:pb-0">
       <div className="flex flex-col gap-2">
-        <h1 className={`text-3xl md:text-5xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} tracking-tighter`}>Portfolio</h1>
-        <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} text-sm md:text-lg`}>Funding status: <span className="text-blue-400">Elite Tier</span></p>
+        <h1 className={`text-3xl md:text-5xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} tracking-tighter`}>Welcome, {user.firstName}</h1>
+        <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} text-sm md:text-lg`}>Account Status: <span className="text-blue-400">Active</span></p>
       </div>
 
     <div className="flex overflow-x-auto pb-4 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 no-scrollbar">
-      <div className="min-w-[280px] md:min-w-0 flex-shrink-0"><MetricCard label="Equity" value="$112,450" trend={2.4} subValue="Live Account" color="blue" /></div>
-      <div className="min-w-[280px] md:min-w-0 flex-shrink-0"><MetricCard label="Daily Loss" value="$1,240" trend={-0.8} subValue="Limit $5k" color="rose" /></div>
-      <div className="min-w-[280px] md:min-w-0 flex-shrink-0"><MetricCard label="Profit Target" value="74%" trend={15.2} subValue="Next Level" color="emerald" /></div>
-      <div className="min-w-[280px] md:min-w-0 flex-shrink-0"><MetricCard label="Win Rate" value="68%" trend={1.2} subValue="Historical" color="purple" /></div>
+      <div className="min-w-[280px] md:min-w-0 flex-shrink-0">
+        <MetricCard 
+          label="Account Balance" 
+          value={loading ? "Loading..." : `${currency}${totalFundedBalance.toLocaleString()}`} 
+          trend={0} 
+          subValue={totalFundedBalance > 0 ? "Live Funded" : (totalChallengeBalance > 0 ? "Challenge Phase" : "No Challenges")} 
+          color="blue" 
+        />
+      </div>
+      <div className="min-w-[280px] md:min-w-0 flex-shrink-0"><MetricCard label="Total Profit" value={`${currency}${user.totalProfit.toLocaleString()}`} trend={0} subValue="All Time" color="emerald" /></div>
+      <div className="min-w-[280px] md:min-w-0 flex-shrink-0"><MetricCard label="Total Loss" value={`${currency}${user.totalLoss.toLocaleString()}`} trend={0} subValue="All Time" color="rose" /></div>
+      <div className="min-w-[280px] md:min-w-0 flex-shrink-0"><MetricCard label="Win Rate" value={`${user.winRate}%`} trend={0} subValue="Historical" color="purple" /></div>
     </div>
+
+    {challengeBalances.length > 0 && (
+      <GlassCard className="p-6">
+        <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Challenge Balances</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {challengeBalances.map((challenge, index) => (
+            <div key={index} className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
+              <div className="flex justify-between items-center mb-2">
+                <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {challenge.accountSize} Account
+                </span>
+                <span className={`text-xs px-2 py-1 rounded ${
+                  challenge.isFunded ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+                }`}>
+                  {challenge.isFunded ? 'Live Funded' : 'Challenge Phase'}
+                </span>
+              </div>
+              <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                ${currency}${challenge.amount ? challenge.amount.toLocaleString() : '0'}
+              </div>
+            </div>
+          ))}
+        </div>
+      </GlassCard>
+    )}
 
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <GlassCard className="lg:col-span-2 p-6 md:p-8">

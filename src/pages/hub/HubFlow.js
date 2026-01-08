@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import HubMainPage from './HubMainPage';
-import EconomicCalendarPage from './EconomicCalendarPage';
-import TradingSignalsPage from './TradingSignalsPage';
-import MarketNewsPage from './MarketNewsPage';
 import MT5CredentialsPage from './MT5CredentialsPage';
+import MT5HistoryPage from './MT5HistoryPage';
 
 const HubFlow = () => {
   const [currentPage, setCurrentPage] = useState('main');
@@ -17,14 +15,10 @@ const HubFlow = () => {
   };
 
   switch (currentPage) {
-    case 'calendar':
-      return <EconomicCalendarPage onBack={handleBack} />;
-    case 'signals':
-      return <TradingSignalsPage onBack={handleBack} />;
-    case 'news':
-      return <MarketNewsPage onBack={handleBack} />;
     case 'credentials':
       return <MT5CredentialsPage onBack={handleBack} />;
+    case 'history':
+      return <MT5HistoryPage onBack={handleBack} />;
     default:
       return <HubMainPage onNavigate={handleNavigate} />;
   }

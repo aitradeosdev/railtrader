@@ -3,9 +3,10 @@ import ChallengesListPage from './ChallengesListPage';
 import ChallengeConfigPage from './ChallengeConfigPage';
 import ChallengePaymentPage from './ChallengePaymentPage';
 import ChallengeSuccessPage from './ChallengeSuccessPage';
+import ChallengeDashboard from './ChallengeDashboard';
 
 const ChallengeFlow = ({ onGoHome }) => {
-  const [currentStep, setCurrentStep] = useState('list');
+  const [currentStep, setCurrentStep] = useState('dashboard');
   const [selectedChallenge, setSelectedChallenge] = useState(null);
   const [challengeConfig, setChallengeConfig] = useState(null);
 
@@ -19,7 +20,8 @@ const ChallengeFlow = ({ onGoHome }) => {
     setCurrentStep('payment');
   };
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = (challengeData) => {
+    setSelectedChallenge(challengeData);
     setCurrentStep('success');
   };
 
@@ -33,10 +35,21 @@ const ChallengeFlow = ({ onGoHome }) => {
   };
 
   const handleGoHome = () => {
-    onGoHome();
+    setCurrentStep('dashboard');
+  };
+
+  const handleBuyNew = () => {
+    setCurrentStep('list');
   };
 
   switch (currentStep) {
+    case 'list':
+      return (
+        <ChallengesListPage
+          onSelectChallenge={handleSelectChallenge}
+          onBack={() => setCurrentStep('dashboard')}
+        />
+      );
     case 'config':
       return (
         <ChallengeConfigPage
@@ -58,13 +71,13 @@ const ChallengeFlow = ({ onGoHome }) => {
       return (
         <ChallengeSuccessPage
           challenge={selectedChallenge}
-          onGoHome={handleGoHome}
+          onGoHome={() => setCurrentStep('dashboard')}
         />
       );
     default:
       return (
-        <ChallengesListPage
-          onSelectChallenge={handleSelectChallenge}
+        <ChallengeDashboard
+          onBuyNew={handleBuyNew}
         />
       );
   }

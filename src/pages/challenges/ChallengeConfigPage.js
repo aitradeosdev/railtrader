@@ -6,14 +6,29 @@ import { useTheme } from '../../contexts/ThemeContext';
 
 const ChallengeConfigPage = ({ challenge, onBack, onContinue }) => {
   const { isDark } = useTheme();
-  const [selectedLeverage, setSelectedLeverage] = useState('1:100');
+  const [selectedLeverage, setSelectedLeverage] = useState(challenge.leverageOptions?.[0] || '1:100');
   const [selectedAddons, setSelectedAddons] = useState([]);
 
-  const leverageOptions = ['1:30', '1:50', '1:100', '1:200'];
+  const leverageOptions = challenge.leverageOptions || ['1:30', '1:50', '1:100', '1:200'];
   const addons = [
-    { id: 'reset', name: 'Reset Protection', price: 49, description: 'Reset your challenge once if you fail' },
-    { id: 'extend', name: 'Time Extension', price: 29, description: 'Add 30 extra days to complete' },
-    { id: 'boost', name: 'Profit Boost', price: 99, description: 'Increase profit share by 5%' }
+    { 
+      id: 'resetProtection', 
+      name: 'Reset Protection', 
+      price: challenge.addOns?.resetProtection?.price || 49, 
+      description: challenge.addOns?.resetProtection?.description || 'Reset your challenge once if you fail' 
+    },
+    { 
+      id: 'timeExtension', 
+      name: 'Time Extension', 
+      price: challenge.addOns?.timeExtension?.price || 29, 
+      description: challenge.addOns?.timeExtension?.description || 'Add 30 extra days to complete' 
+    },
+    { 
+      id: 'profitBoost', 
+      name: 'Profit Boost', 
+      price: challenge.addOns?.profitBoost?.price || 99, 
+      description: challenge.addOns?.profitBoost?.description || 'Increase profit share by 5%' 
+    }
   ];
 
   const toggleAddon = (addonId) => {

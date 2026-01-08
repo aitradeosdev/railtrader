@@ -1,17 +1,33 @@
 import { useState } from 'react';
 import { Eye, EyeOff, Lock, ArrowLeft } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useAuth } from '../../../contexts/AuthContext';
 
-const LoginPasswordPage = ({ email, onLogin, onBack }) => {
+const LoginPasswordPage = ({ email, onLogin, onBack, onTwoFactorRequired }) => {
   const { isDark } = useTheme();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (password) {
-      onLogin({ email, password });
+    setError('');
+    
+    if (!password) return;
+    
+    setLoading(true);
+    const result = await login({ email, password });
+    
+    if (result.success) {
+      onLogin();
+    } else if (result.requiresTwoFactor) {
+      onTwoFactorRequired({ password });
+    } else {
+      setError(result.message);
     }
+    setLoading(false);
   };
 
   return (
@@ -30,6 +46,12 @@ const LoginPasswordPage = ({ email, onLogin, onBack }) => {
           <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Enter Password</h1>
           <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} text-sm`}>Welcome back, {email}</p>
         </div>
+
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -66,9 +88,10 @@ const LoginPasswordPage = ({ email, onLogin, onBack }) => {
 
           <button
             type="submit"
-            className="w-full py-4 bg-gradient-to-r from-blue-500/90 to-blue-600/90 backdrop-blur-xl text-white rounded-2xl font-medium hover:scale-105 active:scale-95 transition-all duration-200 shadow-2xl shadow-blue-500/30 border border-white/20"
+            disabled={loading}
+            className="w-full py-4 bg-gradient-to-r from-blue-500/90 to-blue-600/90 backdrop-blur-xl text-white rounded-2xl font-medium hover:scale-105 active:scale-95 transition-all duration-200 shadow-2xl shadow-blue-500/30 border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Sign In
+            {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
       </div>

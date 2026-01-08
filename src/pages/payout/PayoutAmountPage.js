@@ -3,9 +3,11 @@ import { ArrowLeft, DollarSign, AlertCircle } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const PayoutAmountPage = ({ selectedMethod, availableBalance, onBack, onConfirm }) => {
   const { isDark } = useTheme();
+  const { token } = useAuth();
   const [amount, setAmount] = useState('');
   const [processing, setProcessing] = useState(false);
 
@@ -25,16 +27,33 @@ const PayoutAmountPage = ({ selectedMethod, availableBalance, onBack, onConfirm 
   const handleConfirm = async () => {
     if (parseFloat(amount) >= minPayout && parseFloat(amount) <= availableBalance) {
       setProcessing(true);
-      // Simulate processing
-      setTimeout(() => {
-        setProcessing(false);
-        onConfirm({
-          method: selectedMethod,
-          amount: parseFloat(amount),
-          fee,
-          netAmount
+      try {
+        const response = await fetch('http://localhost:5000/api/user/payout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            amount: parseFloat(amount),
+            paymentMethod: selectedMethod.name,
+            paymentDetails: selectedMethod.type === 'crypto' ? selectedMethod.walletAddress : `${selectedMethod.bankName} - ${selectedMethod.accountNumber}`
+          })
         });
-      }, 2000);
+        
+        if (response.ok) {
+          onConfirm({
+            method: selectedMethod,
+            amount: parseFloat(amount),
+            fee,
+            netAmount
+          });
+        }
+      } catch (error) {
+        console.error('Error submitting payout:', error);
+      } finally {
+        setProcessing(false);
+      }
     }
   };
 

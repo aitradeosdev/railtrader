@@ -27,11 +27,11 @@ const ChallengeSuccessPage = ({ challenge, onGoHome }) => {
           <div className="grid grid-cols-2 gap-6">
             <div className={`p-4 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
               <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Account Balance</h3>
-              <p className="text-2xl font-black text-blue-400">${challenge.amount.toLocaleString()}</p>
+              <p className="text-2xl font-black text-blue-400">${challenge.accountSize?.toLocaleString() || '10,000'}</p>
             </div>
             <div className={`p-4 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
               <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Profit Target</h3>
-              <p className="text-2xl font-black text-emerald-400">{challenge.profitTarget}%</p>
+              <p className="text-2xl font-black text-emerald-400">{challenge.phases?.[1]?.profitTarget || challenge.phases?.[2]?.profitTarget || 20}%</p>
             </div>
           </div>
 

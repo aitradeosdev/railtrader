@@ -2,6 +2,7 @@
 node_modules/
 /.pnp
 .pnp.js
+backend/node_modules/
 
 # Testing
 /coverage
@@ -9,8 +10,9 @@ node_modules/
 # Production
 /build
 
-# Misc
-.DS_Store
+# Environment variables
+.env
+backend/.env
 .env.local
 .env.development.local
 .env.test.local
@@ -27,3 +29,7 @@ yarn-error.log*
 
 # OS
 Thumbs.db
+.DS_Store
+
+# Vercel
+.vercel

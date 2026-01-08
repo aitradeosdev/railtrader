@@ -4,6 +4,8 @@ import KYCPage from './KYCPage';
 import PaymentMethodsPage from './PaymentMethodsPage';
 import PersonalInfoPage from './PersonalInfoPage';
 import AccountSettingsPage from './AccountSettingsPage';
+import ChangePasswordPage from './ChangePasswordPage';
+import TwoFactorSetupPage from './TwoFactorSetupPage';
 import DocumentsPage from './DocumentsPage';
 import NotificationPreferencesPage from './NotificationPreferencesPage';
 
@@ -15,7 +17,11 @@ const AccountFlow = () => {
   };
 
   const handleBack = () => {
-    setCurrentPage('main');
+    if (currentPage === 'changePassword' || currentPage === 'twoFactorSetup') {
+      setCurrentPage('settings');
+    } else {
+      setCurrentPage('main');
+    }
   };
 
   switch (currentPage) {
@@ -26,7 +32,11 @@ const AccountFlow = () => {
     case 'payout':
       return <PaymentMethodsPage onBack={handleBack} />;
     case 'settings':
-      return <AccountSettingsPage onBack={handleBack} />;
+      return <AccountSettingsPage onBack={handleBack} onNavigate={handleNavigate} />;
+    case 'changePassword':
+      return <ChangePasswordPage onBack={handleBack} />;
+    case 'twoFactorSetup':
+      return <TwoFactorSetupPage onBack={handleBack} />;
     case 'documents':
       return <DocumentsPage onBack={handleBack} />;
     case 'notifications':

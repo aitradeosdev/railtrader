@@ -1,48 +1,41 @@
+import { useState, useEffect } from 'react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useState } from 'react';
 
 const ChallengesListPage = ({ onSelectChallenge }) => {
   const { isDark } = useTheme();
   const [selectedPhase, setSelectedPhase] = useState(1);
+  const [challenges, setChallenges] = useState([]);
+  const [loading, setLoading] = useState(true);
   
-  const challenges = [
-    { 
-      id: 1, 
-      name: "$10k Starter", 
-      amount: 10000, 
-      tier: 1,
-      phases: {
-        1: { price: 99, profitSplit: 80, maxDrawdown: 25, profitTarget: 20 },
-        2: { price: 149, profitSplit: 85, maxDrawdown: 20, profitTarget: 15 }
-      }
-    },
-    { 
-      id: 2, 
-      name: "$100k Pro", 
-      amount: 100000, 
-      tier: 2,
-      phases: {
-        1: { price: 499, profitSplit: 80, maxDrawdown: 25, profitTarget: 20 },
-        2: { price: 699, profitSplit: 85, maxDrawdown: 20, profitTarget: 15 }
-      }
-    },
-    { 
-      id: 3, 
-      name: "$250k Elite", 
-      amount: 250000, 
-      tier: 3,
-      phases: {
-        1: { price: 999, profitSplit: 80, maxDrawdown: 25, profitTarget: 20 },
-        2: { price: 1299, profitSplit: 85, maxDrawdown: 20, profitTarget: 15 }
-      }
+  useEffect(() => {
+    fetchChallenges();
+  }, []);
+  
+  const fetchChallenges = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/challenge-plans');
+      const data = await response.json();
+      setChallenges(data);
+    } catch (error) {
+      console.error('Error fetching challenges:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const getCurrentPhaseData = (challenge) => {
     return challenge.phases[selectedPhase];
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-20 md:pb-0">
@@ -80,11 +73,11 @@ const ChallengesListPage = ({ onSelectChallenge }) => {
         {challenges.map((challenge, i) => {
           const phaseData = getCurrentPhaseData(challenge);
           return (
-            <GlassCard key={challenge.id} className={`p-6 md:p-8 flex flex-col border-2 ${i === 1 ? 'border-blue-500/50' : (isDark ? 'border-white/10' : 'border-gray-200')}`}>
+            <GlassCard key={challenge._id} className={`p-6 md:p-8 flex flex-col border-2 ${i === 1 ? 'border-blue-500/50' : (isDark ? 'border-white/10' : 'border-gray-200')}`}>
               <h3 className={`${isDark ? 'text-white/50' : 'text-gray-500'} text-xs font-bold uppercase mb-2`}>Tier {challenge.tier}</h3>
-              <div className={`text-4xl md:text-5xl font-black ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>{challenge.name.split(' ')[0]}</div>
+              <div className={`text-4xl md:text-5xl font-black ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>{challenge.name}</div>
               <div className={`space-y-3 mb-8 text-sm ${isDark ? 'text-white/70' : 'text-gray-600'}`}>
-                <div className="flex justify-between"><span>Account Size</span><span>${challenge.amount.toLocaleString()}</span></div>
+                <div className="flex justify-between"><span>Account Size</span><span>${challenge.accountSize.toLocaleString()}</span></div>
                 <div className="flex justify-between"><span>Profit Target</span><span>{phaseData.profitTarget}%</span></div>
                 <div className="flex justify-between"><span>Max Drawdown</span><span>{phaseData.maxDrawdown}%</span></div>
                 <div className="flex justify-between"><span>Profit Split</span><span>{phaseData.profitSplit}%</span></div>

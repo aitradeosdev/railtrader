@@ -3,23 +3,15 @@ import { CreditCard, Wallet, ArrowRight } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const PayoutMainPage = ({ onSelectMethod }) => {
   const { isDark } = useTheme();
+  const { user } = useAuth();
   const [selectedMethod, setSelectedMethod] = useState(null);
 
-  // Mock data - in real app this would come from user's saved payout methods
-  const bankAccounts = [
-    { id: 1, type: 'bank', name: 'Chase Bank ****1234', routing: 'ACH', default: true },
-    { id: 2, type: 'bank', name: 'Wells Fargo ****5678', routing: 'Wire', default: false }
-  ];
-
-  const cryptoWallets = [
-    { id: 1, type: 'crypto', name: 'Bitcoin Wallet', address: '1A1zP1...', currency: 'BTC', default: true },
-    { id: 2, type: 'crypto', name: 'Ethereum Wallet', address: '0x742d...', currency: 'ETH', default: false }
-  ];
-
-  const availableBalance = 12450;
+  // Get saved payment methods from user data
+  const savedMethods = user?.paymentMethods || [];
 
   const handleMethodSelect = (method) => {
     setSelectedMethod(method);
@@ -27,7 +19,7 @@ const PayoutMainPage = ({ onSelectMethod }) => {
 
   const handleContinue = () => {
     if (selectedMethod) {
-      onSelectMethod(selectedMethod, availableBalance);
+      onSelectMethod(selectedMethod, user.accountBalance);
     }
   };
 
@@ -41,65 +33,47 @@ const PayoutMainPage = ({ onSelectMethod }) => {
       <GlassCard className="p-6 md:p-8">
         <div className="text-center mb-8">
           <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} text-sm mb-2`}>Available Balance</p>
-          <div className="text-4xl md:text-6xl font-black text-emerald-400">${availableBalance.toLocaleString()}</div>
+          <div className="text-4xl md:text-6xl font-black text-emerald-400">${user.accountBalance.toLocaleString()}</div>
         </div>
 
         <div className="space-y-6">
-          <div>
-            <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Bank Accounts</h3>
-            <div className="space-y-3">
-              {bankAccounts.map((account) => (
-                <button
-                  key={account.id}
-                  onClick={() => handleMethodSelect(account)}
-                  className={`w-full p-4 rounded-2xl border transition-all text-left ${
-                    selectedMethod?.id === account.id && selectedMethod?.type === account.type
-                      ? 'border-blue-500 bg-blue-500/10'
-                      : (isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50')
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <CreditCard className={selectedMethod?.id === account.id && selectedMethod?.type === account.type ? 'text-blue-400' : (isDark ? 'text-white/60' : 'text-gray-600')} size={24} />
-                    <div className="flex-1">
-                      <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{account.name}</p>
-                      <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>{account.routing}</p>
-                    </div>
-                    {account.default && (
-                      <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-lg">Default</span>
-                    )}
-                  </div>
-                </button>
-              ))}
+          {savedMethods.length === 0 ? (
+            <div className="text-center py-8">
+              <Wallet className={`mx-auto mb-4 ${isDark ? 'text-white/40' : 'text-gray-400'}`} size={48} />
+              <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>No Payment Methods</h3>
+              <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} mb-4`}>Add payment methods in Account Settings to request payouts</p>
             </div>
-          </div>
-
-          <div>
-            <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Crypto Wallets</h3>
-            <div className="space-y-3">
-              {cryptoWallets.map((wallet) => (
-                <button
-                  key={wallet.id}
-                  onClick={() => handleMethodSelect(wallet)}
-                  className={`w-full p-4 rounded-2xl border transition-all text-left ${
-                    selectedMethod?.id === wallet.id && selectedMethod?.type === wallet.type
-                      ? 'border-blue-500 bg-blue-500/10'
-                      : (isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50')
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <Wallet className={selectedMethod?.id === wallet.id && selectedMethod?.type === wallet.type ? 'text-blue-400' : (isDark ? 'text-white/60' : 'text-gray-600')} size={24} />
-                    <div className="flex-1">
-                      <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{wallet.name}</p>
-                      <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'} font-mono`}>{wallet.address}</p>
+          ) : (
+            <>
+              <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Select Payment Method</h3>
+              <div className="space-y-3">
+                {savedMethods.map((method) => (
+                  <button
+                    key={method._id}
+                    onClick={() => handleMethodSelect(method)}
+                    className={`w-full p-4 rounded-2xl border transition-all text-left ${
+                      selectedMethod?._id === method._id
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : (isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50')
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      {method.type === 'bank' ? 
+                        <CreditCard className={selectedMethod?._id === method._id ? 'text-blue-400' : (isDark ? 'text-white/60' : 'text-gray-600')} size={24} /> :
+                        <Wallet className={selectedMethod?._id === method._id ? 'text-blue-400' : (isDark ? 'text-white/60' : 'text-gray-600')} size={24} />
+                      }
+                      <div className="flex-1">
+                        <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{method.name}</p>
+                        <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'} font-mono`}>
+                          {method.type === 'bank' ? `${method.bankName} - ${method.accountName}` : method.walletAddress}
+                        </p>
+                      </div>
                     </div>
-                    {wallet.default && (
-                      <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-lg">Default</span>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         <button

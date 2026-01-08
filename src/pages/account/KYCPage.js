@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Upload, Check, AlertCircle, User, FileText, MapPin, Eye } from 'lucide-react';
+import { ArrowLeft, Upload, Check, User, FileText, MapPin, Eye } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
