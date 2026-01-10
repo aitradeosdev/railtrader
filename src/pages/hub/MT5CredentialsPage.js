@@ -60,7 +60,7 @@ const MT5CredentialsPage = ({ onBack }) => {
       </div>
 
       <GlassCard className="p-6">
-        {!mt5Data?.liveAccounts && !mt5Data?.mt5Login ? (
+        {(!mt5Data?.liveAccounts || mt5Data?.liveAccounts?.length === 0) && !mt5Data?.mt5Login ? (
           <div className="text-center py-12">
             <ExternalLink className="text-gray-400 mx-auto mb-4" size={48} />
             <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>No MT5 Account Assigned</h3>
