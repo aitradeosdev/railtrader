@@ -41,11 +41,11 @@ const ChallengeManagementPage = ({ onNavigateToChallenge }) => {
   };
 
   const filteredChallenges = challenges.filter(challenge => 
-    challenge.userId && (
+    (challenge.userId && (
       challenge.userId.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       challenge.userId.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       challenge.userId.email.toLowerCase().includes(searchTerm.toLowerCase())
-    ) ||
+    )) ||
     challenge.accountSize.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
