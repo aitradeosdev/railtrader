@@ -43,7 +43,7 @@ const EditChallengePlanPage = ({ planId, onBack }) => {
 
   useEffect(() => {
     fetchPlan();
-  }, [planId]);
+  }, [planId, token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchPlan = async () => {
     try {
