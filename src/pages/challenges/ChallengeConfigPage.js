@@ -15,7 +15,7 @@ const ChallengeConfigPage = ({ challenge, onBack, onContinue }) => {
   
   // Only show enabled addons
   const addons = Object.entries(challenge.addOns || {})
-    .filter(([key, addon]) => addon.enabled !== false)
+    .filter(([key, addon]) => addon.enabled === true)
     .map(([key, addon]) => ({
       id: key,
       name: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
