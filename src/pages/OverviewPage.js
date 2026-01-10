@@ -80,7 +80,7 @@ const OverviewPage = () => {
                 </span>
               </div>
               <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                ${currency}${challenge.amount ? challenge.amount.toLocaleString() : '0'}
+                {currency}{challenge.amount ? challenge.amount.toLocaleString() : '0'}
               </div>
             </div>
           ))}

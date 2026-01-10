@@ -2,9 +2,11 @@ import { CheckCircle, Home } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 const ChallengeSuccessPage = ({ challenge, onGoHome }) => {
   const { isDark } = useTheme();
+  const { currency } = useCurrency();
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-20 md:pb-0">
@@ -27,7 +29,7 @@ const ChallengeSuccessPage = ({ challenge, onGoHome }) => {
           <div className="grid grid-cols-2 gap-6">
             <div className={`p-4 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
               <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Account Balance</h3>
-              <p className="text-2xl font-black text-blue-400">${challenge.accountSize?.toLocaleString() || '10,000'}</p>
+              <p className="text-2xl font-black text-blue-400">{currency}{challenge.accountSize?.toLocaleString() || '10,000'}</p>
             </div>
             <div className={`p-4 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
               <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Profit Target</h3>

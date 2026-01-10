@@ -4,11 +4,13 @@ import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { apiUrl } from '../../utils/api';
 
 const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
   const { isDark } = useTheme();
   const { token } = useAuth();
+  const { currency } = useCurrency();
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [processing, setProcessing] = useState(false);
 
@@ -121,7 +123,7 @@ const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className={isDark ? 'text-white/70' : 'text-gray-600'}>{challenge.name}</span>
-              <span className={isDark ? 'text-white' : 'text-gray-900'}>${challenge.phases[1].price}</span>
+              <span className={isDark ? 'text-white' : 'text-gray-900'}>{currency}{challenge.phases[1].price}</span>
             </div>
             <div className="flex justify-between">
               <span className={isDark ? 'text-white/70' : 'text-gray-600'}>Leverage</span>
@@ -139,7 +141,7 @@ const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
                   return addon ? (
                     <div key={addonId} className="flex justify-between ml-4">
                       <span className={isDark ? 'text-white/70' : 'text-gray-600'}>{addon.name}</span>
-                      <span className={isDark ? 'text-white' : 'text-gray-900'}>${addon.price}</span>
+                      <span className={isDark ? 'text-white' : 'text-gray-900'}>{currency}{addon.price}</span>
                     </div>
                   ) : null;
                 })}}
@@ -147,7 +149,7 @@ const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
             )}
             <div className={`border-t ${isDark ? 'border-white/10' : 'border-gray-200'} pt-3 flex justify-between font-bold`}>
               <span className={isDark ? 'text-white' : 'text-gray-900'}>Total</span>
-              <span className={isDark ? 'text-white' : 'text-gray-900'}>${config.totalPrice}</span>
+              <span className={isDark ? 'text-white' : 'text-gray-900'}>{currency}{config.totalPrice}</span>
             </div>
           </div>
           
@@ -156,7 +158,7 @@ const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
             disabled={processing}
             className="w-full mt-6 py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
-            {processing ? 'Processing...' : `Pay $${config.totalPrice}`}
+            {processing ? 'Processing...' : `Pay ${currency}${config.totalPrice}`}
           </button>
         </GlassCard>
       </div>
