@@ -47,7 +47,7 @@ const UserMT5Page = ({ userId, onBack }) => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const allChallenges = await response.json();
-      const userChallenges = allChallenges.filter(c => c.userId._id === userId);
+      const userChallenges = allChallenges.filter(c => c.userId && c.userId._id === userId);
       setChallenges(userChallenges);
     } catch (error) {
       console.error('Error fetching challenges:', error);
