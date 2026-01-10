@@ -17,7 +17,7 @@ const UserManagementPage = ({ onBack }) => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/users', {
+      const response = await fetch('apiUrl('/admin/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -31,7 +31,7 @@ const UserManagementPage = ({ onBack }) => {
 
   const updateUser = async (userId, updates) => {
     try {
-      await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+      await fetch(`apiUrl('/admin/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -49,7 +49,7 @@ const UserManagementPage = ({ onBack }) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     
     try {
-      await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+      await fetch(`apiUrl('/admin/users/${userId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

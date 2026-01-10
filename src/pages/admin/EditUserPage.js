@@ -29,7 +29,7 @@ const EditUserPage = ({ onBack, userId }) => {
 
   const fetchUser = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/users', {
+      const response = await fetch('apiUrl('/admin/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const users = await response.json();
@@ -65,7 +65,7 @@ const EditUserPage = ({ onBack, userId }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+      const response = await fetch(`apiUrl('/admin/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

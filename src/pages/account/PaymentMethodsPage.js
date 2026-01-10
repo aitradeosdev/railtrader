@@ -19,7 +19,7 @@ const PaymentMethodsPage = ({ onBack }) => {
 
   const handleAddMethod = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/user/payment-methods', {
+      const response = await fetch('apiUrl('/user/payment-methods', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,7 +40,7 @@ const PaymentMethodsPage = ({ onBack }) => {
 
   const handleDeleteMethod = async (methodId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/user/payment-methods/${methodId}`, {
+      const response = await fetch(`apiUrl('/user/payment-methods/${methodId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

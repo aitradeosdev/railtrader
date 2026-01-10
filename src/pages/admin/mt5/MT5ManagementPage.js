@@ -19,7 +19,7 @@ const MT5ManagementPage = ({ onNavigateToUser }) => {
 
   const fetchPendingMT5Requests = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/mt5-requests', {
+      const response = await fetch('apiUrl('/admin/mt5-requests', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -32,7 +32,7 @@ const MT5ManagementPage = ({ onNavigateToUser }) => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/users', {
+      const response = await fetch('apiUrl('/admin/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();

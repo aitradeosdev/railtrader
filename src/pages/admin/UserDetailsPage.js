@@ -16,7 +16,7 @@ const UserDetailsPage = ({ onBack, userId }) => {
 
   const fetchUser = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/users', {
+      const response = await fetch('apiUrl('/admin/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const users = await response.json();

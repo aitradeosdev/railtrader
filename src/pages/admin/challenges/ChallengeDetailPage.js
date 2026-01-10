@@ -19,7 +19,7 @@ const ChallengeDetailPage = ({ challengeId, onBack }) => {
 
   const fetchChallengeData = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/challenges', {
+      const response = await fetch('apiUrl('/admin/challenges', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const challenges = await response.json();
@@ -32,7 +32,7 @@ const ChallengeDetailPage = ({ challengeId, onBack }) => {
 
   const handleNotifyMT5Needed = async (phase) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/challenges/${challengeId}/notify-mt5`, {
+      const response = await fetch(`apiUrl('/admin/challenges/${challengeId}/notify-mt5`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -61,7 +61,7 @@ const ChallengeDetailPage = ({ challengeId, onBack }) => {
 
   const handleNotifyLiveAccount = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/challenges/${challengeId}/notify-live-account`, {
+      const response = await fetch(`apiUrl('/admin/challenges/${challengeId}/notify-live-account`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -89,7 +89,7 @@ const ChallengeDetailPage = ({ challengeId, onBack }) => {
 
   const handleCompleteEvaluation = async (action) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/challenges/${challengeId}/update-status`, {
+      const response = await fetch(`apiUrl('/admin/challenges/${challengeId}/update-status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
