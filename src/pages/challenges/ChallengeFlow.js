@@ -34,10 +34,6 @@ const ChallengeFlow = ({ onGoHome }) => {
     setCurrentStep('config');
   };
 
-  const handleGoHome = () => {
-    setCurrentStep('dashboard');
-  };
-
   const handleBuyNew = () => {
     setCurrentStep('list');
   };

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Save, User, Mail, DollarSign, Shield, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Save, User, DollarSign, Shield, Eye, EyeOff } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';

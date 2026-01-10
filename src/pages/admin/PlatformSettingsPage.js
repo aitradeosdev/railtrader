@@ -17,12 +17,7 @@ const PlatformSettingsPage = ({ onBack }) => {
     emailNotifications: true,
     backupFrequency: 'daily'
   });
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    fetchSettings();
-  }, []);
 
   const fetchSettings = async () => {
     try {
@@ -37,6 +32,10 @@ const PlatformSettingsPage = ({ onBack }) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchSettings();
+  }, [token]);
 
   const saveSettings = async () => {
     setSaving(true);

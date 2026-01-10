@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Plus, Edit, Eye, Trash2, Shield, Calendar, TrendingUp, DollarSign } from 'lucide-react';
+import { Search, Plus, Edit, Eye, Trash2, Shield, TrendingUp, DollarSign } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
