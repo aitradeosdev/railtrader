@@ -3,11 +3,13 @@ import { ArrowLeft, User, Mail, Calendar, Shield, Smartphone, DollarSign, Trendi
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { apiUrl } from '../../utils/api';
 
 const UserDetailsPage = ({ onBack, userId }) => {
   const { isDark } = useTheme();
   const { token } = useAuth();
+  const { currency } = useCurrency();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -141,7 +143,7 @@ const UserDetailsPage = ({ onBack, userId }) => {
               <div>
                 <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Account Balance</p>
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  ${user.accountBalance.toLocaleString()}
+                  {currency}{user.accountBalance.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -153,7 +155,7 @@ const UserDetailsPage = ({ onBack, userId }) => {
               <div>
                 <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Total Profit</p>
                 <p className="text-2xl font-bold text-emerald-400">
-                  ${user.totalProfit.toLocaleString()}
+                  {currency}{user.totalProfit.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -165,7 +167,7 @@ const UserDetailsPage = ({ onBack, userId }) => {
               <div>
                 <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Total Loss</p>
                 <p className="text-2xl font-bold text-red-400">
-                  ${user.totalLoss.toLocaleString()}
+                  {currency}{user.totalLoss.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -187,7 +189,7 @@ const UserDetailsPage = ({ onBack, userId }) => {
           <div className={`mt-6 p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
             <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'} mb-2`}>Net Profit/Loss</p>
             <p className={`text-xl font-bold ${user.totalProfit - user.totalLoss >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-              ${(user.totalProfit - user.totalLoss).toLocaleString()}
+              {currency}{(user.totalProfit - user.totalLoss).toLocaleString()}
             </p>
           </div>
         </GlassCard>
