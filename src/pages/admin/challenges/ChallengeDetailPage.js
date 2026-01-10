@@ -220,8 +220,29 @@ const ChallengeDetailPage = ({ challengeId, onBack }) => {
               </div>
             </div>
             <div className="flex justify-between">
-              <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Current Phase:</span>
-              <span className={isDark ? 'text-white' : 'text-gray-900'}>Phase {challenge.currentPhase}</span>
+              <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Challenge Type:</span>
+              <select
+                value={challenge.challengeType}
+                onChange={async (e) => {
+                  try {
+                    await fetch(`${apiUrl()}/api/admin/challenges/${challengeId}/update-type`, {
+                      method: 'PUT',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                      },
+                      body: JSON.stringify({ challengeType: e.target.value })
+                    });
+                    fetchChallengeData();
+                  } catch (error) {
+                    console.error('Error updating challenge type:', error);
+                  }
+                }}
+                className={`${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} px-2 py-1 rounded text-sm`}
+              >
+                <option value="1-phase">1-Phase</option>
+                <option value="2-phase">2-Phase</option>
+              </select>
             </div>
             <div className="flex justify-between">
               <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Amount:</span>

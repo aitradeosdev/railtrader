@@ -949,6 +949,21 @@ app.put('/api/admin/challenges/:id/complete-evaluation', authenticateAdmin, asyn
   }
 });
 
+// Update challenge type
+app.put('/api/admin/challenges/:id/update-type', authenticateAdmin, async (req, res) => {
+  try {
+    const { challengeType } = req.body;
+    const challenge = await ChallengeRequest.findByIdAndUpdate(
+      req.params.id,
+      { challengeType, currentPhase: 1 },
+      { new: true }
+    );
+    res.json({ message: 'Challenge type updated successfully', challenge });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // Update challenge status (new endpoint)
 app.put('/api/admin/challenges/:id/update-status', authenticateAdmin, async (req, res) => {
   try {
