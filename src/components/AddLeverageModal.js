@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { GlassCard } from '../UIComponents';
+import { GlassCard } from './UIComponents';
 import { useTheme } from '../contexts/ThemeContext';
 
 const AddLeverageModal = ({ show, onClose, onAdd }) => {
