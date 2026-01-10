@@ -164,8 +164,8 @@ const AdminPayoutsPage = () => {
                   <div className="flex justify-between">
                     <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Name:</span>
                     <span className={isDark ? 'text-white' : 'text-gray-900'}>
-                      {payout.userInfo ? `${payout.userInfo.firstName} ${payout.userInfo.lastName}` : 
-                       (payout.userId ? `${payout.userId.firstName} ${payout.userId.lastName}` : 'Deleted User')}
+                      {selectedPayout.userInfo ? `${selectedPayout.userInfo.firstName} ${selectedPayout.userInfo.lastName}` : 
+                       (selectedPayout.userId ? `${selectedPayout.userId.firstName} ${selectedPayout.userId.lastName}` : 'Deleted User')}
                     </span>
                   </div>
                   <div className="flex justify-between">

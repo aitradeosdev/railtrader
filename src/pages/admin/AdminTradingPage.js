@@ -9,7 +9,6 @@ const AdminTradingPage = () => {
   const { isDark } = useTheme();
   const { token } = useAuth();
   const [users, setUsers] = useState([]);
-  const [challenges, setChallenges] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -24,7 +23,6 @@ const AdminTradingPage = () => {
   useEffect(() => {
     fetchUsers();
     fetchPendingMT5Requests();
-    fetchChallenges();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchPendingMT5Requests = async () => {
@@ -36,18 +34,6 @@ const AdminTradingPage = () => {
       setPendingMT5Requests(data);
     } catch (error) {
       console.error('Error fetching MT5 requests:', error);
-    }
-  };
-
-  const fetchChallenges = async () => {
-    try {
-      const response = await fetch(`${apiUrl()}/api/admin/challenges`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
-      setChallenges(data);
-    } catch (error) {
-      console.error('Error fetching challenges:', error);
     }
   };
 
@@ -124,30 +110,6 @@ const AdminTradingPage = () => {
         console.error('Error assigning credentials:', error);
       }
     }
-  };
-
-  const getUserMT5Display = (user) => {
-    if (user.mt5Login) {
-      return `MT5: ${user.mt5Login} | ${user.mt5Server}`;
-    }
-    
-    const userChallenges = challenges.filter(c => c.userId && c.userId._id === user._id);
-    for (const challenge of userChallenges) {
-      if (challenge.mt5Accounts && challenge.mt5Accounts.length > 0) {
-        const activeAccount = challenge.mt5Accounts.find(acc => acc.active);
-        if (activeAccount) {
-          return `MT5: ${activeAccount.login} | ${activeAccount.server} (${activeAccount.accountType.toUpperCase()})`;
-        }
-      }
-    }
-    
-    return 'No MT5 credentials';
-  };
-
-  const userHasMT5 = (user) => {
-    if (user.mt5Login) return true;
-    const userChallenges = challenges.filter(c => c.userId && c.userId._id === user._id);
-    return userChallenges.some(c => c.mt5Accounts && c.mt5Accounts.some(acc => acc.active));
   };
 
   const filteredUsers = users.filter(user => 
@@ -239,9 +201,13 @@ const AdminTradingPage = () => {
                     {user.firstName} {user.lastName}
                   </h3>
                   <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>{user.email}</p>
-                  <p className={`text-xs ${userHasMT5(user) ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-red-400' : 'text-red-600')}`}>
-                    {getUserMT5Display(user)}
-                  </p>
+                  {user.mt5Login ? (
+                    <p className={`text-xs ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                      MT5: {user.mt5Login} | {user.mt5Server}
+                    </p>
+                  ) : (
+                    <p className={`text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>No MT5 credentials</p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -255,11 +221,11 @@ const AdminTradingPage = () => {
                     });
                     setShowAssignModal(true);
                   }}
-                  className={`p-2 rounded-lg ${userHasMT5(user) ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white transition-colors`}
+                  className={`p-2 rounded-lg ${user.mt5Login ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white transition-colors`}
                 >
-                  {userHasMT5(user) ? <Edit size={16} /> : <Plus size={16} />}
+                  {user.mt5Login ? <Edit size={16} /> : <Plus size={16} />}
                 </button>
-                {userHasMT5(user) && (
+                {user.mt5Login && (
                   <button
                     onClick={() => {
                       // Remove credentials logic here
