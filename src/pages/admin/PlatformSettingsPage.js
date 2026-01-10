@@ -4,6 +4,7 @@ import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { apiUrl } from '../../utils/api';
 
 const PlatformSettingsPage = ({ onBack }) => {
   const { isDark } = useTheme();
@@ -21,7 +22,7 @@ const PlatformSettingsPage = ({ onBack }) => {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/platform-settings', {
+      const response = await fetch(`${apiUrl()}/api/admin/platform-settings`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -38,7 +39,7 @@ const PlatformSettingsPage = ({ onBack }) => {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      await fetch('http://localhost:5000/api/admin/platform-settings', {
+      await fetch(`${apiUrl()}/api/admin/platform-settings`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
