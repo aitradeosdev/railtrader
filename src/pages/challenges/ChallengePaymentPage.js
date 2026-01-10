@@ -30,6 +30,10 @@ const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
       
       if (response.ok) {
         // Update user account balance
+        const accountSizeNumber = typeof challenge.accountSize === 'string' 
+          ? parseInt(challenge.accountSize.replace(/,/g, '')) 
+          : challenge.accountSize || 10000;
+        
         await fetch(`${apiUrl()}/api/user/profile`, {
           method: 'PUT',
           headers: {
@@ -37,7 +41,7 @@ const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            accountBalance: challenge.accountSize || 10000
+            accountBalance: accountSizeNumber
           })
         });
         onSuccess(challenge);
