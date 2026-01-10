@@ -23,9 +23,9 @@ const EditChallengePlanPage = ({ planId, onBack }) => {
     tier: 1,
     leverageOptions: ['1:30', '1:50', '1:100', '1:200'],
     addOns: {
-      resetProtection: { price: 1, description: 'Reset your challenge once if you fail' },
-      timeExtension: { price: 1, description: 'Add 30 extra days to complete' },
-      profitBoost: { price: 1, description: 'Increase profit share by 5%' }
+      resetProtection: { price: 1, description: 'Reset your challenge once if you fail', enabled: true },
+      timeExtension: { price: 1, description: 'Add 30 extra days to complete', enabled: true },
+      profitBoost: { price: 1, description: 'Increase profit share by 5%', enabled: true }
     },
     phases: {
       1: {
@@ -62,9 +62,9 @@ const EditChallengePlanPage = ({ planId, onBack }) => {
           tier: plan.tier || 1,
           leverageOptions: plan.leverageOptions || ['1:30', '1:50', '1:100', '1:200'],
           addOns: plan.addOns || {
-            resetProtection: { price: 1, description: 'Reset your challenge once if you fail' },
-            timeExtension: { price: 1, description: 'Add 30 extra days to complete' },
-            profitBoost: { price: 1, description: 'Increase profit share by 5%' }
+            resetProtection: { price: 1, description: 'Reset your challenge once if you fail', enabled: true },
+            timeExtension: { price: 1, description: 'Add 30 extra days to complete', enabled: true },
+            profitBoost: { price: 1, description: 'Increase profit share by 5%', enabled: true }
           },
           phases: plan.phases || {
             1: { price: 60, profitSplit: 80, profitTarget: 20, maxDrawdown: 20 },
@@ -107,6 +107,29 @@ const EditChallengePlanPage = ({ planId, onBack }) => {
         }
       }
     }));
+  };
+
+  const addNewAddOn = () => {
+    const name = prompt('Enter addon name:');
+    const description = prompt('Enter addon description:');
+    if (name && description) {
+      const key = name.toLowerCase().replace(/\s+/g, '');
+      setFormData(prev => ({
+        ...prev,
+        addOns: {
+          ...prev.addOns,
+          [key]: { price: 0, description, enabled: true }
+        }
+      }));
+    }
+  };
+
+  const removeAddOn = (addOnKey) => {
+    setFormData(prev => {
+      const newAddOns = { ...prev.addOns };
+      delete newAddOns[addOnKey];
+      return { ...prev, addOns: newAddOns };
+    });
   };
 
   const addLeverageOption = (newOption) => {
@@ -264,44 +287,70 @@ const EditChallengePlanPage = ({ planId, onBack }) => {
 
         {/* Add-ons */}
         <GlassCard className="p-6">
-          <h2 className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Add-ons</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Add-ons</h2>
+            <button
+              type="button"
+              onClick={addNewAddOn}
+              className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+            >
+              <Plus size={16} className="inline mr-1" />
+              Add New
+            </button>
+          </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Reset Protection Price ({currency})
-              </label>
-              <input
-                type="number"
-                value={formData.addOns.resetProtection.price}
-                onChange={(e) => handleAddOnChange('resetProtection', 'price', e.target.value)}
-                className={`w-full p-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none`}
-              />
-            </div>
-            
-            <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Time Extension Price ({currency})
-              </label>
-              <input
-                type="number"
-                value={formData.addOns.timeExtension.price}
-                onChange={(e) => handleAddOnChange('timeExtension', 'price', e.target.value)}
-                className={`w-full p-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none`}
-              />
-            </div>
-            
-            <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Profit Boost Price ({currency})
-              </label>
-              <input
-                type="number"
-                value={formData.addOns.profitBoost.price}
-                onChange={(e) => handleAddOnChange('profitBoost', 'price', e.target.value)}
-                className={`w-full p-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none`}
-              />
-            </div>
+          <div className="space-y-4">
+            {Object.entries(formData.addOns).map(([key, addon]) => (
+              <div key={key} className={`p-4 rounded-lg border ${isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={addon.enabled}
+                      onChange={(e) => handleAddOnChange(key, 'enabled', e.target.checked)}
+                      className="rounded"
+                    />
+                    <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'} capitalize`}>
+                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeAddOn(key)}
+                    className="text-red-400 hover:text-red-300 p-1"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className={`block text-sm ${isDark ? 'text-white/70' : 'text-gray-600'} mb-1`}>
+                      Price ({currency})
+                    </label>
+                    <input
+                      type="number"
+                      value={addon.price}
+                      onChange={(e) => handleAddOnChange(key, 'price', e.target.value)}
+                      disabled={!addon.enabled}
+                      className={`w-full p-2 rounded-lg ${isDark ? 'bg-white/10 text-white' : 'bg-white text-gray-900'} border-none outline-none disabled:opacity-50`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm ${isDark ? 'text-white/70' : 'text-gray-600'} mb-1`}>
+                      Description
+                    </label>
+                    <input
+                      type="text"
+                      value={addon.description}
+                      onChange={(e) => handleAddOnChange(key, 'description', e.target.value)}
+                      disabled={!addon.enabled}
+                      className={`w-full p-2 rounded-lg ${isDark ? 'bg-white/10 text-white' : 'bg-white text-gray-900'} border-none outline-none disabled:opacity-50`}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </GlassCard>
 
