@@ -83,14 +83,14 @@ function AppContent() {
 
   // Admin gets separate interface
   if (user?.isAdmin) {
-    return <AdminApp />;
+    return <AdminApp platformName={platformName} />;
   }
 
   // Regular user interface
-  return <UserApp />;
+  return <UserApp platformName={platformName} />;
 }
 
-function AdminApp() {
+function AdminApp({ platformName }) {
   const [activeTab, setActiveTab] = useState('overview');
   const { isDark, toggleTheme } = useTheme();
   const { user } = useAuth();
@@ -222,7 +222,7 @@ function AdminApp() {
   );
 }
 
-function UserApp() {
+function UserApp({ platformName }) {
   const [activeTab, setActiveTab] = useState('overview');
   const { isDark, toggleTheme } = useTheme();
 
