@@ -15,7 +15,7 @@ const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
   const handlePayment = async () => {
     setProcessing(true);
     try {
-      const response = await fetch(apiUrl('/user/challenge'), {
+      const response = await fetch(`${apiUrl()}/api/user/challenge`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -30,7 +30,7 @@ const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
       
       if (response.ok) {
         // Update user account balance
-        await fetch(apiUrl('/user/profile'), {
+        await fetch(`${apiUrl()}/api/user/profile`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
