@@ -662,9 +662,12 @@ app.get('/api/user/dashboard-stats', authenticateToken, async (req, res) => {
       // Parse account size safely
       let accountSizeNum = 0;
       if (challenge.accountSize && typeof challenge.accountSize === 'string') {
-        const sizeMatch = challenge.accountSize.match(/\d+/);
+        // Handle formats like "10k", "25k", "50k", "100k"
+        const sizeMatch = challenge.accountSize.toLowerCase().match(/(\d+)k?/);
         if (sizeMatch) {
-          accountSizeNum = parseInt(sizeMatch[0]) * 1000;
+          const baseNum = parseInt(sizeMatch[1]);
+          // Only multiply by 1000 if it's in "k" format
+          accountSizeNum = challenge.accountSize.toLowerCase().includes('k') ? baseNum * 1000 : baseNum;
         }
       } else if (typeof challenge.accountSize === 'number') {
         accountSizeNum = challenge.accountSize;
@@ -697,9 +700,12 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
     const platformBalance = fundedChallenges.reduce((total, challenge) => {
       let accountSizeNum = 0;
       if (challenge.accountSize && typeof challenge.accountSize === 'string') {
-        const sizeMatch = challenge.accountSize.match(/\d+/);
+        // Handle formats like "10k", "25k", "50k", "100k"
+        const sizeMatch = challenge.accountSize.toLowerCase().match(/(\d+)k?/);
         if (sizeMatch) {
-          accountSizeNum = parseInt(sizeMatch[0]) * 1000;
+          const baseNum = parseInt(sizeMatch[1]);
+          // Only multiply by 1000 if it's in "k" format
+          accountSizeNum = challenge.accountSize.toLowerCase().includes('k') ? baseNum * 1000 : baseNum;
         }
       } else if (typeof challenge.accountSize === 'number') {
         accountSizeNum = challenge.accountSize;
@@ -719,9 +725,12 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
     const challengePhaseBalance = challengePhaseChallenges.reduce((total, challenge) => {
       let accountSizeNum = 0;
       if (challenge.accountSize && typeof challenge.accountSize === 'string') {
-        const sizeMatch = challenge.accountSize.match(/\d+/);
+        // Handle formats like "10k", "25k", "50k", "100k"
+        const sizeMatch = challenge.accountSize.toLowerCase().match(/(\d+)k?/);
         if (sizeMatch) {
-          accountSizeNum = parseInt(sizeMatch[0]) * 1000;
+          const baseNum = parseInt(sizeMatch[1]);
+          // Only multiply by 1000 if it's in "k" format
+          accountSizeNum = challenge.accountSize.toLowerCase().includes('k') ? baseNum * 1000 : baseNum;
         }
       } else if (typeof challenge.accountSize === 'number') {
         accountSizeNum = challenge.accountSize;
