@@ -176,6 +176,7 @@ const AdminChallengeConfig = () => {
           </GlassCard>
         ))}
       </div>
+    </div>
   );
 };
 
