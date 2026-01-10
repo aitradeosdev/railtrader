@@ -9,6 +9,7 @@ const AdminTradingPage = () => {
   const { isDark } = useTheme();
   const { token } = useAuth();
   const [users, setUsers] = useState([]);
+  const [challenges, setChallenges] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -22,6 +23,7 @@ const AdminTradingPage = () => {
 
   useEffect(() => {
     fetchUsers();
+    fetchChallenges();
     fetchPendingMT5Requests();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -34,6 +36,18 @@ const AdminTradingPage = () => {
       setPendingMT5Requests(data);
     } catch (error) {
       console.error('Error fetching MT5 requests:', error);
+    }
+  };
+
+  const fetchChallenges = async () => {
+    try {
+      const response = await fetch(`${apiUrl()}/api/admin/challenges`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setChallenges(data);
+    } catch (error) {
+      console.error('Error fetching challenges:', error);
     }
   };
 
@@ -110,6 +124,27 @@ const AdminTradingPage = () => {
         console.error('Error assigning credentials:', error);
       }
     }
+  };
+
+  // Helper function to check if user has challenge-based MT5 credentials
+  const getUserChallengeCredentials = (userId) => {
+    const userChallenges = challenges.filter(c => c.userId && c.userId._id === userId);
+    const credentialsArray = [];
+    
+    userChallenges.forEach(challenge => {
+      if (challenge.mt5Accounts && challenge.mt5Accounts.length > 0) {
+        challenge.mt5Accounts.filter(acc => acc.active).forEach(account => {
+          credentialsArray.push({
+            login: account.login,
+            server: account.server,
+            accountType: account.accountType,
+            challengeId: challenge._id
+          });
+        });
+      }
+    });
+    
+    return credentialsArray;
   };
 
   const filteredUsers = users.filter(user => 
@@ -203,9 +238,22 @@ const AdminTradingPage = () => {
                   <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>{user.email}</p>
                   {user.mt5Login ? (
                     <p className={`text-xs ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                      MT5: {user.mt5Login} | {user.mt5Server}
+                      Legacy MT5: {user.mt5Login} | {user.mt5Server}
                     </p>
-                  ) : (
+                  ) : null}
+                  {(() => {
+                    const challengeCredentials = getUserChallengeCredentials(user._id);
+                    return challengeCredentials.length > 0 ? (
+                      <div className="space-y-1">
+                        {challengeCredentials.map((cred, idx) => (
+                          <p key={idx} className={`text-xs ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                            Challenge MT5: {cred.login} | {cred.server} ({cred.accountType.toUpperCase()})
+                          </p>
+                        ))}
+                      </div>
+                    ) : null;
+                  })()}
+                  {!user.mt5Login && getUserChallengeCredentials(user._id).length === 0 && (
                     <p className={`text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>No MT5 credentials</p>
                   )}
                 </div>
