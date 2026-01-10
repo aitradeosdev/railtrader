@@ -206,7 +206,6 @@ const UserMT5Page = ({ userId, onBack }) => {
           </div>
           
           {user.mt5Login || challenges.some(c => c.mt5Accounts && c.mt5Accounts.length > 0) ? (
-          {user.mt5Login || challenges.some(c => c.mt5Accounts && c.mt5Accounts.length > 0) ? (
             <div className="space-y-3">
               {user.mt5Login && (
                 <>
