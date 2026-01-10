@@ -3,11 +3,13 @@ import { ArrowLeft, User, Trophy, Edit, Plus } from 'lucide-react';
 import { GlassCard } from '../../../components/UIComponents';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useCurrency } from '../../../contexts/CurrencyContext';
 import { apiUrl } from '../../../utils/api';
 
 const UserMT5Page = ({ userId, onBack }) => {
   const { isDark } = useTheme();
   const { token } = useAuth();
+  const { currency } = useCurrency();
   const [user, setUser] = useState(null);
   const [challenges, setChallenges] = useState([]);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -171,7 +173,7 @@ const UserMT5Page = ({ userId, onBack }) => {
             </div>
             <div className="flex justify-between">
               <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Account Balance:</span>
-              <span className={isDark ? 'text-white' : 'text-gray-900'}>${user.accountBalance?.toLocaleString()}</span>
+              <span className={isDark ? 'text-white' : 'text-gray-900'}>{currency}{user.accountBalance?.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
               <span className={isDark ? 'text-white/60' : 'text-gray-600'}>2FA Enabled:</span>
@@ -203,16 +205,41 @@ const UserMT5Page = ({ userId, onBack }) => {
             </button>
           </div>
           
-          {user.mt5Login ? (
+          {user.mt5Login || challenges.some(c => c.mt5Accounts && c.mt5Accounts.length > 0) ? (
+          {user.mt5Login || challenges.some(c => c.mt5Accounts && c.mt5Accounts.length > 0) ? (
             <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Server:</span>
-                <span className={isDark ? 'text-white' : 'text-gray-900'}>{user.mt5Server}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Login:</span>
-                <span className={`${isDark ? 'text-white' : 'text-gray-900'} font-mono`}>{user.mt5Login}</span>
-              </div>
+              {user.mt5Login && (
+                <>
+                  <div className="flex justify-between">
+                    <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Server:</span>
+                    <span className={isDark ? 'text-white' : 'text-gray-900'}>{user.mt5Server}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Login:</span>
+                    <span className={`${isDark ? 'text-white' : 'text-gray-900'} font-mono`}>{user.mt5Login}</span>
+                  </div>
+                </>
+              )}
+              {challenges.filter(c => c.mt5Accounts && c.mt5Accounts.length > 0).map(challenge => 
+                challenge.mt5Accounts.filter(acc => acc.active).map((account, idx) => (
+                  <div key={`${challenge._id}-${idx}`} className={`p-3 rounded-lg ${isDark ? 'bg-white/5' : 'bg-gray-100'}`}>
+                    <div className="flex justify-between mb-1">
+                      <span className={`text-xs ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Challenge MT5:</span>
+                      <span className={`text-xs px-2 py-1 rounded ${account.accountType === 'live' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                        {account.accountType.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Server:</span>
+                      <span className={isDark ? 'text-white' : 'text-gray-900'}>{account.server}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Login:</span>
+                      <span className={`${isDark ? 'text-white' : 'text-gray-900'} font-mono`}>{account.login}</span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           ) : (
             <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>No MT5 credentials assigned</p>
@@ -234,7 +261,7 @@ const UserMT5Page = ({ userId, onBack }) => {
                       {challenge.accountSize} {challenge.challengeType.toUpperCase()} - Phase {challenge.currentPhase}
                     </h3>
                     <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>
-                      Status: {challenge.status} | Amount: ${challenge.amount}
+                      Status: {challenge.status} | Amount: {currency}{challenge.amount}
                       {challenge.needsLiveAccount && ' | Needs Live Account'}
                     </p>
                   </div>
