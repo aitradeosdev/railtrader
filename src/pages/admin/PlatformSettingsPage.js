@@ -117,6 +117,9 @@ const PlatformSettingsPage = ({ onBack }) => {
               <div>
                 <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Maintenance Mode</p>
                 <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Disable platform access for maintenance</p>
+                {settings.maintenanceMode && (
+                  <p className="text-xs text-amber-400 mt-1">⚠️ Platform is currently in maintenance mode</p>
+                )}
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -125,7 +128,7 @@ const PlatformSettingsPage = ({ onBack }) => {
                   onChange={(e) => handleSettingChange('maintenanceMode', e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className={`w-11 h-6 ${settings.maintenanceMode ? 'bg-amber-500' : 'bg-gray-200'} peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500`}></div>
               </label>
             </div>
 
@@ -133,6 +136,9 @@ const PlatformSettingsPage = ({ onBack }) => {
               <div>
                 <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>User Registration</p>
                 <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Allow new user registrations</p>
+                {!settings.registrationEnabled && (
+                  <p className="text-xs text-red-400 mt-1">🚫 New registrations are disabled</p>
+                )}
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -141,7 +147,7 @@ const PlatformSettingsPage = ({ onBack }) => {
                   onChange={(e) => handleSettingChange('registrationEnabled', e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className={`w-11 h-6 ${settings.registrationEnabled ? 'bg-emerald-500' : 'bg-red-500'} peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500`}></div>
               </label>
             </div>
           </div>
