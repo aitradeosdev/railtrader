@@ -22,7 +22,6 @@ const AdminTradingPage = () => {
   });
 
   useEffect(() => {
-    console.log('AdminTradingPage mounted');
     fetchUsers();
     fetchPendingMT5Requests();
     fetchChallenges();
@@ -41,13 +40,11 @@ const AdminTradingPage = () => {
   };
 
   const fetchChallenges = async () => {
-    console.log('Fetching challenges...');
     try {
       const response = await fetch(`${apiUrl()}/api/admin/challenges`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
-      console.log('Challenges fetched:', data.length, data);
       setChallenges(data);
     } catch (error) {
       console.error('Error fetching challenges:', error);
@@ -129,66 +126,28 @@ const AdminTradingPage = () => {
     }
   };
 
-  // Helper function to check if user has MT5 credentials
-  const getUserMT5Status = (user) => {
-    console.log(`Checking MT5 for user ${user.email}:`, { 
-      userMT5: user.mt5Login, 
-      challengesCount: challenges.length,
-      challenges: challenges.filter(c => c.userId && c.userId._id === user._id)
-    });
-    
-    // Check legacy MT5 credentials first
+  const getUserMT5Display = (user) => {
     if (user.mt5Login) {
-      console.log(`User ${user.email} has legacy MT5:`, user.mt5Login);
-      return {
-        hasCredentials: true,
-        display: `MT5: ${user.mt5Login} | ${user.mt5Server}`,
-        type: 'legacy'
-      };
+      return `MT5: ${user.mt5Login} | ${user.mt5Server}`;
     }
     
-    // If no challenges loaded yet, return loading state
-    if (challenges.length === 0) {
-      console.log('No challenges loaded yet');
-      return {
-        hasCredentials: false,
-        display: 'Loading...',
-        type: 'loading'
-      };
-    }
-    
-    // Check challenge-based MT5 accounts
     const userChallenges = challenges.filter(c => c.userId && c.userId._id === user._id);
-    console.log(`User ${user.email} challenges:`, userChallenges);
-    
-    const activeMT5Accounts = [];
-    
-    userChallenges.forEach(challenge => {
-      console.log(`Challenge ${challenge._id} MT5 accounts:`, challenge.mt5Accounts);
+    for (const challenge of userChallenges) {
       if (challenge.mt5Accounts && challenge.mt5Accounts.length > 0) {
-        const activeAccounts = challenge.mt5Accounts.filter(acc => acc.active);
-        console.log(`Active accounts for challenge ${challenge._id}:`, activeAccounts);
-        activeMT5Accounts.push(...activeAccounts);
+        const activeAccount = challenge.mt5Accounts.find(acc => acc.active);
+        if (activeAccount) {
+          return `MT5: ${activeAccount.login} | ${activeAccount.server} (${activeAccount.accountType.toUpperCase()})`;
+        }
       }
-    });
-    
-    console.log(`User ${user.email} total active MT5 accounts:`, activeMT5Accounts);
-    
-    if (activeMT5Accounts.length > 0) {
-      const account = activeMT5Accounts[0];
-      console.log(`Using MT5 account for ${user.email}:`, account);
-      return {
-        hasCredentials: true,
-        display: `MT5: ${account.login} | ${account.server} (${account.accountType.toUpperCase()})`,
-        type: 'challenge'
-      };
     }
     
-    return {
-      hasCredentials: false,
-      display: 'No MT5 credentials',
-      type: 'none'
-    };
+    return 'No MT5 credentials';
+  };
+
+  const userHasMT5 = (user) => {
+    if (user.mt5Login) return true;
+    const userChallenges = challenges.filter(c => c.userId && c.userId._id === user._id);
+    return userChallenges.some(c => c.mt5Accounts && c.mt5Accounts.some(acc => acc.active));
   };
 
   const filteredUsers = users.filter(user => 
@@ -269,9 +228,7 @@ const AdminTradingPage = () => {
       <GlassCard className="p-6">
         <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-6`}>Users & MT5 Credentials</h2>
         <div className="space-y-4">
-          {console.log('Rendering users:', filteredUsers.length)}
-          {filteredUsers.map(user => {
-            return (
+          {filteredUsers.map(user => (
             <div key={user._id} className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-gray-50'} flex items-center justify-between`}>
               <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-xl ${isDark ? 'bg-white/10' : 'bg-gray-200'} flex items-center justify-center`}>
@@ -282,8 +239,8 @@ const AdminTradingPage = () => {
                     {user.firstName} {user.lastName}
                   </h3>
                   <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>{user.email}</p>
-                  <p className={`text-xs ${user.mt5Login ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-red-400' : 'text-red-600')}`}>
-                    {user.mt5Login ? `MT5: ${user.mt5Login} | ${user.mt5Server}` : 'No MT5 credentials'}
+                  <p className={`text-xs ${userHasMT5(user) ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-red-400' : 'text-red-600')}`}>
+                    {getUserMT5Display(user)}
                   </p>
                 </div>
               </div>
@@ -298,11 +255,11 @@ const AdminTradingPage = () => {
                     });
                     setShowAssignModal(true);
                   }}
-                  className={`p-2 rounded-lg ${user.mt5Login ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white transition-colors`}
+                  className={`p-2 rounded-lg ${userHasMT5(user) ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white transition-colors`}
                 >
-                  {user.mt5Login ? <Edit size={16} /> : <Plus size={16} />}
+                  {userHasMT5(user) ? <Edit size={16} /> : <Plus size={16} />}
                 </button>
-                {user.mt5Login && (
+                {userHasMT5(user) && (
                   <button
                     onClick={() => {
                       // Remove credentials logic here
@@ -314,8 +271,7 @@ const AdminTradingPage = () => {
                 )}
               </div>
             </div>
-            );
-          })}}
+          ))}
         </div>
       </GlassCard>
 
