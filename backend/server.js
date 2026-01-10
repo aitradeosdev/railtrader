@@ -39,9 +39,20 @@ const decrypt = (text) => {
   }
 };
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Platform name context middleware
+const addPlatformContext = async (req, res, next) => {
+  try {
+    const settings = await PlatformSettings.findOne();
+    req.platformSettings = settings || { platformName: 'RailTrader', currency: '$' };
+    next();
+  } catch (error) {
+    req.platformSettings = { platformName: 'RailTrader', currency: '$' };
+    next();
+  }
+};
+
+// Apply platform context to all routes
+app.use(addPlatformContext);
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI, {
@@ -211,7 +222,53 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Admin middleware
+// Maintenance mode middleware
+const checkMaintenanceMode = async (req, res, next) => {
+  try {
+    const settings = await PlatformSettings.findOne();
+    if (settings && settings.maintenanceMode) {
+      // Allow admin users to bypass maintenance mode
+      const authHeader = req.headers['authorization'];
+      const token = authHeader && authHeader.split(' ')[1];
+      
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          const user = await User.findById(decoded.userId);
+          if (user && user.isAdmin) {
+            return next();
+          }
+        } catch (error) {
+          // Token invalid, continue with maintenance check
+        }
+      }
+      
+      return res.status(503).json({ 
+        message: 'Platform is currently under maintenance. Please try again later.',
+        maintenanceMode: true 
+      });
+    }
+    next();
+  } catch (error) {
+    next();
+  }
+};
+
+// Registration enabled middleware
+const checkRegistrationEnabled = async (req, res, next) => {
+  try {
+    const settings = await PlatformSettings.findOne();
+    if (settings && !settings.registrationEnabled) {
+      return res.status(403).json({ 
+        message: 'New user registration is currently disabled.',
+        registrationDisabled: true 
+      });
+    }
+    next();
+  } catch (error) {
+    next();
+  }
+};
 const authenticateAdmin = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -236,7 +293,7 @@ const authenticateAdmin = async (req, res, next) => {
 };
 
 // Routes
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', checkMaintenanceMode, checkRegistrationEnabled, async (req, res) => {
   try {
     const { email, password, firstName, lastName } = req.body;
 
@@ -282,7 +339,7 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', checkMaintenanceMode, async (req, res) => {
   try {
     const { email, password, twoFactorCode } = req.body;
 
@@ -339,7 +396,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-app.get('/api/user', authenticateToken, async (req, res) => {
+app.get('/api/user', checkMaintenanceMode, authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select('-password');
     res.json(user);
@@ -348,7 +405,7 @@ app.get('/api/user', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/user/profile', authenticateToken, async (req, res) => {
+app.put('/api/user/profile', checkMaintenanceMode, authenticateToken, async (req, res) => {
   try {
     const { firstName, lastName, email } = req.body;
     const user = await User.findByIdAndUpdate(
@@ -386,8 +443,8 @@ app.post('/api/user/2fa/setup', authenticateToken, async (req, res) => {
     const user = await User.findById(req.user.userId);
     
     const secret = speakeasy.generateSecret({
-      name: `RailTrader (${user.email})`,
-      issuer: 'RailTrader'
+      name: `${req.platformSettings.platformName} (${user.email})`,
+      issuer: req.platformSettings.platformName
     });
     
     const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url);
@@ -1046,7 +1103,7 @@ app.delete('/api/admin/challenge-plans/:id', authenticateAdmin, async (req, res)
 });
 
 // Get challenge plans for users
-app.get('/api/challenge-plans', async (req, res) => {
+app.get('/api/challenge-plans', checkMaintenanceMode, async (req, res) => {
   try {
     const plans = await ChallengePlan.find({ active: true }).sort({ tier: 1 });
     res.json(plans);
