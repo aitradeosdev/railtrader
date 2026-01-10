@@ -349,12 +349,15 @@ const ChallengeDetailPage = ({ challengeId, onBack }) => {
                   Complete Phase 1 → Phase 2
                 </button>
               )}
-              <button
-                onClick={() => handleCompleteEvaluation('approve_funded')}
-                className="flex-1 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
-              >
-                Approve for Funding
-              </button>
+              {(challenge.challengeType === '1-phase' || 
+                (challenge.challengeType === '2-phase' && challenge.currentPhase === 2)) && (
+                <button
+                  onClick={() => handleCompleteEvaluation('approve_funded')}
+                  className="flex-1 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
+                >
+                  Approve for Funding
+                </button>
+              )}
             </div>
           </GlassCard>
         </div>
