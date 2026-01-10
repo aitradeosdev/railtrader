@@ -47,7 +47,11 @@ const UserMT5Page = ({ userId, onBack }) => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const allChallenges = await response.json();
-      const userChallenges = allChallenges.filter(c => c.userId && c.userId._id === userId);
+      const userChallenges = allChallenges.filter(c => {
+        // Check both userId reference and stored userInfo
+        return (c.userId && c.userId._id === userId) || 
+               (c.userInfo && c.userId && c.userId.toString() === userId);
+      });
       setChallenges(userChallenges);
     } catch (error) {
       console.error('Error fetching challenges:', error);
