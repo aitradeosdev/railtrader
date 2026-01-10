@@ -1,4 +1,4 @@
-import { Users, BarChart3, Settings, Shield } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -6,27 +6,6 @@ const AdminMainPage = ({ onNavigate }) => {
   const { isDark } = useTheme();
 
   const adminSections = [
-    {
-      id: 'users',
-      title: 'User Management',
-      description: 'Manage user accounts, balances, and permissions',
-      icon: Users,
-      color: 'text-blue-400'
-    },
-    {
-      id: 'analytics',
-      title: 'Analytics & Stats',
-      description: 'View platform statistics and user metrics',
-      icon: BarChart3,
-      color: 'text-green-400'
-    },
-    {
-      id: 'security',
-      title: 'Security Settings',
-      description: 'Manage 2FA, security policies, and access controls',
-      icon: Shield,
-      color: 'text-purple-400'
-    },
     {
       id: 'settings',
       title: 'Platform Settings',
