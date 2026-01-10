@@ -22,6 +22,7 @@ const AdminTradingPage = () => {
   });
 
   useEffect(() => {
+    console.log('AdminTradingPage mounted');
     fetchUsers();
     fetchPendingMT5Requests();
     fetchChallenges();
@@ -40,11 +41,13 @@ const AdminTradingPage = () => {
   };
 
   const fetchChallenges = async () => {
+    console.log('Fetching challenges...');
     try {
       const response = await fetch(`${apiUrl()}/api/admin/challenges`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
+      console.log('Challenges fetched:', data.length, data);
       setChallenges(data);
     } catch (error) {
       console.error('Error fetching challenges:', error);
@@ -266,6 +269,7 @@ const AdminTradingPage = () => {
       <GlassCard className="p-6">
         <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-6`}>Users & MT5 Credentials</h2>
         <div className="space-y-4">
+          {console.log('Rendering users:', filteredUsers.length)}
           {filteredUsers.map(user => {
             const mt5Status = getUserMT5Status(user);
             return (
