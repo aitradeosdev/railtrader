@@ -69,7 +69,7 @@ const MT5ManagementPage = ({ onNavigateToUser }) => {
     }
     
     // Check MT5 accounts from challenges
-    const userChallenges = challenges.filter(c => c.userId._id === user._id);
+    const userChallenges = challenges.filter(c => c.userId && c.userId._id === user._id);
     for (const challenge of userChallenges) {
       if (challenge.mt5Accounts && challenge.mt5Accounts.length > 0) {
         const activeAccount = challenge.mt5Accounts.find(acc => acc.active);
