@@ -1,5 +1,5 @@
-const API_BASE = process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000/api';
+const API_BASE = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
-export const apiUrl = (endpoint) => `${API_BASE}${endpoint}`;
+export const apiUrl = () => API_BASE;
 
 export default API_BASE;
