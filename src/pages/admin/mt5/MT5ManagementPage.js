@@ -9,12 +9,14 @@ const MT5ManagementPage = ({ onNavigateToUser }) => {
   const { isDark } = useTheme();
   const { token } = useAuth();
   const [users, setUsers] = useState([]);
+  const [challenges, setChallenges] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [pendingMT5Requests, setPendingMT5Requests] = useState([]);
   const [pendingLiveRequests, setPendingLiveRequests] = useState([]);
 
   useEffect(() => {
     fetchUsers();
+    fetchChallenges();
     fetchPendingMT5Requests();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -31,6 +33,18 @@ const MT5ManagementPage = ({ onNavigateToUser }) => {
     }
   };
 
+  const fetchChallenges = async () => {
+    try {
+      const response = await fetch(`${apiUrl()}/api/admin/challenges`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setChallenges(data);
+    } catch (error) {
+      console.error('Error fetching challenges:', error);
+    }
+  };
+
   const fetchUsers = async () => {
     try {
       const response = await fetch(`${apiUrl()}/api/admin/users`, {
@@ -41,6 +55,38 @@ const MT5ManagementPage = ({ onNavigateToUser }) => {
     } catch (error) {
       console.error('Error fetching users:', error);
     }
+  };
+
+  const getUserMT5Info = (user) => {
+    // Check legacy MT5 credentials in user profile
+    if (user.mt5Login) {
+      return {
+        hasCredentials: true,
+        login: user.mt5Login,
+        server: user.mt5Server,
+        source: 'profile'
+      };
+    }
+    
+    // Check MT5 accounts from challenges
+    const userChallenges = challenges.filter(c => c.userId._id === user._id);
+    for (const challenge of userChallenges) {
+      if (challenge.mt5Accounts && challenge.mt5Accounts.length > 0) {
+        const activeAccount = challenge.mt5Accounts.find(acc => acc.active);
+        if (activeAccount) {
+          return {
+            hasCredentials: true,
+            login: activeAccount.login,
+            server: activeAccount.server,
+            accountType: activeAccount.accountType,
+            phase: activeAccount.phase,
+            source: 'challenge'
+          };
+        }
+      }
+    }
+    
+    return { hasCredentials: false };
   };
 
   const filteredUsers = users.filter(user => 
@@ -118,30 +164,35 @@ const MT5ManagementPage = ({ onNavigateToUser }) => {
       <GlassCard className="p-6">
         <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-6`}>All Users</h2>
         <div className="space-y-4">
-          {filteredUsers.map(user => (
-            <div key={user._id} className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-gray-50'} flex items-center justify-between cursor-pointer hover:bg-white/10 transition-colors`}
-                 onClick={() => onNavigateToUser(user._id)}>
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl ${isDark ? 'bg-white/10' : 'bg-gray-200'} flex items-center justify-center`}>
-                  <User className={isDark ? 'text-white' : 'text-gray-600'} size={20} />
+          {filteredUsers.map(user => {
+            const mt5Info = getUserMT5Info(user);
+            return (
+              <div key={user._id} className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-gray-50'} flex items-center justify-between cursor-pointer hover:bg-white/10 transition-colors`}
+                   onClick={() => onNavigateToUser(user._id)}>
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-xl ${isDark ? 'bg-white/10' : 'bg-gray-200'} flex items-center justify-center`}>
+                    <User className={isDark ? 'text-white' : 'text-gray-600'} size={20} />
+                  </div>
+                  <div>
+                    <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {user.firstName} {user.lastName}
+                    </h3>
+                    <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>{user.email}</p>
+                    {mt5Info.hasCredentials ? (
+                      <p className={`text-xs ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                        MT5: {mt5Info.login} | {mt5Info.server}
+                        {mt5Info.accountType && ` (${mt5Info.accountType})`}
+                        {mt5Info.phase && ` - Phase ${mt5Info.phase}`}
+                      </p>
+                    ) : (
+                      <p className={`text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>No MT5 credentials</p>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {user.firstName} {user.lastName}
-                  </h3>
-                  <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>{user.email}</p>
-                  {user.mt5Login ? (
-                    <p className={`text-xs ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                      MT5: {user.mt5Login} | {user.mt5Server}
-                    </p>
-                  ) : (
-                    <p className={`text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>No MT5 credentials</p>
-                  )}
-                </div>
+                <ArrowRight className={isDark ? 'text-white/40' : 'text-gray-400'} size={20} />
               </div>
-              <ArrowRight className={isDark ? 'text-white/40' : 'text-gray-400'} size={20} />
-            </div>
-          ))}
+            );
+          })}
         </div>
       </GlassCard>
     </div>
