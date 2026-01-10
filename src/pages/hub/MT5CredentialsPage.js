@@ -4,6 +4,7 @@ import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiUrl } from '../../utils/api';
 
 const MT5CredentialsPage = ({ onBack }) => {
   const { isDark } = useTheme();
@@ -18,7 +19,7 @@ const MT5CredentialsPage = ({ onBack }) => {
 
   const fetchMT5Credentials = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/user/mt5', {
+      const response = await fetch(apiUrl('/user/mt5'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();

@@ -3,6 +3,7 @@ import { Trophy, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiUrl } from '../../utils/api';
 
 const ChallengeDashboard = ({ onBuyNew }) => {
   const { isDark } = useTheme();
@@ -16,7 +17,7 @@ const ChallengeDashboard = ({ onBuyNew }) => {
 
   const fetchChallenges = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/user/challenges', {
+      const response = await fetch(apiUrl('/user/challenges'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -30,7 +31,7 @@ const ChallengeDashboard = ({ onBuyNew }) => {
 
   const handleRequestReview = async (challengeId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/user/challenge/${challengeId}/review`, {
+      const response = await fetch(apiUrl(`/user/challenge/${challengeId}/review`), {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });

@@ -3,6 +3,7 @@ import { ArrowLeft, Trophy } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiUrl } from '../../utils/api';
 
 const MT5HistoryPage = ({ onBack }) => {
   const { isDark } = useTheme();
@@ -16,7 +17,7 @@ const MT5HistoryPage = ({ onBack }) => {
 
   const fetchChallenges = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/user/challenges', {
+      const response = await fetch(apiUrl('/user/challenges'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
