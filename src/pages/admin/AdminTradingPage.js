@@ -271,7 +271,6 @@ const AdminTradingPage = () => {
         <div className="space-y-4">
           {console.log('Rendering users:', filteredUsers.length)}
           {filteredUsers.map(user => {
-            const mt5Status = getUserMT5Status(user);
             return (
             <div key={user._id} className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-gray-50'} flex items-center justify-between`}>
               <div className="flex items-center gap-4">
@@ -283,8 +282,8 @@ const AdminTradingPage = () => {
                     {user.firstName} {user.lastName}
                   </h3>
                   <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>{user.email}</p>
-                  <p className={`text-xs ${mt5Status.hasCredentials ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-red-400' : 'text-red-600')}`}>
-                    {mt5Status.display}
+                  <p className={`text-xs ${user.mt5Login ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-red-400' : 'text-red-600')}`}>
+                    {user.mt5Login ? `MT5: ${user.mt5Login} | ${user.mt5Server}` : 'No MT5 credentials'}
                   </p>
                 </div>
               </div>
@@ -299,11 +298,11 @@ const AdminTradingPage = () => {
                     });
                     setShowAssignModal(true);
                   }}
-                  className={`p-2 rounded-lg ${mt5Status.hasCredentials ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white transition-colors`}
+                  className={`p-2 rounded-lg ${user.mt5Login ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white transition-colors`}
                 >
-                  {mt5Status.hasCredentials ? <Edit size={16} /> : <Plus size={16} />}
+                  {user.mt5Login ? <Edit size={16} /> : <Plus size={16} />}
                 </button>
-                {mt5Status.hasCredentials && (
+                {user.mt5Login && (
                   <button
                     onClick={() => {
                       // Remove credentials logic here
