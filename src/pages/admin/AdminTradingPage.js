@@ -81,6 +81,7 @@ const AdminTradingPage = () => {
       if (response.ok) {
         fetchPendingMT5Requests();
         fetchUsers();
+        fetchChallenges(); // Add this line to refresh challenge data
         setShowAssignModal(false);
         setSelectedUser(null);
         setMt5Credentials({ mt5Login: '', mt5Password: '', mt5Server: 'RailTrader-Live' });
@@ -116,6 +117,7 @@ const AdminTradingPage = () => {
 
         if (response.ok) {
           fetchUsers();
+          fetchChallenges(); // Add this line to refresh challenge data
           setShowAssignModal(false);
           setSelectedUser(null);
           setMt5Credentials({ mt5Login: '', mt5Password: '', mt5Server: 'RailTrader-Live' });
