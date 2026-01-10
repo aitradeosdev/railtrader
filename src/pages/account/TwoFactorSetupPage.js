@@ -4,6 +4,7 @@ import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiUrl } from '../../utils/api';
 
 const TwoFactorSetupPage = ({ onBack }) => {
   const { isDark } = useTheme();
@@ -16,12 +17,10 @@ const TwoFactorSetupPage = ({ onBack }) => {
   const [message, setMessage] = useState('');
   const [copied, setCopied] = useState(false);
 
-  const API_BASE = 'http://localhost:5000/api';
-
   const setupTwoFactor = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/user/2fa/setup`, {
+      const response = await fetch(apiUrl('/user/2fa/setup'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -45,7 +44,7 @@ const TwoFactorSetupPage = ({ onBack }) => {
   const verifyTwoFactor = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/user/2fa/verify`, {
+      const response = await fetch(apiUrl('/user/2fa/verify'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

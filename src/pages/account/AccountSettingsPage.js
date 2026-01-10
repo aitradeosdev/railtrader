@@ -8,8 +8,6 @@ const AccountSettingsPage = ({ onBack, onNavigate }) => {
   const { isDark, themeMode, setTheme } = useTheme();
   const { user, token } = useAuth();
 
-  const API_BASE = 'http://localhost:5000/api';
-
   const disableTwoFactor = async () => {
     try {
       const response = await fetch(`${API_BASE}/user/2fa/disable`, {
