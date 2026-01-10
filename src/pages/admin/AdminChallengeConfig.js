@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';`nimport { apiUrl } from '../../utils/api';
+import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -33,7 +33,7 @@ const AdminChallengeConfig = () => {
 
   const fetchPlans = async () => {
     try {
-      const response = await fetch('apiUrl('/admin/challenge-plans', {
+      const response = await fetch('http://localhost:5000/api/admin/challenge-plans', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -48,8 +48,8 @@ const AdminChallengeConfig = () => {
   const handleSave = async () => {
     try {
       const url = editingPlan 
-        ? `apiUrl('/admin/challenge-plans/${editingPlan._id}`
-        : 'apiUrl('/admin/challenge-plans';
+        ? `http://localhost:5000/api/admin/challenge-plans/${editingPlan._id}`
+        : 'http://localhost:5000/api/admin/challenge-plans';
       
       const response = await fetch(url, {
         method: editingPlan ? 'PUT' : 'POST',
@@ -93,7 +93,7 @@ const AdminChallengeConfig = () => {
 
   const handleDelete = async (planId) => {
     try {
-      const response = await fetch(`apiUrl('/admin/challenge-plans/${planId}`, {
+      const response = await fetch(`http://localhost:5000/api/admin/challenge-plans/${planId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
