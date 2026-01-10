@@ -20,7 +20,7 @@ const TwoFactorSetupPage = ({ onBack }) => {
   const setupTwoFactor = async () => {
     setLoading(true);
     try {
-      const response = await fetch(apiUrl('/user/2fa/setup'), {
+      const response = await fetch(`${apiUrl()}/api/user/2fa/setup`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -44,7 +44,7 @@ const TwoFactorSetupPage = ({ onBack }) => {
   const verifyTwoFactor = async () => {
     setLoading(true);
     try {
-      const response = await fetch(apiUrl('/user/2fa/verify'), {
+      const response = await fetch(`${apiUrl()}/api/user/2fa/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
