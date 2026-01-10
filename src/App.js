@@ -33,7 +33,7 @@ import AdminChallengeConfig from './pages/admin/AdminChallengeConfig';
 function AppContent() {
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState('login');
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
+
   const [platformName, setPlatformName] = useState('RailTrader');
   const { isDark } = useTheme();
   const { isAuthenticated, loading, user } = useAuth();
