@@ -108,9 +108,9 @@ const AdminPayoutsPage = () => {
                   </div>
                   <div>
                     <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {payout.userId.firstName} {payout.userId.lastName}
+                      {payout.userId ? `${payout.userId.firstName} ${payout.userId.lastName}` : 'Unknown User'}
                     </h3>
-                    <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>{payout.userId.email}</p>
+                    <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>{payout.userId?.email || 'No email'}</p>
                     <div className="flex items-center gap-4 mt-1">
                       <span className={`text-xs ${isDark ? 'text-white/40' : 'text-gray-500'}`}>
                         {new Date(payout.createdAt).toLocaleDateString()}
@@ -161,12 +161,12 @@ const AdminPayoutsPage = () => {
                   <div className="flex justify-between">
                     <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Name:</span>
                     <span className={isDark ? 'text-white' : 'text-gray-900'}>
-                      {selectedPayout.userId.firstName} {selectedPayout.userId.lastName}
+                      {selectedPayout.userId ? `${selectedPayout.userId.firstName} ${selectedPayout.userId.lastName}` : 'Unknown User'}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Email:</span>
-                    <span className={isDark ? 'text-white' : 'text-gray-900'}>{selectedPayout.userId.email}</span>
+                    <span className={isDark ? 'text-white' : 'text-gray-900'}>{selectedPayout.userId?.email || 'No email'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Balance:</span>
