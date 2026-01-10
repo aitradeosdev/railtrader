@@ -11,7 +11,7 @@ const AccountSettingsPage = ({ onBack, onNavigate }) => {
 
   const disableTwoFactor = async () => {
     try {
-      const response = await fetch(apiUrl('/user/2fa/disable'), {
+      const response = await fetch(`${apiUrl()}/api/user/2fa/disable`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
