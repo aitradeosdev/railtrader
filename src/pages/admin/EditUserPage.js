@@ -3,6 +3,7 @@ import { ArrowLeft, Save, User, Mail, DollarSign, TrendingUp, Shield, Smartphone
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiUrl } from '../../utils/api';
 
 const EditUserPage = ({ onBack, userId }) => {
   const { isDark } = useTheme();
@@ -29,7 +30,7 @@ const EditUserPage = ({ onBack, userId }) => {
 
   const fetchUser = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/users', {
+      const response = await fetch(`${apiUrl()}/api/admin/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const users = await response.json();
@@ -65,7 +66,7 @@ const EditUserPage = ({ onBack, userId }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+      const response = await fetch(`${apiUrl()}/api/admin/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

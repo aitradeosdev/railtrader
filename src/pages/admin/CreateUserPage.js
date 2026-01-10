@@ -3,6 +3,7 @@ import { ArrowLeft, Save, User, DollarSign, Shield, Eye, EyeOff } from 'lucide-r
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiUrl } from '../../utils/api';
 
 const CreateUserPage = ({ onBack }) => {
   const { isDark } = useTheme();
@@ -84,7 +85,7 @@ const CreateUserPage = ({ onBack }) => {
 
     setSaving(true);
     try {
-      const response = await fetch('http://localhost:5000/api/register', {
+      const response = await fetch(`${apiUrl()}/api/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,7 +104,7 @@ const CreateUserPage = ({ onBack }) => {
         
         // Update the user with additional fields if needed
         if (formData.accountBalance > 0 || formData.totalProfit > 0 || formData.totalLoss > 0 || formData.winRate > 0 || formData.isAdmin) {
-          await fetch(`http://localhost:5000/api/admin/users/${result.user.id}`, {
+          await fetch(`${apiUrl()}/api/admin/users/${result.user.id}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
