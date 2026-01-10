@@ -20,7 +20,7 @@ export const CurrencyProvider = ({ children }) => {
 
   const fetchCurrency = async () => {
     try {
-      const response = await fetch(apiUrl('/platform-settings'));
+      const response = await fetch(`${apiUrl()}/api/platform-settings`);
       const data = await response.json();
       setCurrency(data.currency || '$');
     } catch (error) {

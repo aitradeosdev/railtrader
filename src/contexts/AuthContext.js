@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import API_BASE from '../utils/api';
+import { apiUrl } from '../utils/api';
 
 const AuthContext = createContext();
 
@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const response = await fetch(`${API_BASE}/user`, {
+      const response = await fetch(`${apiUrl()}/api/user`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await fetch(`${API_BASE}/register`, {
+      const response = await fetch(`${apiUrl()}/api/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -75,7 +75,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      const response = await fetch(`${API_BASE}/login`, {
+      const response = await fetch(`${apiUrl()}/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -116,7 +116,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateProfile: async (profileData) => {
       try {
-        const response = await fetch(`${API_BASE}/user/profile`, {
+        const response = await fetch(`${apiUrl()}/api/user/profile`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -139,7 +139,7 @@ export const AuthProvider = ({ children }) => {
     },
     changePassword: async (passwordData) => {
       try {
-        const response = await fetch(`${API_BASE}/user/password`, {
+        const response = await fetch(`${apiUrl()}/api/user/password`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
