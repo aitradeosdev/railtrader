@@ -3,6 +3,7 @@ import { ArrowLeft, User, Mail, Calendar, Shield, Smartphone, DollarSign, Trendi
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiUrl } from '../../utils/api';
 
 const UserDetailsPage = ({ onBack, userId }) => {
   const { isDark } = useTheme();
@@ -16,7 +17,7 @@ const UserDetailsPage = ({ onBack, userId }) => {
 
   const fetchUser = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/users', {
+      const response = await fetch(`${apiUrl()}/api/admin/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const users = await response.json();

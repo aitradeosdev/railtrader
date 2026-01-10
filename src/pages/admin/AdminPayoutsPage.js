@@ -3,6 +3,7 @@ import { Wallet, User, Clock, CheckCircle, XCircle, Eye } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiUrl } from '../../utils/api';
 
 const AdminPayoutsPage = () => {
   const { isDark } = useTheme();
@@ -19,7 +20,7 @@ const AdminPayoutsPage = () => {
 
   const fetchPayouts = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/payouts', {
+      const response = await fetch(`${apiUrl()}/api/admin/payouts`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -33,7 +34,7 @@ const AdminPayoutsPage = () => {
 
   const handleStatusUpdate = async (payoutId, status) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/payouts/${payoutId}`, {
+      const response = await fetch(`${apiUrl()}/api/admin/payouts/${payoutId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
