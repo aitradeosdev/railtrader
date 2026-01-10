@@ -80,7 +80,9 @@ const ChallengeDashboard = ({ onBuyNew }) => {
       case 'mt5_assigned': 
         return `MT5 Assigned - Check Trading Hub for Phase ${phase} credentials`;
       case 'evaluation': 
-        if (challengeType === '2-phase' && phase === 1) {
+        if (challengeType === '1-phase') {
+          return 'Evaluation Under Review';
+        } else if (challengeType === '2-phase' && phase === 1) {
           return 'Phase 1 Evaluation Under Review';
         } else if (challengeType === '2-phase' && phase === 2) {
           return 'Phase 2 Evaluation Under Review';
@@ -166,8 +168,9 @@ const ChallengeDashboard = ({ onBuyNew }) => {
                     className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                     style={{ 
                       width: challenge.status === 'funded' ? '100%' : 
-                             challenge.status === 'evaluation_2' ? '75%' :
-                             challenge.status === 'evaluation' ? '50%' :
+                             challenge.status === 'pending_funding' ? '90%' :
+                             challenge.status === 'evaluation' && challenge.challengeType === '2-phase' && challenge.currentPhase === 2 ? '75%' :
+                             challenge.status === 'evaluation' && (challenge.challengeType === '1-phase' || challenge.currentPhase === 1) ? '50%' :
                              challenge.status === 'mt5_assigned' ? '25%' : '10%'
                     }}
                   ></div>

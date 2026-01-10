@@ -960,15 +960,27 @@ app.put('/api/admin/challenges/:id/update-status', authenticateAdmin, async (req
     }
     
     if (action === 'next_phase') {
-      challenge.currentPhase = 2;
-      challenge.status = 'pending';
-      challenge.needsMT5 = true;
-      challenge.mt5Accounts.forEach(acc => acc.active = false);
+      // Only proceed to next phase if it's a 2-phase challenge
+      if (challenge.challengeType === '2-phase' && challenge.currentPhase === 1) {
+        challenge.currentPhase = 2;
+        challenge.status = 'pending';
+        challenge.needsMT5 = true;
+        challenge.mt5Accounts.forEach(acc => acc.active = false);
+      } else {
+        return res.status(400).json({ message: 'Cannot proceed to next phase for this challenge type or current phase' });
+      }
     } else if (action === 'approve_funded') {
-      challenge.status = 'pending_funding';
-      challenge.needsLiveAccount = true;
-      challenge.needsMT5 = false;
-      challenge.mt5Accounts.forEach(acc => acc.active = false);
+      // For 1-phase: go directly to funding
+      // For 2-phase: only if currently in phase 2
+      if (challenge.challengeType === '1-phase' || 
+          (challenge.challengeType === '2-phase' && challenge.currentPhase === 2)) {
+        challenge.status = 'pending_funding';
+        challenge.needsLiveAccount = true;
+        challenge.needsMT5 = false;
+        challenge.mt5Accounts.forEach(acc => acc.active = false);
+      } else {
+        return res.status(400).json({ message: 'Cannot approve for funding at current phase' });
+      }
     }
     
     await challenge.save();
