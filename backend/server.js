@@ -142,11 +142,7 @@ const challengePlanSchema = new mongoose.Schema({
     }
   },
   leverageOptions: [{ type: String, default: ['1:30', '1:50', '1:100', '1:200'] }],
-  addOns: {
-    resetProtection: { price: { type: Number, default: 49 }, description: { type: String, default: 'Reset your challenge once if you fail' } },
-    timeExtension: { price: { type: Number, default: 29 }, description: { type: String, default: 'Add 30 extra days to complete' } },
-    profitBoost: { price: { type: Number, default: 99 }, description: { type: String, default: 'Increase profit share by 5%' } }
-  },
+  addOns: { type: mongoose.Schema.Types.Mixed, default: {} },
   active: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }
 });
