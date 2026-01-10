@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, Settings, Globe, Mail, Database } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
+import SuccessNotification from '../../components/SuccessNotification';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
@@ -19,6 +20,7 @@ const PlatformSettingsPage = ({ onBack }) => {
     backupFrequency: 'daily'
   });
   const [saving, setSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -48,7 +50,7 @@ const PlatformSettingsPage = ({ onBack }) => {
         body: JSON.stringify(settings)
       });
       await fetchCurrency(); // Refresh currency context
-      alert('Settings saved successfully!');
+      setShowSuccess(true);
     } catch (error) {
       console.error('Error saving settings:', error);
       alert('Error saving settings');
@@ -239,6 +241,12 @@ const PlatformSettingsPage = ({ onBack }) => {
           {saving ? 'Saving...' : 'Save Settings'}
         </button>
       </div>
+
+      <SuccessNotification 
+        message="Settings saved successfully!"
+        show={showSuccess}
+        onClose={() => setShowSuccess(false)}
+      />
     </div>
   );
 };
