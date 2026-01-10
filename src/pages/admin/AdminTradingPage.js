@@ -9,6 +9,7 @@ const AdminTradingPage = () => {
   const { isDark } = useTheme();
   const { token } = useAuth();
   const [users, setUsers] = useState([]);
+  const [challenges, setChallenges] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -23,6 +24,7 @@ const AdminTradingPage = () => {
   useEffect(() => {
     fetchUsers();
     fetchPendingMT5Requests();
+    fetchChallenges();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchPendingMT5Requests = async () => {
@@ -34,6 +36,18 @@ const AdminTradingPage = () => {
       setPendingMT5Requests(data);
     } catch (error) {
       console.error('Error fetching MT5 requests:', error);
+    }
+  };
+
+  const fetchChallenges = async () => {
+    try {
+      const response = await fetch(`${apiUrl()}/api/admin/challenges`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setChallenges(data);
+    } catch (error) {
+      console.error('Error fetching challenges:', error);
     }
   };
 
@@ -111,6 +125,48 @@ const AdminTradingPage = () => {
       }
     }
   };
+
+  // Helper function to check if user has MT5 credentials
+  const getUserMT5Status = (user) => {
+    // Check legacy MT5 credentials
+    if (user.mt5Login) {
+      return {
+        hasCredentials: true,
+        display: `MT5: ${user.mt5Login} | ${user.mt5Server}`,
+        type: 'legacy'
+      };
+    }
+    
+    // Check challenge-based MT5 accounts
+    const userChallenges = challenges.filter(c => c.userId._id === user._id);
+    const activeMT5Accounts = [];
+    
+    userChallenges.forEach(challenge => {
+      if (challenge.mt5Accounts && challenge.mt5Accounts.length > 0) {
+        const activeAccounts = challenge.mt5Accounts.filter(acc => acc.active);
+        activeMT5Accounts.push(...activeAccounts);
+      }
+    });
+    
+    if (activeMT5Accounts.length > 0) {
+      const account = activeMT5Accounts[0]; // Show first active account
+      return {
+        hasCredentials: true,
+        display: `MT5: ${account.login} | ${account.server} (${account.accountType.toUpperCase()})`,
+        type: 'challenge'
+      };
+    }
+    
+    return {
+      hasCredentials: false,
+      display: 'No MT5 credentials',
+      type: 'none'
+    };
+  }; 
+    user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const filteredUsers = users.filter(user => 
     user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -190,7 +246,9 @@ const AdminTradingPage = () => {
       <GlassCard className="p-6">
         <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-6`}>Users & MT5 Credentials</h2>
         <div className="space-y-4">
-          {filteredUsers.map(user => (
+          {filteredUsers.map(user => {
+            const mt5Status = getUserMT5Status(user);
+            return (
             <div key={user._id} className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-gray-50'} flex items-center justify-between`}>
               <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-xl ${isDark ? 'bg-white/10' : 'bg-gray-200'} flex items-center justify-center`}>
@@ -201,13 +259,9 @@ const AdminTradingPage = () => {
                     {user.firstName} {user.lastName}
                   </h3>
                   <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>{user.email}</p>
-                  {user.mt5Login ? (
-                    <p className={`text-xs ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                      MT5: {user.mt5Login} | {user.mt5Server}
-                    </p>
-                  ) : (
-                    <p className={`text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>No MT5 credentials</p>
-                  )}
+                  <p className={`text-xs ${mt5Status.hasCredentials ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-red-400' : 'text-red-600')}`}>
+                    {mt5Status.display}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -221,11 +275,11 @@ const AdminTradingPage = () => {
                     });
                     setShowAssignModal(true);
                   }}
-                  className={`p-2 rounded-lg ${user.mt5Login ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white transition-colors`}
+                  className={`p-2 rounded-lg ${mt5Status.hasCredentials ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white transition-colors`}
                 >
-                  {user.mt5Login ? <Edit size={16} /> : <Plus size={16} />}
+                  {mt5Status.hasCredentials ? <Edit size={16} /> : <Plus size={16} />}
                 </button>
-                {user.mt5Login && (
+                {mt5Status.hasCredentials && (
                   <button
                     onClick={() => {
                       // Remove credentials logic here
@@ -237,7 +291,8 @@ const AdminTradingPage = () => {
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}}
         </div>
       </GlassCard>
 
