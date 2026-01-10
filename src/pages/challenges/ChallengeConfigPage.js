@@ -3,9 +3,11 @@ import { ArrowLeft, Check } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 const ChallengeConfigPage = ({ challenge, onBack, onContinue }) => {
   const { isDark } = useTheme();
+  const { currency } = useCurrency();
   const [selectedLeverage, setSelectedLeverage] = useState(challenge.leverageOptions?.[0] || '1:100');
   const [selectedAddons, setSelectedAddons] = useState([]);
 
@@ -95,7 +97,7 @@ const ChallengeConfigPage = ({ challenge, onBack, onContinue }) => {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{addon.name}</h3>
-                      <span className="text-blue-400 font-bold">${addon.price}</span>
+                      <span className="text-blue-400 font-bold">{currency}{addon.price}</span>
                     </div>
                     <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'} mt-1`}>{addon.description}</p>
                   </div>
@@ -111,7 +113,7 @@ const ChallengeConfigPage = ({ challenge, onBack, onContinue }) => {
         <div className="flex justify-between items-center mb-4">
           <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Order Summary</h2>
           <div className="text-right">
-            <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>${totalPrice}</p>
+            <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{currency}{totalPrice}</p>
             <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Total</p>
           </div>
         </div>
