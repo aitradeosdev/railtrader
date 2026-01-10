@@ -9,7 +9,7 @@ const ChallengesPage = ({ onGetStarted, onNavigate, onAuthRequest }) => {
   const { isDark } = useTheme();
   const [currentStep, setCurrentStep] = useState('list');
   const [selectedChallenge, setSelectedChallenge] = useState(null);
-  const [selectedPhase, setSelectedPhase] = useState(1);
+  const [selectedType, setSelectedType] = useState('1-phase');
 
   const challenges = [
     { 
@@ -67,7 +67,7 @@ const ChallengesPage = ({ onGetStarted, onNavigate, onAuthRequest }) => {
   };
 
   const getCurrentPhaseData = (challenge) => {
-    return challenge.phases[selectedPhase];
+    return challenge.phases[selectedType === '1-phase' ? 1 : 2];
   };
 
   if (currentStep === 'config' && selectedChallenge) {
@@ -107,13 +107,13 @@ const ChallengesPage = ({ onGetStarted, onNavigate, onAuthRequest }) => {
             <h1 className={`text-3xl md:text-5xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} tracking-tighter mb-2`}>Alpha Challenges</h1>
             <p className={`${isDark ? 'text-white/50' : 'text-gray-500'} text-sm md:text-lg mb-8`}>Scale your capital with high-performance accounts.</p>
             
-            {/* Phase Selection */}
+            {/* Challenge Type Selection */}
             <div className="flex justify-center mb-8">
               <div className={`flex rounded-2xl p-1 ${isDark ? 'bg-white/10 backdrop-blur-xl border border-white/20' : 'bg-white/80 backdrop-blur-xl border border-gray-200/50'}`}>
                 <button
-                  onClick={() => setSelectedPhase(1)}
+                  onClick={() => setSelectedType('1-phase')}
                   className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
-                    selectedPhase === 1
+                    selectedType === '1-phase'
                       ? 'bg-gradient-to-r from-blue-500/90 to-blue-600/90 text-white shadow-lg'
                       : isDark ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-gray-900'
                   }`}
@@ -121,9 +121,9 @@ const ChallengesPage = ({ onGetStarted, onNavigate, onAuthRequest }) => {
                   1-Phase Challenge
                 </button>
                 <button
-                  onClick={() => setSelectedPhase(2)}
+                  onClick={() => setSelectedType('2-phase')}
                   className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
-                    selectedPhase === 2
+                    selectedType === '2-phase'
                       ? 'bg-gradient-to-r from-blue-500/90 to-blue-600/90 text-white shadow-lg'
                       : isDark ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-gray-900'
                   }`}
@@ -153,12 +153,12 @@ const ChallengesPage = ({ onGetStarted, onNavigate, onAuthRequest }) => {
                     <div className="flex justify-between"><span>Profit Target</span><span>{phaseData.profitTarget}%</span></div>
                     <div className="flex justify-between"><span>Max Drawdown</span><span>{phaseData.maxDrawdown}%</span></div>
                     <div className="flex justify-between"><span>Profit Split</span><span>{phaseData.profitSplit}%</span></div>
-                    <div className="flex justify-between"><span>Phases</span><span>{selectedPhase}</span></div>
+                    <div className="flex justify-between"><span>Type</span><span>{selectedType === '1-phase' ? '1-Phase' : '2-Phase'}</span></div>
                     <div className="flex justify-between font-bold"><span>Price</span><span>${phaseData.price}</span></div>
                   </div>
                   
                   <button 
-                    onClick={() => handleSelectChallenge(challenge)}
+                    onClick={() => handleSelectChallenge({...challenge, selectedType})}}
                     className={`w-full py-4 rounded-2xl font-bold transition-all duration-200 ${
                       challenge.popular 
                         ? 'bg-gradient-to-r from-blue-500/90 to-blue-600/90 backdrop-blur-xl text-white hover:scale-105 active:scale-95 shadow-2xl shadow-blue-500/30 border border-white/20' 

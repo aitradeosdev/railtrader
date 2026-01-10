@@ -109,7 +109,7 @@ const ChallengeManagementPage = ({ onNavigateToChallenge }) => {
                        (challenge.userId ? `${challenge.userId.firstName} ${challenge.userId.lastName}` : 'Deleted User')}
                     </h3>
                     <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>
-                      {challenge.accountSize} {challenge.challengeType.toUpperCase()} - ${challenge.amount} (Phase {challenge.currentPhase})
+                      {challenge.accountSize} {challenge.challengeType?.toUpperCase() || 'UNKNOWN'} - ${challenge.amount} (Phase {challenge.currentPhase})
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`text-xs ${getStatusColor(challenge.status)}`}>

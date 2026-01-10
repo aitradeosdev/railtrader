@@ -31,7 +31,7 @@ const ChallengeSuccessPage = ({ challenge, onGoHome }) => {
             </div>
             <div className={`p-4 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
               <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Profit Target</h3>
-              <p className="text-2xl font-black text-emerald-400">{challenge.phases?.[1]?.profitTarget || challenge.phases?.[2]?.profitTarget || 20}%</p>
+              <p className="text-2xl font-black text-emerald-400">{challenge.phases?.[challenge.selectedType === '1-phase' ? 1 : 2]?.profitTarget || challenge.phases?.[1]?.profitTarget || 20}%</p>
             </div>
           </div>
 
