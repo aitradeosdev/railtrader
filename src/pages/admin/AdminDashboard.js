@@ -3,6 +3,7 @@ import { Users, DollarSign, TrendingUp, Shield } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiUrl } from '../../utils/api';
 
 const AdminDashboard = () => {
   const { isDark } = useTheme();
@@ -18,10 +19,10 @@ const AdminDashboard = () => {
   const fetchAdminData = async () => {
     try {
       const [statsRes, usersRes] = await Promise.all([
-        fetch('http://localhost:5000/api/admin/stats', {
+        fetch(`${apiUrl()}/api/admin/stats`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch('http://localhost:5000/api/admin/users', {
+        fetch(`${apiUrl()}/api/admin/users`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
@@ -40,7 +41,7 @@ const AdminDashboard = () => {
 
   const updateUser = async (userId, updates) => {
     try {
-      await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+      await fetch(`${apiUrl()}/api/admin/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -58,7 +59,7 @@ const AdminDashboard = () => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     
     try {
-      await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+      await fetch(`${apiUrl()}/api/admin/users/${userId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
