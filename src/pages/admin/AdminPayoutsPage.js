@@ -3,11 +3,13 @@ import { Wallet, User, Clock, CheckCircle, XCircle, Eye } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { apiUrl } from '../../utils/api';
 
 const AdminPayoutsPage = () => {
   const { isDark } = useTheme();
   const { token } = useAuth();
+  const { currency } = useCurrency();
   const [payouts, setPayouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPayout, setSelectedPayout] = useState(null);
@@ -122,7 +124,7 @@ const AdminPayoutsPage = () => {
                 </div>
                 <div className="text-right">
                   <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    ${payout.amount.toLocaleString()}
+                    {currency}{payout.amount.toLocaleString()}
                   </p>
                   <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>
                     {payout.paymentMethod}
@@ -169,7 +171,7 @@ const AdminPayoutsPage = () => {
                   <div className="flex justify-between">
                     <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Balance:</span>
                     <span className={isDark ? 'text-white' : 'text-gray-900'}>
-                      ${selectedPayout.userId.accountBalance?.toLocaleString()}
+                      {currency}{selectedPayout.userId.accountBalance?.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -193,7 +195,7 @@ const AdminPayoutsPage = () => {
                   <div className="flex justify-between">
                     <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Amount:</span>
                     <span className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      ${selectedPayout.amount.toLocaleString()}
+                      {currency}{selectedPayout.amount.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between">

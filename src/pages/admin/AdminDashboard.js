@@ -3,11 +3,13 @@ import { Users, DollarSign, TrendingUp, Shield } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { apiUrl } from '../../utils/api';
 
 const AdminDashboard = () => {
   const { isDark } = useTheme();
   const { token } = useAuth();
+  const { currency } = useCurrency();
   const [stats, setStats] = useState({});
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -98,7 +100,7 @@ const AdminDashboard = () => {
             <DollarSign className="text-green-400" size={24} />
             <div>
               <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Total Balance</p>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>${stats.totalBalance?.toFixed(2)}</p>
+              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{currency}{stats.totalBalance?.toFixed(2)}</p>
             </div>
           </div>
         </GlassCard>
@@ -108,7 +110,7 @@ const AdminDashboard = () => {
             <TrendingUp className="text-emerald-400" size={24} />
             <div>
               <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Total Profit</p>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>${stats.totalProfit?.toFixed(2)}</p>
+              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{currency}{stats.totalProfit?.toFixed(2)}</p>
             </div>
           </div>
         </GlassCard>
@@ -159,8 +161,8 @@ const AdminDashboard = () => {
                   </td>
                   <td className="p-3">
                     <div className="text-sm">
-                      <div className="text-green-400">${user.totalProfit.toFixed(2)}</div>
-                      <div className="text-red-400">-${user.totalLoss.toFixed(2)}</div>
+                      <div className="text-green-400">{currency}{user.totalProfit.toFixed(2)}</div>
+                      <div className="text-red-400">-{currency}{user.totalLoss.toFixed(2)}</div>
                     </div>
                   </td>
                   <td className="p-3">
