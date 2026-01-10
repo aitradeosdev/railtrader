@@ -3,11 +3,13 @@ import { Plus, Edit, Trash2 } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { apiUrl } from '../../utils/api';
 
 const AdminChallengeConfig = () => {
   const { isDark } = useTheme();
   const { token } = useAuth();
+  const { currency } = useCurrency();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -156,7 +158,7 @@ const AdminChallengeConfig = () => {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Account Size:</span>
-                <span className={isDark ? 'text-white' : 'text-gray-900'}>${plan.accountSize.toLocaleString()}</span>
+                <span className={isDark ? 'text-white' : 'text-gray-900'}>{currency}{plan.accountSize.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Tier:</span>
@@ -168,7 +170,7 @@ const AdminChallengeConfig = () => {
                 <div className="space-y-1 text-xs">
                   <div className="flex justify-between">
                     <span>Price:</span>
-                    <span>${plan.phases[1].price}</span>
+                    <span>{currency}{plan.phases[1].price}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Profit Split:</span>
@@ -190,7 +192,7 @@ const AdminChallengeConfig = () => {
                 <div className="space-y-1 text-xs">
                   <div className="flex justify-between">
                     <span>Price:</span>
-                    <span>${plan.phases[2].price}</span>
+                    <span>{currency}{plan.phases[2].price}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Profit Split:</span>
@@ -298,7 +300,7 @@ const AdminChallengeConfig = () => {
                   <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-3`}>Add-ons</h4>
                   <div className="space-y-3">
                     <div>
-                      <label className={`block text-xs ${isDark ? 'text-white/70' : 'text-gray-600'} mb-1`}>Reset Protection Price ($)</label>
+                      <label className={`block text-xs ${isDark ? 'text-white/70' : 'text-gray-600'} mb-1`}>Reset Protection Price ({currency})</label>
                       <input
                         type="number"
                         value={formData.addOns.resetProtection.price}
@@ -313,7 +315,7 @@ const AdminChallengeConfig = () => {
                       />
                     </div>
                     <div>
-                      <label className={`block text-xs ${isDark ? 'text-white/70' : 'text-gray-600'} mb-1`}>Time Extension Price ($)</label>
+                      <label className={`block text-xs ${isDark ? 'text-white/70' : 'text-gray-600'} mb-1`}>Time Extension Price ({currency})</label>
                       <input
                         type="number"
                         value={formData.addOns.timeExtension.price}
@@ -328,7 +330,7 @@ const AdminChallengeConfig = () => {
                       />
                     </div>
                     <div>
-                      <label className={`block text-xs ${isDark ? 'text-white/70' : 'text-gray-600'} mb-1`}>Profit Boost Price ($)</label>
+                      <label className={`block text-xs ${isDark ? 'text-white/70' : 'text-gray-600'} mb-1`}>Profit Boost Price ({currency})</label>
                       <input
                         type="number"
                         value={formData.addOns.profitBoost.price}
@@ -351,7 +353,7 @@ const AdminChallengeConfig = () => {
                   <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-3`}>1-Phase Challenge</h4>
                   <div className="space-y-3">
                     <div>
-                      <label className={`block text-xs ${isDark ? 'text-white/70' : 'text-gray-600'} mb-1`}>Price ($)</label>
+                      <label className={`block text-xs ${isDark ? 'text-white/70' : 'text-gray-600'} mb-1`}>Price ({currency})</label>
                       <input
                         type="number"
                         placeholder="99"
@@ -421,7 +423,7 @@ const AdminChallengeConfig = () => {
                   <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-3`}>2-Phase Challenge</h4>
                   <div className="space-y-3">
                     <div>
-                      <label className={`block text-xs ${isDark ? 'text-white/70' : 'text-gray-600'} mb-1`}>Price ($)</label>
+                      <label className={`block text-xs ${isDark ? 'text-white/70' : 'text-gray-600'} mb-1`}>Price ({currency})</label>
                       <input
                         type="number"
                         placeholder="149"

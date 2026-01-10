@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { apiUrl } from '../../utils/api';
 
 const ChallengesListPage = ({ onSelectChallenge }) => {
   const { isDark } = useTheme();
+  const { currency } = useCurrency();
   const [selectedPhase, setSelectedPhase] = useState(1);
   const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -78,12 +80,12 @@ const ChallengesListPage = ({ onSelectChallenge }) => {
               <h3 className={`${isDark ? 'text-white/50' : 'text-gray-500'} text-xs font-bold uppercase mb-2`}>Tier {challenge.tier}</h3>
               <div className={`text-4xl md:text-5xl font-black ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>{challenge.name}</div>
               <div className={`space-y-3 mb-8 text-sm ${isDark ? 'text-white/70' : 'text-gray-600'}`}>
-                <div className="flex justify-between"><span>Account Size</span><span>${challenge.accountSize.toLocaleString()}</span></div>
+                <div className="flex justify-between"><span>Account Size</span><span>{currency}{challenge.accountSize.toLocaleString()}</span></div>
                 <div className="flex justify-between"><span>Profit Target</span><span>{phaseData.profitTarget}%</span></div>
                 <div className="flex justify-between"><span>Max Drawdown</span><span>{phaseData.maxDrawdown}%</span></div>
                 <div className="flex justify-between"><span>Profit Split</span><span>{phaseData.profitSplit}%</span></div>
                 <div className="flex justify-between"><span>Phases</span><span>{selectedPhase}</span></div>
-                <div className="flex justify-between font-bold"><span>Price</span><span>${phaseData.price}</span></div>
+                <div className="flex justify-between font-bold"><span>Price</span><span>{currency}{phaseData.price}</span></div>
               </div>
               <button 
                 onClick={() => onSelectChallenge(challenge)}
