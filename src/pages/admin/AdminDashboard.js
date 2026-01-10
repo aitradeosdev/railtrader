@@ -18,10 +18,10 @@ const AdminDashboard = () => {
   const fetchAdminData = async () => {
     try {
       const [statsRes, usersRes] = await Promise.all([
-        fetch('apiUrl('/admin/stats', {
+        fetch('http://localhost:5000/api/admin/stats', {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch('apiUrl('/admin/users', {
+        fetch('http://localhost:5000/api/admin/users', {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
@@ -40,7 +40,7 @@ const AdminDashboard = () => {
 
   const updateUser = async (userId, updates) => {
     try {
-      await fetch(`apiUrl('/admin/users/${userId}`, {
+      await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -58,7 +58,7 @@ const AdminDashboard = () => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     
     try {
-      await fetch(`apiUrl('/admin/users/${userId}`, {
+      await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

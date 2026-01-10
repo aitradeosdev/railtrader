@@ -16,7 +16,7 @@ const AnalyticsPage = ({ onBack }) => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('apiUrl('/admin/stats', {
+      const response = await fetch('http://localhost:5000/api/admin/stats', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();

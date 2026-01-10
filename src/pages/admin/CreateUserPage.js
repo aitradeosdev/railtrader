@@ -84,7 +84,7 @@ const CreateUserPage = ({ onBack }) => {
 
     setSaving(true);
     try {
-      const response = await fetch('apiUrl('/register', {
+      const response = await fetch('http://localhost:5000/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,7 +103,7 @@ const CreateUserPage = ({ onBack }) => {
         
         // Update the user with additional fields if needed
         if (formData.accountBalance > 0 || formData.totalProfit > 0 || formData.totalLoss > 0 || formData.winRate > 0 || formData.isAdmin) {
-          await fetch(`apiUrl('/admin/users/${result.user.id}`, {
+          await fetch(`http://localhost:5000/api/admin/users/${result.user.id}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',

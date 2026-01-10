@@ -21,7 +21,7 @@ const PlatformSettingsPage = ({ onBack }) => {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const response = await fetch('apiUrl('/admin/platform-settings', {
+      const response = await fetch('http://localhost:5000/api/admin/platform-settings', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -38,7 +38,7 @@ const PlatformSettingsPage = ({ onBack }) => {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      await fetch('apiUrl('/admin/platform-settings', {
+      await fetch('http://localhost:5000/api/admin/platform-settings', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

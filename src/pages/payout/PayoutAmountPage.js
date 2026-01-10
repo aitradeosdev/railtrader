@@ -28,7 +28,7 @@ const PayoutAmountPage = ({ selectedMethod, availableBalance, onBack, onConfirm 
     if (parseFloat(amount) >= minPayout && parseFloat(amount) <= availableBalance) {
       setProcessing(true);
       try {
-        const response = await fetch('apiUrl('/user/payout', {
+        const response = await fetch('http://localhost:5000/api/user/payout', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

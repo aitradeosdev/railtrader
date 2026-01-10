@@ -26,7 +26,7 @@ const AdminTradingPage = () => {
 
   const fetchPendingMT5Requests = async () => {
     try {
-      const response = await fetch('apiUrl('/admin/mt5-requests', {
+      const response = await fetch('http://localhost:5000/api/admin/mt5-requests', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -38,7 +38,7 @@ const AdminTradingPage = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('apiUrl('/admin/users', {
+      const response = await fetch('http://localhost:5000/api/admin/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -50,7 +50,7 @@ const AdminTradingPage = () => {
 
   const handleAssignMT5ToChallenge = async (challengeId, credentials) => {
     try {
-      const response = await fetch(`apiUrl('/admin/challenges/${challengeId}/assign-mt5`, {
+      const response = await fetch(`http://localhost:5000/api/admin/challenges/${challengeId}/assign-mt5`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -90,7 +90,7 @@ const AdminTradingPage = () => {
     } else {
       // Regular user MT5 assignment (legacy)
       try {
-        const response = await fetch(`apiUrl('/admin/users/${selectedUser._id}`, {
+        const response = await fetch(`http://localhost:5000/api/admin/users/${selectedUser._id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

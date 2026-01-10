@@ -16,7 +16,7 @@ const TwoFactorSetupPage = ({ onBack }) => {
   const [message, setMessage] = useState('');
   const [copied, setCopied] = useState(false);
 
-  const API_BASE = 'apiUrl('';
+  const API_BASE = 'http://localhost:5000/api';
 
   const setupTwoFactor = async () => {
     setLoading(true);

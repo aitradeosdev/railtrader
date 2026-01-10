@@ -27,7 +27,7 @@ const UserMT5Page = ({ userId, onBack }) => {
 
   const fetchUserData = async () => {
     try {
-      const response = await fetch(`apiUrl('/admin/users`, {
+      const response = await fetch(`http://localhost:5000/api/admin/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const users = await response.json();
@@ -40,7 +40,7 @@ const UserMT5Page = ({ userId, onBack }) => {
 
   const fetchUserChallenges = async () => {
     try {
-      const response = await fetch('apiUrl('/admin/challenges', {
+      const response = await fetch('http://localhost:5000/api/admin/challenges', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const allChallenges = await response.json();
@@ -53,7 +53,7 @@ const UserMT5Page = ({ userId, onBack }) => {
 
   const handleAssignMT5ToChallenge = async (challengeId, credentials) => {
     try {
-      const response = await fetch(`apiUrl('/admin/challenges/${challengeId}/assign-mt5`, {
+      const response = await fetch(`http://localhost:5000/api/admin/challenges/${challengeId}/assign-mt5`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -88,7 +88,7 @@ const UserMT5Page = ({ userId, onBack }) => {
       await handleAssignMT5ToChallenge(userRequest._id, mt5Credentials);
     } else {
       try {
-        const response = await fetch(`apiUrl('/admin/users/${userId}`, {
+        const response = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

@@ -17,7 +17,7 @@ const ChallengeManagementPage = ({ onNavigateToChallenge }) => {
 
   const fetchChallenges = async () => {
     try {
-      const response = await fetch('apiUrl('/admin/challenges', {
+      const response = await fetch('http://localhost:5000/api/admin/challenges', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();

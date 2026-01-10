@@ -20,7 +20,7 @@ const UserDashboard = ({ onNavigate }) => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('apiUrl('/admin/users', {
+      const response = await fetch('http://localhost:5000/api/admin/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -36,7 +36,7 @@ const UserDashboard = ({ onNavigate }) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     
     try {
-      await fetch(`apiUrl('/admin/users/${userId}`, {
+      await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
