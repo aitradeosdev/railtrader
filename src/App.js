@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Trophy, 
@@ -12,6 +12,7 @@ import {
 import { useTheme } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CurrencyProvider } from './contexts/CurrencyContext';
+import { apiUrl } from './utils/api';
 import LandingFlow from './pages/landing/LandingFlow';
 import AuthFlow from './pages/auth/AuthFlow';
 import OverviewPage from './pages/OverviewPage';
@@ -32,8 +33,28 @@ import AdminChallengeConfig from './pages/admin/AdminChallengeConfig';
 function AppContent() {
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState('login');
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [platformName, setPlatformName] = useState('RailTrader');
   const { isDark } = useTheme();
   const { isAuthenticated, loading, user } = useAuth();
+
+  // Check platform settings on app load
+  useEffect(() => {
+    checkPlatformSettings();
+  }, []);
+
+  const checkPlatformSettings = async () => {
+    try {
+      const response = await fetch(`${apiUrl()}/api/platform-settings`);
+      if (response.ok) {
+        const settings = await response.json();
+        setPlatformName(settings.platformName || 'RailTrader');
+        // Note: maintenance mode is handled by backend middleware
+      }
+    } catch (error) {
+      console.error('Error fetching platform settings:', error);
+    }
+  };
 
   const handleAuthRequest = (mode) => {
     setAuthMode(mode);
@@ -108,7 +129,7 @@ function AdminApp() {
         {/* Admin Sidebar */}
         <aside className={`hidden lg:flex flex-col w-72 p-6 border-r ${isDark ? 'border-white/5 bg-black/20' : 'border-gray-200 bg-white/80'} backdrop-blur-xl`}>
           <div className="flex items-center justify-center mb-8">
-            <img src={isDark ? "/white-logo.png" : "/dark-logo.png"} alt="RailTrader Admin" className="h-16 w-auto" />
+            <img src={isDark ? "/white-logo.png" : "/dark-logo.png"} alt={`${platformName} Admin`} className="h-16 w-auto" />
           </div>
           
           <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-red-500/20 border border-red-500/30 text-xs font-bold tracking-widest text-red-400 mb-6 justify-center">
@@ -149,7 +170,7 @@ function AdminApp() {
           {/* Admin Header */}
           <header className="flex items-center justify-between px-6 md:px-10 py-3 md:py-4 bg-transparent z-50">
             <div className="flex items-center gap-4">
-              <img src={isDark ? "/white-logo.png" : "/dark-logo.png"} alt="RailTrader Admin" className="lg:hidden h-12 w-auto" />
+              <img src={isDark ? "/white-logo.png" : "/dark-logo.png"} alt={`${platformName} Admin`} className="lg:hidden h-12 w-auto" />
               <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/20 border border-red-500/30 text-[10px] font-bold tracking-widest text-red-400">
                 <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
                 ADMIN PANEL
@@ -231,7 +252,7 @@ function UserApp() {
           hidden lg:flex flex-col w-72 p-6 border-r ${isDark ? 'border-white/5 bg-black/20' : 'border-gray-200 bg-white/80'} backdrop-blur-xl transition-all duration-300
         `}>
           <div className="flex items-center justify-center mb-8">
-            <img src={isDark ? "/white-logo.png" : "/dark-logo.png"} alt="RailTrader" className="h-16 w-auto" />
+            <img src={isDark ? "/white-logo.png" : "/dark-logo.png"} alt={platformName} className="h-16 w-auto" />
           </div>
           <nav className="space-y-1 flex-1">
             {navItems.map(item => (
@@ -267,7 +288,7 @@ function UserApp() {
           
           <header className="flex items-center justify-between px-6 md:px-10 py-3 md:py-4 bg-transparent z-50">
             <div className="flex items-center gap-4">
-              <img src={isDark ? "/white-logo.png" : "/dark-logo.png"} alt="RailTrader" className="lg:hidden h-12 w-auto" />
+              <img src={isDark ? "/white-logo.png" : "/dark-logo.png"} alt={platformName} className="lg:hidden h-12 w-auto" />
               <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/5 text-[10px] font-bold tracking-widest text-emerald-400">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 SYSTEM LIVE

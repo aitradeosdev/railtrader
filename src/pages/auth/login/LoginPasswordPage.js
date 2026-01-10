@@ -25,7 +25,12 @@ const LoginPasswordPage = ({ email, onLogin, onBack, onTwoFactorRequired }) => {
     } else if (result.requiresTwoFactor) {
       onTwoFactorRequired({ password });
     } else {
-      setError(result.message);
+      // Handle specific error cases
+      if (result.maintenanceMode) {
+        setError('Platform is currently under maintenance. Please try again later.');
+      } else {
+        setError(result.message);
+      }
     }
     setLoading(false);
   };

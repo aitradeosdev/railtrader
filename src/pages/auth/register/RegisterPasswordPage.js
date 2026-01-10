@@ -48,7 +48,14 @@ const RegisterPasswordPage = ({ basicInfo, onRegister, onBack }) => {
     if (result.success) {
       onRegister();
     } else {
-      setError(result.message);
+      // Handle specific error cases
+      if (result.registrationDisabled) {
+        setError('New user registration is currently disabled. Please try again later.');
+      } else if (result.maintenanceMode) {
+        setError('Platform is currently under maintenance. Please try again later.');
+      } else {
+        setError(result.message);
+      }
     }
     setLoading(false);
   };

@@ -66,7 +66,12 @@ export const AuthProvider = ({ children }) => {
         setUser(data.user);
         return { success: true };
       } else {
-        return { success: false, message: data.message };
+        return { 
+          success: false, 
+          message: data.message,
+          registrationDisabled: data.registrationDisabled,
+          maintenanceMode: data.maintenanceMode
+        };
       }
     } catch (error) {
       return { success: false, message: 'Network error' };
@@ -94,7 +99,11 @@ export const AuthProvider = ({ children }) => {
         setUser(data.user);
         return { success: true };
       } else {
-        return { success: false, message: data.message };
+        return { 
+          success: false, 
+          message: data.message,
+          maintenanceMode: data.maintenanceMode
+        };
       }
     } catch (error) {
       return { success: false, message: 'Network error' };
