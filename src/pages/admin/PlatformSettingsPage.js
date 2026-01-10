@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, Settings, Globe, Mail, Database } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -18,9 +18,8 @@ const PlatformSettingsPage = ({ onBack }) => {
     backupFrequency: 'daily'
   });
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:5000/api/admin/platform-settings', {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -29,14 +28,12 @@ const PlatformSettingsPage = ({ onBack }) => {
       setSettings(data);
     } catch (error) {
       console.error('Error fetching settings:', error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchSettings();
-  }, [token]);
+  }, [fetchSettings]);
 
   const saveSettings = async () => {
     setSaving(true);
