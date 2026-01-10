@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { GlassCard } from '../../../components/UIComponents';
 import SuccessNotification from '../../../components/SuccessNotification';
+import AddLeverageModal from '../../../components/AddLeverageModal';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useCurrency } from '../../../contexts/CurrencyContext';
@@ -13,6 +14,7 @@ const AddChallengePlanPage = ({ onBack }) => {
   const { currency } = useCurrency();
   const [saving, setSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showLeverageModal, setShowLeverageModal] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -70,8 +72,7 @@ const AddChallengePlanPage = ({ onBack }) => {
     }));
   };
 
-  const addLeverageOption = () => {
-    const newOption = prompt('Enter leverage option (e.g., 1:500):');
+  const addLeverageOption = (newOption) => {
     if (newOption && !formData.leverageOptions.includes(newOption)) {
       setFormData(prev => ({
         ...prev,
@@ -206,7 +207,7 @@ const AddChallengePlanPage = ({ onBack }) => {
               
               <button
                 type="button"
-                onClick={addLeverageOption}
+                onClick={() => setShowLeverageModal(true)}
                 className={`w-full p-2 border-2 border-dashed rounded-lg ${isDark ? 'border-white/20 text-white/60 hover:border-white/40' : 'border-gray-300 text-gray-600 hover:border-gray-400'} transition-colors`}
               >
                 <Plus size={16} className="inline mr-2" />
@@ -407,6 +408,12 @@ const AddChallengePlanPage = ({ onBack }) => {
         message="Challenge plan created successfully!"
         show={showSuccess}
         onClose={() => setShowSuccess(false)}
+      />
+
+      <AddLeverageModal
+        show={showLeverageModal}
+        onClose={() => setShowLeverageModal(false)}
+        onAdd={addLeverageOption}
       />
     </div>
   );
