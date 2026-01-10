@@ -2,9 +2,11 @@ import { Clock, Home } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 const PayoutSuccessPage = ({ payoutDetails, onGoHome }) => {
   const { isDark } = useTheme();
+  const { currency } = useCurrency();
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-20 md:pb-0">
@@ -26,7 +28,7 @@ const PayoutSuccessPage = ({ payoutDetails, onGoHome }) => {
         <div className="text-center space-y-6">
           <div className={`p-4 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
             <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Requested Amount</h3>
-            <p className="text-2xl font-black text-amber-400">${payoutDetails.amount.toFixed(2)}</p>
+            <p className="text-2xl font-black text-amber-400">{currency}{payoutDetails.amount.toFixed(2)}</p>
           </div>
 
           <div className={`p-6 rounded-2xl ${isDark ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'} border text-left`}>

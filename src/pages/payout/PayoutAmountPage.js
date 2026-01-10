@@ -4,11 +4,13 @@ import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { apiUrl } from '../../utils/api';
 
 const PayoutAmountPage = ({ selectedMethod, availableBalance, onBack, onConfirm }) => {
   const { isDark } = useTheme();
   const { token } = useAuth();
+  const { currency } = useCurrency();
   const [amount, setAmount] = useState('');
   const [processing, setProcessing] = useState(false);
 
@@ -96,19 +98,19 @@ const PayoutAmountPage = ({ selectedMethod, availableBalance, onBack, onConfirm 
             
             <div className="flex justify-between text-sm">
               <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Available Balance</span>
-              <span className={isDark ? 'text-white' : 'text-gray-900'}>${availableBalance.toLocaleString()}</span>
+              <span className={isDark ? 'text-white' : 'text-gray-900'}>{currency}{availableBalance.toLocaleString()}</span>
             </div>
             
             <div className="flex justify-between text-sm">
               <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Minimum Withdrawal</span>
-              <span className={isDark ? 'text-white' : 'text-gray-900'}>${minPayout}</span>
+              <span className={isDark ? 'text-white' : 'text-gray-900'}>{currency}{minPayout}</span>
             </div>
           </div>
 
           {amount && parseFloat(amount) < minPayout && (
             <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-2">
               <AlertCircle className="text-amber-400" size={16} />
-              <span className="text-amber-400 text-sm">Minimum withdrawal is ${minPayout}</span>
+              <span className="text-amber-400 text-sm">Minimum withdrawal is {currency}{minPayout}</span>
             </div>
           )}
         </GlassCard>
@@ -128,15 +130,15 @@ const PayoutAmountPage = ({ selectedMethod, availableBalance, onBack, onConfirm 
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Withdrawal Amount</span>
-                <span className={isDark ? 'text-white' : 'text-gray-900'}>${amount || '0.00'}</span>
+                <span className={isDark ? 'text-white' : 'text-gray-900'}>{currency}{amount || '0.00'}</span>
               </div>
               <div className="flex justify-between">
                 <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Processing Fee</span>
-                <span className={isDark ? 'text-white' : 'text-gray-900'}>-${fee}</span>
+                <span className={isDark ? 'text-white' : 'text-gray-900'}>-{currency}{fee}</span>
               </div>
               <div className={`border-t ${isDark ? 'border-white/10' : 'border-gray-200'} pt-2 flex justify-between font-bold`}>
                 <span className={isDark ? 'text-white' : 'text-gray-900'}>Net Amount</span>
-                <span className="text-emerald-400">${netAmount.toFixed(2)}</span>
+                <span className="text-emerald-400">{currency}{netAmount.toFixed(2)}</span>
               </div>
             </div>
           </div>

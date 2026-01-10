@@ -4,10 +4,12 @@ import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 const PayoutMainPage = ({ onSelectMethod }) => {
   const { isDark } = useTheme();
   const { user } = useAuth();
+  const { currency } = useCurrency();
   const [selectedMethod, setSelectedMethod] = useState(null);
 
   // Get saved payment methods from user data
@@ -33,7 +35,7 @@ const PayoutMainPage = ({ onSelectMethod }) => {
       <GlassCard className="p-6 md:p-8">
         <div className="text-center mb-8">
           <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} text-sm mb-2`}>Available Balance</p>
-          <div className="text-4xl md:text-6xl font-black text-emerald-400">${user.accountBalance.toLocaleString()}</div>
+          <div className="text-4xl md:text-6xl font-black text-emerald-400">{currency}{user.accountBalance.toLocaleString()}</div>
         </div>
 
         <div className="space-y-6">
