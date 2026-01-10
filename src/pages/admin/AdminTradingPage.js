@@ -128,14 +128,29 @@ const AdminTradingPage = () => {
 
   // Helper function to check if user has MT5 credentials
   const getUserMT5Status = (user) => {
-    console.log(`Checking MT5 for user ${user.email}:`, { userMT5: user.mt5Login, challengesCount: challenges.length });
+    console.log(`Checking MT5 for user ${user.email}:`, { 
+      userMT5: user.mt5Login, 
+      challengesCount: challenges.length,
+      challenges: challenges.filter(c => c.userId && c.userId._id === user._id)
+    });
     
-    // Check legacy MT5 credentials
+    // Check legacy MT5 credentials first
     if (user.mt5Login) {
+      console.log(`User ${user.email} has legacy MT5:`, user.mt5Login);
       return {
         hasCredentials: true,
         display: `MT5: ${user.mt5Login} | ${user.mt5Server}`,
         type: 'legacy'
+      };
+    }
+    
+    // If no challenges loaded yet, return loading state
+    if (challenges.length === 0) {
+      console.log('No challenges loaded yet');
+      return {
+        hasCredentials: false,
+        display: 'Loading...',
+        type: 'loading'
       };
     }
     
@@ -146,16 +161,19 @@ const AdminTradingPage = () => {
     const activeMT5Accounts = [];
     
     userChallenges.forEach(challenge => {
+      console.log(`Challenge ${challenge._id} MT5 accounts:`, challenge.mt5Accounts);
       if (challenge.mt5Accounts && challenge.mt5Accounts.length > 0) {
         const activeAccounts = challenge.mt5Accounts.filter(acc => acc.active);
+        console.log(`Active accounts for challenge ${challenge._id}:`, activeAccounts);
         activeMT5Accounts.push(...activeAccounts);
       }
     });
     
-    console.log(`User ${user.email} active MT5 accounts:`, activeMT5Accounts);
+    console.log(`User ${user.email} total active MT5 accounts:`, activeMT5Accounts);
     
     if (activeMT5Accounts.length > 0) {
       const account = activeMT5Accounts[0];
+      console.log(`Using MT5 account for ${user.email}:`, account);
       return {
         hasCredentials: true,
         display: `MT5: ${account.login} | ${account.server} (${account.accountType.toUpperCase()})`,
