@@ -11,6 +11,18 @@ require('dotenv').config();
 
 const app = express();
 
+// CORS configuration
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://railtrader.vercel.app'] 
+    : ['http://localhost:3000'],
+  credentials: true
+}));
+
+// Body parser middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Encryption functions
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY ? Buffer.from(process.env.ENCRYPTION_KEY, 'utf8').subarray(0, 32) : crypto.randomBytes(32);
 const IV_LENGTH = 16;
