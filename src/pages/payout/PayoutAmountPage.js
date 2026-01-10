@@ -4,6 +4,7 @@ import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiUrl } from '../../utils/api';
 
 const PayoutAmountPage = ({ selectedMethod, availableBalance, onBack, onConfirm }) => {
   const { isDark } = useTheme();
@@ -28,7 +29,7 @@ const PayoutAmountPage = ({ selectedMethod, availableBalance, onBack, onConfirm 
     if (parseFloat(amount) >= minPayout && parseFloat(amount) <= availableBalance) {
       setProcessing(true);
       try {
-        const response = await fetch('http://localhost:5000/api/user/payout', {
+        const response = await fetch(apiUrl('/user/payout'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
