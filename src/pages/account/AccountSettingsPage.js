@@ -3,6 +3,7 @@ import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiUrl } from '../../utils/api';
 
 const AccountSettingsPage = ({ onBack, onNavigate }) => {
   const { isDark, themeMode, setTheme } = useTheme();
@@ -10,7 +11,7 @@ const AccountSettingsPage = ({ onBack, onNavigate }) => {
 
   const disableTwoFactor = async () => {
     try {
-      const response = await fetch(`${API_BASE}/user/2fa/disable`, {
+      const response = await fetch(apiUrl('/user/2fa/disable'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
