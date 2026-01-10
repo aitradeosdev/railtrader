@@ -3,11 +3,13 @@ import { Search, Plus, Edit, Eye, Trash2, Shield, TrendingUp, DollarSign } from 
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { apiUrl } from '../../utils/api';
 
 const UserDashboard = ({ onNavigate }) => {
   const { isDark } = useTheme();
   const { token } = useAuth();
+  const { currency } = useCurrency();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -77,8 +79,8 @@ const UserDashboard = ({ onNavigate }) => {
       return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
     });
 
-  const totalBalance = users.reduce((sum, user) => sum + user.accountBalance, 0);
-  const totalProfit = users.reduce((sum, user) => sum + user.totalProfit, 0);
+  const totalBalance = users.reduce((sum, user) => sum + (user.accountBalance || 0), 0);
+  const totalProfit = users.reduce((sum, user) => sum + (user.totalProfit || 0), 0);
   const adminCount = users.filter(user => user.isAdmin).length;
   const twoFACount = users.filter(user => user.twoFactorEnabled).length;
 
@@ -119,7 +121,7 @@ const UserDashboard = ({ onNavigate }) => {
             </div>
             <div>
               <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Total Balance</p>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>${totalBalance.toLocaleString()}</p>
+              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{currency}{totalBalance.toLocaleString()}</p>
               <p className={`text-xs ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Platform funds</p>
             </div>
           </div>
@@ -132,7 +134,7 @@ const UserDashboard = ({ onNavigate }) => {
             </div>
             <div>
               <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Total Profit</p>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>${totalProfit.toLocaleString()}</p>
+              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{currency}{totalProfit.toLocaleString()}</p>
               <p className={`text-xs ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Generated</p>
             </div>
           </div>
@@ -243,7 +245,7 @@ const UserDashboard = ({ onNavigate }) => {
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <p className={`text-xs ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Balance</p>
-                  <p className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>${user.accountBalance.toLocaleString()}</p>
+                  <p className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{currency}{(user.accountBalance || 0).toLocaleString()}</p>
                 </div>
                 <div>
                   <p className={`text-xs ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Win Rate</p>
@@ -251,7 +253,7 @@ const UserDashboard = ({ onNavigate }) => {
                 </div>
                 <div>
                   <p className={`text-xs ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Profit</p>
-                  <p className="font-bold text-emerald-400">${user.totalProfit.toFixed(2)}</p>
+                  <p className="font-bold text-emerald-400">{currency}{(user.totalProfit || 0).toFixed(2)}</p>
                 </div>
                 <div>
                   <p className={`text-xs ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Joined</p>
