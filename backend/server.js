@@ -133,6 +133,12 @@ const ChallengePlan = mongoose.model('ChallengePlan', challengePlanSchema);
 // Payout Request Schema
 const payoutRequestSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userInfo: {
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    email: { type: String, required: true },
+    accountBalance: { type: Number, default: 0 }
+  },
   amount: { type: Number, required: true },
   paymentMethod: { type: String, required: true },
   paymentDetails: { type: String, required: true },
@@ -148,6 +154,11 @@ const PayoutRequest = mongoose.model('PayoutRequest', payoutRequestSchema);
 // Challenge Request Schema
 const challengeRequestSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userInfo: {
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    email: { type: String, required: true }
+  },
   challengeType: { type: String, required: true }, // '1-phase', '2-phase'
   accountSize: { type: String, required: true }, // '10k', '25k', '50k', '100k'
   amount: { type: Number, required: true },
@@ -517,6 +528,12 @@ app.post('/api/user/payout', authenticateToken, async (req, res) => {
     
     const payoutRequest = new PayoutRequest({
       userId: req.user.userId,
+      userInfo: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        accountBalance: user.accountBalance
+      },
       amount,
       paymentMethod,
       paymentDetails,
@@ -545,9 +562,19 @@ app.get('/api/user/payouts', authenticateToken, async (req, res) => {
 app.post('/api/user/challenge', authenticateToken, async (req, res) => {
   try {
     const { challengeType, accountSize, amount } = req.body;
+    const user = await User.findById(req.user.userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
     
     const challengeRequest = new ChallengeRequest({
       userId: req.user.userId,
+      userInfo: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email
+      },
       challengeType,
       accountSize,
       amount

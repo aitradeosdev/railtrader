@@ -108,9 +108,12 @@ const AdminPayoutsPage = () => {
                   </div>
                   <div>
                     <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {payout.userId ? `${payout.userId.firstName} ${payout.userId.lastName}` : 'Unknown User'}
+                      {payout.userInfo ? `${payout.userInfo.firstName} ${payout.userInfo.lastName}` : 
+                       (payout.userId ? `${payout.userId.firstName} ${payout.userId.lastName}` : 'Deleted User')}
                     </h3>
-                    <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>{payout.userId?.email || 'No email'}</p>
+                    <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>
+                      {payout.userInfo?.email || payout.userId?.email || 'No email available'}
+                    </p>
                     <div className="flex items-center gap-4 mt-1">
                       <span className={`text-xs ${isDark ? 'text-white/40' : 'text-gray-500'}`}>
                         {new Date(payout.createdAt).toLocaleDateString()}
@@ -161,17 +164,20 @@ const AdminPayoutsPage = () => {
                   <div className="flex justify-between">
                     <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Name:</span>
                     <span className={isDark ? 'text-white' : 'text-gray-900'}>
-                      {selectedPayout.userId ? `${selectedPayout.userId.firstName} ${selectedPayout.userId.lastName}` : 'Unknown User'}
+                      {payout.userInfo ? `${payout.userInfo.firstName} ${payout.userInfo.lastName}` : 
+                       (payout.userId ? `${payout.userId.firstName} ${payout.userId.lastName}` : 'Deleted User')}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Email:</span>
-                    <span className={isDark ? 'text-white' : 'text-gray-900'}>{selectedPayout.userId?.email || 'No email'}</span>
+                    <span className={isDark ? 'text-white' : 'text-gray-900'}>
+                      {selectedPayout.userInfo?.email || selectedPayout.userId?.email || 'No email available'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Balance:</span>
                     <span className={isDark ? 'text-white' : 'text-gray-900'}>
-                      {currency}{selectedPayout.userId.accountBalance?.toLocaleString()}
+                      {currency}{(selectedPayout.userInfo?.accountBalance || selectedPayout.userId?.accountBalance || 0).toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between">

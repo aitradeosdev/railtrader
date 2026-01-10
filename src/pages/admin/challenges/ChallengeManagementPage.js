@@ -40,14 +40,17 @@ const ChallengeManagementPage = ({ onNavigateToChallenge }) => {
     }
   };
 
-  const filteredChallenges = challenges.filter(challenge => 
-    (challenge.userId && (
-      challenge.userId.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      challenge.userId.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      challenge.userId.email.toLowerCase().includes(searchTerm.toLowerCase())
-    )) ||
-    challenge.accountSize.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredChallenges = challenges.filter(challenge => {
+    const userInfo = challenge.userInfo || challenge.userId;
+    return (
+      (userInfo && (
+        userInfo.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        userInfo.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        userInfo.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      )) ||
+      challenge.accountSize?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-20 md:pb-0">
@@ -102,7 +105,8 @@ const ChallengeManagementPage = ({ onNavigateToChallenge }) => {
                   </div>
                   <div>
                     <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {challenge.userId ? `${challenge.userId.firstName} ${challenge.userId.lastName}` : 'Unknown User'}
+                      {challenge.userInfo ? `${challenge.userInfo.firstName} ${challenge.userInfo.lastName}` : 
+                       (challenge.userId ? `${challenge.userId.firstName} ${challenge.userId.lastName}` : 'Deleted User')}
                     </h3>
                     <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>
                       {challenge.accountSize} {challenge.challengeType.toUpperCase()} - ${challenge.amount} (Phase {challenge.currentPhase})
