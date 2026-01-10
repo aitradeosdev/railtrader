@@ -23,6 +23,7 @@ const MT5CredentialsPage = ({ onBack }) => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
+      console.log('MT5 Data received:', data); // Debug log
       setMt5Data(data);
     } catch (error) {
       console.error('Error fetching MT5 credentials:', error);
@@ -60,6 +61,11 @@ const MT5CredentialsPage = ({ onBack }) => {
       </div>
 
       <GlassCard className="p-6">
+        {console.log('Checking condition:', {
+          hasLiveAccounts: mt5Data?.liveAccounts && mt5Data.liveAccounts.length > 0,
+          hasMt5Login: !!mt5Data?.mt5Login,
+          mt5Data
+        })}
         {(!mt5Data?.liveAccounts || mt5Data?.liveAccounts?.length === 0) && !mt5Data?.mt5Login ? (
           <div className="text-center py-12">
             <ExternalLink className="text-gray-400 mx-auto mb-4" size={48} />
