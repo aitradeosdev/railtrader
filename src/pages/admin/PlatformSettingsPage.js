@@ -18,6 +18,7 @@ const PlatformSettingsPage = ({ onBack }) => {
     backupFrequency: 'daily'
   });
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const fetchSettings = async () => {
     try {
