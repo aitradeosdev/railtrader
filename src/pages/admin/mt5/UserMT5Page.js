@@ -115,6 +115,25 @@ const UserMT5Page = ({ userId, onBack }) => {
     }
   };
 
+  const getTotalChallengeBalance = () => {
+    return challenges.reduce((total, challenge) => {
+      if (challenge.status === 'funded' || challenge.status === 'mt5_assigned') {
+        let accountSizeNum = 0;
+        if (challenge.accountSize && typeof challenge.accountSize === 'string') {
+          const sizeMatch = challenge.accountSize.toLowerCase().match(/(\d+)k?/);
+          if (sizeMatch) {
+            const baseNum = parseInt(sizeMatch[1]);
+            accountSizeNum = challenge.accountSize.toLowerCase().includes('k') ? baseNum * 1000 : baseNum;
+          }
+        } else if (typeof challenge.accountSize === 'number') {
+          accountSizeNum = challenge.accountSize;
+        }
+        return total + accountSizeNum;
+      }
+      return total;
+    }, 0);
+  };
+
   if (!user) {
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-20 md:pb-0">
@@ -173,7 +192,7 @@ const UserMT5Page = ({ userId, onBack }) => {
             </div>
             <div className="flex justify-between">
               <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Account Balance:</span>
-              <span className={isDark ? 'text-white' : 'text-gray-900'}>{currency}{user.accountBalance?.toLocaleString()}</span>
+              <span className={isDark ? 'text-white' : 'text-gray-900'}>{currency}{getTotalChallengeBalance().toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
               <span className={isDark ? 'text-white/60' : 'text-gray-600'}>2FA Enabled:</span>
