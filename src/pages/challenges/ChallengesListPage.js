@@ -16,7 +16,7 @@ const ChallengesListPage = ({ onSelectChallenge }) => {
   
   const fetchChallenges = async () => {
     try {
-      const response = await fetch(apiUrl('/challenge-plans'));
+      const response = await fetch(`${apiUrl()}/api/challenge-plans`);
       const data = await response.json();
       setChallenges(data);
     } catch (error) {

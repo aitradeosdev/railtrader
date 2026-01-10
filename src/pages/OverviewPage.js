@@ -19,7 +19,7 @@ const OverviewPage = () => {
   
   const fetchDashboardStats = async () => {
     try {
-      const response = await fetch(apiUrl('/user/dashboard-stats'), {
+      const response = await fetch(`${apiUrl()}/api/user/dashboard-stats`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();

@@ -19,7 +19,7 @@ const MT5CredentialsPage = ({ onBack }) => {
 
   const fetchMT5Credentials = async () => {
     try {
-      const response = await fetch(apiUrl('/user/mt5'), {
+      const response = await fetch(`${apiUrl()}/api/user/mt5`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();

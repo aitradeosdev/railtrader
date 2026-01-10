@@ -17,7 +17,7 @@ const ChallengeDashboard = ({ onBuyNew }) => {
 
   const fetchChallenges = async () => {
     try {
-      const response = await fetch(apiUrl('/user/challenges'), {
+      const response = await fetch(`${apiUrl()}/api/user/challenges`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -31,7 +31,7 @@ const ChallengeDashboard = ({ onBuyNew }) => {
 
   const handleRequestReview = async (challengeId) => {
     try {
-      const response = await fetch(apiUrl(`/user/challenge/${challengeId}/review`), {
+      const response = await fetch(`${apiUrl()}/api/user/challenge/${challengeId}/review`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });

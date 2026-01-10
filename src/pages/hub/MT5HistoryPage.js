@@ -17,7 +17,7 @@ const MT5HistoryPage = ({ onBack }) => {
 
   const fetchChallenges = async () => {
     try {
-      const response = await fetch(apiUrl('/user/challenges'), {
+      const response = await fetch(`${apiUrl()}/api/user/challenges`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
