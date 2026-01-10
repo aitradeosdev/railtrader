@@ -3,6 +3,7 @@ import { User, Search, ArrowRight } from 'lucide-react';
 import { GlassCard } from '../../../components/UIComponents';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useAuth } from '../../../contexts/AuthContext';
+import { apiUrl } from '../../../utils/api';
 
 const MT5ManagementPage = ({ onNavigateToUser }) => {
   const { isDark } = useTheme();
@@ -19,7 +20,7 @@ const MT5ManagementPage = ({ onNavigateToUser }) => {
 
   const fetchPendingMT5Requests = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/mt5-requests', {
+      const response = await fetch(`${apiUrl()}/api/admin/mt5-requests`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -32,7 +33,7 @@ const MT5ManagementPage = ({ onNavigateToUser }) => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/users', {
+      const response = await fetch(`${apiUrl()}/api/admin/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
