@@ -41,9 +41,11 @@ const ChallengeManagementPage = ({ onNavigateToChallenge }) => {
   };
 
   const filteredChallenges = challenges.filter(challenge => 
-    challenge.userId.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    challenge.userId.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    challenge.userId.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    challenge.userId && (
+      challenge.userId.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      challenge.userId.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      challenge.userId.email.toLowerCase().includes(searchTerm.toLowerCase())
+    ) ||
     challenge.accountSize.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -100,7 +102,7 @@ const ChallengeManagementPage = ({ onNavigateToChallenge }) => {
                   </div>
                   <div>
                     <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {challenge.userId.firstName} {challenge.userId.lastName}
+                      {challenge.userId ? `${challenge.userId.firstName} ${challenge.userId.lastName}` : 'Unknown User'}
                     </h3>
                     <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>
                       {challenge.accountSize} {challenge.challengeType.toUpperCase()} - ${challenge.amount} (Phase {challenge.currentPhase})
