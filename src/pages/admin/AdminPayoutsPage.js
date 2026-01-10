@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';`nimport { apiUrl } from '../../utils/api';
 import { Wallet, User, Clock, CheckCircle, XCircle, Eye } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -19,7 +19,7 @@ const AdminPayoutsPage = () => {
 
   const fetchPayouts = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/payouts', {
+      const response = await fetch('apiUrl('/admin/payouts', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -33,7 +33,7 @@ const AdminPayoutsPage = () => {
 
   const handleStatusUpdate = async (payoutId, status) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/payouts/${payoutId}`, {
+      const response = await fetch(`apiUrl('/admin/payouts/${payoutId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

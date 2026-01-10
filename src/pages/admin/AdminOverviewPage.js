@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';`nimport { apiUrl } from '../../utils/api';
 import { Users, TrendingUp, Shield, Trophy, Wallet, Activity } from 'lucide-react';
 import { GlassCard, MetricCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -18,7 +18,7 @@ const AdminOverviewPage = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/stats', {
+      const response = await fetch('apiUrl('/admin/stats', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
