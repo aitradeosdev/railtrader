@@ -12,26 +12,16 @@ const ChallengeConfigPage = ({ challenge, onBack, onContinue }) => {
   const [selectedAddons, setSelectedAddons] = useState([]);
 
   const leverageOptions = challenge.leverageOptions || ['1:30', '1:50', '1:100', '1:200'];
-  const addons = [
-    { 
-      id: 'resetProtection', 
-      name: 'Reset Protection', 
-      price: challenge.addOns?.resetProtection?.price || 49, 
-      description: challenge.addOns?.resetProtection?.description || 'Reset your challenge once if you fail' 
-    },
-    { 
-      id: 'timeExtension', 
-      name: 'Time Extension', 
-      price: challenge.addOns?.timeExtension?.price || 29, 
-      description: challenge.addOns?.timeExtension?.description || 'Add 30 extra days to complete' 
-    },
-    { 
-      id: 'profitBoost', 
-      name: 'Profit Boost', 
-      price: challenge.addOns?.profitBoost?.price || 99, 
-      description: challenge.addOns?.profitBoost?.description || 'Increase profit share by 5%' 
-    }
-  ];
+  
+  // Only show enabled addons
+  const addons = Object.entries(challenge.addOns || {})
+    .filter(([key, addon]) => addon.enabled !== false)
+    .map(([key, addon]) => ({
+      id: key,
+      name: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
+      price: addon.price || 0,
+      description: addon.description || ''
+    }));
 
   const toggleAddon = (addonId) => {
     setSelectedAddons(prev => 
