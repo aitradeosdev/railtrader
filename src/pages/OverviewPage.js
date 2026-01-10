@@ -4,6 +4,7 @@ import Footer from '../components/Footer';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { apiUrl } from '../utils/api';
 
 const OverviewPage = () => {
   const { isDark } = useTheme();
@@ -18,7 +19,7 @@ const OverviewPage = () => {
   
   const fetchDashboardStats = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/user/dashboard-stats', {
+      const response = await fetch(apiUrl('/user/dashboard-stats'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { apiUrl } from '../utils/api';
 
 const CurrencyContext = createContext();
 
@@ -19,8 +20,7 @@ export const CurrencyProvider = ({ children }) => {
 
   const fetchCurrency = async () => {
     try {
-      const API_BASE = process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000/api';
-      const response = await fetch(`${API_BASE}/platform-settings`);
+      const response = await fetch(apiUrl('/platform-settings'));
       const data = await response.json();
       setCurrency(data.currency || '$');
     } catch (error) {
