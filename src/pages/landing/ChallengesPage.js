@@ -158,7 +158,7 @@ const ChallengesPage = ({ onGetStarted, onNavigate, onAuthRequest }) => {
                   </div>
                   
                   <button 
-                    onClick={() => handleSelectChallenge({...challenge, selectedType})}}
+                    onClick={() => handleSelectChallenge({...challenge, selectedType})}
                     className={`w-full py-4 rounded-2xl font-bold transition-all duration-200 ${
                       challenge.popular 
                         ? 'bg-gradient-to-r from-blue-500/90 to-blue-600/90 backdrop-blur-xl text-white hover:scale-105 active:scale-95 shadow-2xl shadow-blue-500/30 border border-white/20' 
