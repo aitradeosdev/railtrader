@@ -4,6 +4,7 @@ import { GlassCard, MetricCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { apiUrl } from '../../utils/api';
 
 const AdminOverviewPage = () => {
   const { isDark } = useTheme();
@@ -18,7 +19,7 @@ const AdminOverviewPage = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/stats', {
+      const response = await fetch(`${apiUrl()}/api/admin/stats`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
