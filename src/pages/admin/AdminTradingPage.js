@@ -128,6 +128,8 @@ const AdminTradingPage = () => {
 
   // Helper function to check if user has MT5 credentials
   const getUserMT5Status = (user) => {
+    console.log(`Checking MT5 for user ${user.email}:`, { userMT5: user.mt5Login, challengesCount: challenges.length });
+    
     // Check legacy MT5 credentials
     if (user.mt5Login) {
       return {
@@ -138,7 +140,9 @@ const AdminTradingPage = () => {
     }
     
     // Check challenge-based MT5 accounts
-    const userChallenges = challenges.filter(c => c.userId._id === user._id);
+    const userChallenges = challenges.filter(c => c.userId && c.userId._id === user._id);
+    console.log(`User ${user.email} challenges:`, userChallenges);
+    
     const activeMT5Accounts = [];
     
     userChallenges.forEach(challenge => {
@@ -148,8 +152,10 @@ const AdminTradingPage = () => {
       }
     });
     
+    console.log(`User ${user.email} active MT5 accounts:`, activeMT5Accounts);
+    
     if (activeMT5Accounts.length > 0) {
-      const account = activeMT5Accounts[0]; // Show first active account
+      const account = activeMT5Accounts[0];
       return {
         hasCredentials: true,
         display: `MT5: ${account.login} | ${account.server} (${account.accountType.toUpperCase()})`,
@@ -162,11 +168,7 @@ const AdminTradingPage = () => {
       display: 'No MT5 credentials',
       type: 'none'
     };
-  }; 
-    user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  };
 
   const filteredUsers = users.filter(user => 
     user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
