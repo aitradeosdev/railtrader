@@ -1201,8 +1201,6 @@ app.post('/api/payment/initialize', authenticateToken, async (req, res) => {
       amount: Math.round(amount * 100), // Convert to kobo and ensure integer
       currency: 'NGN',
       callback_url: `${req.get('origin')}/?tab=challenges`,
-      send_email: false, // Disable Paystack email notifications
-      send_sms: false,   // Disable Paystack SMS notifications
       metadata: {
         userId: user._id.toString(),
         challengeType: challengeType || '1-phase',
