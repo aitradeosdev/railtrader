@@ -209,6 +209,13 @@ const platformSettingsSchema = new mongoose.Schema({
   registrationEnabled: { type: Boolean, default: true },
   emailNotifications: { type: Boolean, default: true },
   backupFrequency: { type: String, default: 'daily' },
+  paystack: {
+    testMode: { type: Boolean, default: true },
+    testPublicKey: { type: String, default: '' },
+    testSecretKey: { type: String, default: '' },
+    livePublicKey: { type: String, default: '' },
+    liveSecretKey: { type: String, default: '' }
+  },
   updatedAt: { type: Date, default: Date.now }
 });
 
@@ -1160,6 +1167,114 @@ app.get('/api/platform-settings', async (req, res) => {
       await settings.save();
     }
     res.json({ currency: settings.currency });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Paystack payment endpoints
+app.post('/api/payment/initialize', authenticateToken, async (req, res) => {
+  try {
+    const { amount, challengeType, accountSize } = req.body;
+    const user = await User.findById(req.user.userId);
+    const settings = await PlatformSettings.findOne();
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const secretKey = settings?.paystack?.testMode 
+      ? settings.paystack.testSecretKey 
+      : settings.paystack.liveSecretKey;
+    
+    if (!secretKey) {
+      return res.status(500).json({ message: 'Payment configuration not set' });
+    }
+    
+    const response = await axios.post('https://api.paystack.co/transaction/initialize', {
+      email: user.email,
+      amount: amount * 100, // Convert to kobo
+      currency: 'NGN',
+      metadata: {
+        userId: user._id,
+        challengeType,
+        accountSize,
+        firstName: user.firstName,
+        lastName: user.lastName
+      }
+    }, {
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    console.error('Paystack initialization error:', error.response?.data || error.message);
+    res.status(500).json({ message: 'Payment initialization failed', error: error.message });
+  }
+});
+
+app.post('/api/payment/verify', authenticateToken, async (req, res) => {
+  try {
+    const { reference } = req.body;
+    const settings = await PlatformSettings.findOne();
+    
+    const secretKey = settings?.paystack?.testMode 
+      ? settings.paystack.testSecretKey 
+      : settings.paystack.liveSecretKey;
+    
+    const response = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, {
+      headers: {
+        Authorization: `Bearer ${secretKey}`
+      }
+    });
+    
+    if (response.data.status && response.data.data.status === 'success') {
+      const { metadata } = response.data.data;
+      
+      // Create challenge request
+      const challengeRequest = new ChallengeRequest({
+        userId: metadata.userId,
+        userInfo: {
+          firstName: metadata.firstName,
+          lastName: metadata.lastName,
+          email: response.data.data.customer.email
+        },
+        challengeType: metadata.challengeType,
+        accountSize: metadata.accountSize,
+        amount: response.data.data.amount / 100 // Convert from kobo
+      });
+      
+      await challengeRequest.save();
+      
+      res.json({ 
+        status: 'success', 
+        message: 'Payment verified and challenge created',
+        challenge: challengeRequest
+      });
+    } else {
+      res.status(400).json({ message: 'Payment verification failed' });
+    }
+  } catch (error) {
+    console.error('Paystack verification error:', error.response?.data || error.message);
+    res.status(500).json({ message: 'Payment verification failed', error: error.message });
+  }
+});
+
+// Get Paystack public key
+app.get('/api/payment/config', async (req, res) => {
+  try {
+    const settings = await PlatformSettings.findOne();
+    const publicKey = settings?.paystack?.testMode 
+      ? settings.paystack.testPublicKey 
+      : settings.paystack.livePublicKey;
+    
+    res.json({ 
+      publicKey,
+      testMode: settings?.paystack?.testMode || true
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
