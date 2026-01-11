@@ -1149,7 +1149,19 @@ app.get('/api/admin/platform-settings', authenticateAdmin, async (req, res) => {
       settings = new PlatformSettings();
       await settings.save();
     }
-    res.json(settings);
+    
+    // Decrypt sensitive keys for admin view
+    const decryptedSettings = { ...settings.toObject() };
+    if (decryptedSettings.paystack) {
+      if (decryptedSettings.paystack.testSecretKey) {
+        decryptedSettings.paystack.testSecretKey = decrypt(decryptedSettings.paystack.testSecretKey) || decryptedSettings.paystack.testSecretKey;
+      }
+      if (decryptedSettings.paystack.liveSecretKey) {
+        decryptedSettings.paystack.liveSecretKey = decrypt(decryptedSettings.paystack.liveSecretKey) || decryptedSettings.paystack.liveSecretKey;
+      }
+    }
+    
+    res.json(decryptedSettings);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -1159,13 +1171,36 @@ app.put('/api/admin/platform-settings', authenticateAdmin, async (req, res) => {
   try {
     let settings = await PlatformSettings.findOne();
     if (!settings) {
-      settings = new PlatformSettings(req.body);
-    } else {
-      Object.assign(settings, req.body);
-      settings.updatedAt = new Date();
+      settings = new PlatformSettings();
     }
+    
+    // Encrypt sensitive keys before saving
+    const updatedData = { ...req.body };
+    if (updatedData.paystack) {
+      if (updatedData.paystack.testSecretKey && updatedData.paystack.testSecretKey.trim()) {
+        updatedData.paystack.testSecretKey = encrypt(updatedData.paystack.testSecretKey);
+      }
+      if (updatedData.paystack.liveSecretKey && updatedData.paystack.liveSecretKey.trim()) {
+        updatedData.paystack.liveSecretKey = encrypt(updatedData.paystack.liveSecretKey);
+      }
+    }
+    
+    Object.assign(settings, updatedData);
+    settings.updatedAt = new Date();
     await settings.save();
-    res.json(settings);
+    
+    // Return decrypted version for admin view
+    const responseData = { ...settings.toObject() };
+    if (responseData.paystack) {
+      if (responseData.paystack.testSecretKey) {
+        responseData.paystack.testSecretKey = decrypt(responseData.paystack.testSecretKey) || responseData.paystack.testSecretKey;
+      }
+      if (responseData.paystack.liveSecretKey) {
+        responseData.paystack.liveSecretKey = decrypt(responseData.paystack.liveSecretKey) || responseData.paystack.liveSecretKey;
+      }
+    }
+    
+    res.json(responseData);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -1197,8 +1232,8 @@ app.post('/api/payment/initialize', authenticateToken, async (req, res) => {
     }
     
     const secretKey = settings?.paystack?.testMode 
-      ? settings.paystack.testSecretKey 
-      : settings.paystack.liveSecretKey;
+      ? (decrypt(settings.paystack.testSecretKey) || settings.paystack.testSecretKey)
+      : (decrypt(settings.paystack.liveSecretKey) || settings.paystack.liveSecretKey);
     
     if (!secretKey) {
       return res.status(500).json({ message: 'Payment configuration not set' });
@@ -1265,8 +1300,8 @@ app.post('/api/payment/verify', authenticateToken, async (req, res) => {
 
     const settings = await PlatformSettings.findOne();
     const secretKey = settings?.paystack?.testMode 
-      ? settings.paystack.testSecretKey 
-      : settings.paystack.liveSecretKey;
+      ? (decrypt(settings.paystack.testSecretKey) || settings.paystack.testSecretKey)
+      : (decrypt(settings.paystack.liveSecretKey) || settings.paystack.liveSecretKey);
     
     if (!secretKey) {
       return res.status(500).json({ success: false, message: 'Payment configuration error' });
@@ -1342,8 +1377,8 @@ app.get('/api/payment/banks', async (req, res) => {
   try {
     const settings = await PlatformSettings.findOne();
     const secretKey = settings?.paystack?.testMode 
-      ? settings.paystack.testSecretKey 
-      : settings.paystack.liveSecretKey;
+      ? (decrypt(settings.paystack.testSecretKey) || settings.paystack.testSecretKey)
+      : (decrypt(settings.paystack.liveSecretKey) || settings.paystack.liveSecretKey);
     
     if (!secretKey) {
       return res.status(500).json({ message: 'Payment configuration not set' });
@@ -1372,8 +1407,8 @@ app.post('/api/payment/resolve-account', authenticateToken, async (req, res) => 
     
     const settings = await PlatformSettings.findOne();
     const secretKey = settings?.paystack?.testMode 
-      ? settings.paystack.testSecretKey 
-      : settings.paystack.liveSecretKey;
+      ? (decrypt(settings.paystack.testSecretKey) || settings.paystack.testSecretKey)
+      : (decrypt(settings.paystack.liveSecretKey) || settings.paystack.liveSecretKey);
     
     if (!secretKey) {
       return res.status(500).json({ message: 'Payment configuration not set' });

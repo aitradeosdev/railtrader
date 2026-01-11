@@ -56,7 +56,6 @@ const PaymentMethodsPage = ({ onBack }) => {
           setNewMethod(prev => ({ ...prev, accountName: data.data.account_name }));
         }
       } else {
-        const errorData = await response.json();
         if (response.status === 429) {
           setResolutionError('Daily verification limit reached. Please enter account name manually.');
         } else {
