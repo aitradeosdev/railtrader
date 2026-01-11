@@ -8,7 +8,7 @@ import { apiUrl } from '../../utils/api';
 
 const TwoFactorSetupPage = ({ onBack }) => {
   const { isDark } = useTheme();
-  const { token } = useAuth();
+  const { token, refreshUser } = useAuth();
   const [step, setStep] = useState(1);
   const [qrCode, setQrCode] = useState('');
   const [secret, setSecret] = useState('');
@@ -57,6 +57,7 @@ const TwoFactorSetupPage = ({ onBack }) => {
       if (response.ok) {
         setMessage('2FA enabled successfully!');
         setStep(3);
+        await refreshUser(); // Refresh user data to show 2FA is enabled
       } else {
         setMessage(data.message);
       }

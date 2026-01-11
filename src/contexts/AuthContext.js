@@ -123,6 +123,7 @@ export const AuthProvider = ({ children }) => {
     register,
     login,
     logout,
+    refreshUser: fetchUser, // Add refresh function
     updateProfile: async (profileData) => {
       try {
         const response = await fetch(`${apiUrl()}/api/user/profile`, {

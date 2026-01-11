@@ -7,7 +7,7 @@ import { apiUrl } from '../../utils/api';
 
 const AccountSettingsPage = ({ onBack, onNavigate }) => {
   const { isDark, themeMode, setTheme } = useTheme();
-  const { user, token } = useAuth();
+  const { user, token, refreshUser } = useAuth();
 
   const disableTwoFactor = async () => {
     try {
@@ -19,7 +19,7 @@ const AccountSettingsPage = ({ onBack, onNavigate }) => {
       });
       
       if (response.ok) {
-        window.location.reload(); // Refresh to update user data
+        await refreshUser(); // Refresh user data instead of page reload
       }
     } catch (error) {
       console.error('Error disabling 2FA:', error);

@@ -27,6 +27,8 @@ app.use(express.urlencoded({ extended: true }));
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY ? Buffer.from(process.env.ENCRYPTION_KEY, 'utf8').subarray(0, 32) : crypto.randomBytes(32);
 const IV_LENGTH = 16;
 
+
+
 const encrypt = (text) => {
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv('aes-256-cbc', ENCRYPTION_KEY, iv);
@@ -46,7 +48,7 @@ const decrypt = (text) => {
     decrypted += decipher.final('utf8');
     return decrypted;
   } catch (error) {
-    console.log('Decryption failed, returning null:', error.message);
+    // Silently return null for corrupted data instead of logging
     return null;
   }
 };
@@ -113,6 +115,7 @@ const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     accountName: { type: String },
     bankName: { type: String },
+    bankCode: { type: String },
     accountNumber: { type: String },
     walletAddress: { type: String },
     isDefault: { type: Boolean, default: false }
@@ -513,48 +516,42 @@ app.post('/api/user/2fa/disable', authenticateToken, async (req, res) => {
 // Get MT5 credentials from user profile or active challenges
 app.get('/api/user/mt5', authenticateToken, async (req, res) => {
   try {
-    // Get all funded challenges with live accounts
-    const fundedChallenges = await ChallengeRequest.find({
+    // Get all challenges with active MT5 accounts and return current active account for each
+    const challengesWithMT5 = await ChallengeRequest.find({
       userId: req.user.userId,
-      status: 'funded',
-      'mt5Accounts.active': true,
-      'mt5Accounts.accountType': 'live'
-    });
-    
-    const liveAccounts = [];
-    fundedChallenges.forEach(challenge => {
-      const activeLiveAccounts = challenge.mt5Accounts.filter(acc => acc.active && acc.accountType === 'live');
-      activeLiveAccounts.forEach(account => {
-        liveAccounts.push({
-          challengeId: challenge._id,
-          challengeType: challenge.challengeType,
-          accountSize: challenge.accountSize,
-          mt5Server: account.server,
-          mt5Login: account.login,
-          mt5Password: account.password,
-          assignedAt: account.assignedAt
-        });
-      });
-    });
-    
-    if (liveAccounts.length > 0) {
-      return res.json({ liveAccounts });
-    }
-    
-    // Fallback: check for any active MT5 account (evaluation)
-    const activeChallenge = await ChallengeRequest.findOne({
-      userId: req.user.userId,
-      status: 'mt5_assigned',
       'mt5Accounts.active': true
     });
     
-    if (activeChallenge && activeChallenge.mt5Accounts.length > 0) {
-      const activeMT5 = activeChallenge.mt5Accounts.find(acc => acc.active);
-      return res.json({
-        mt5Server: activeMT5.server,
-        mt5Login: activeMT5.login,
-        mt5Password: activeMT5.password
+    if (challengesWithMT5.length > 0) {
+      const allAccounts = [];
+      challengesWithMT5.forEach(challenge => {
+        const activeAccount = challenge.mt5Accounts.find(acc => acc.active);
+        if (activeAccount) {
+          allAccounts.push({
+            challengeId: challenge._id,
+            challengeType: challenge.challengeType,
+            accountSize: challenge.accountSize,
+            mt5Server: activeAccount.server,
+            mt5Login: activeAccount.login,
+            mt5Password: activeAccount.password,
+            assignedAt: activeAccount.assignedAt,
+            accountType: activeAccount.accountType || 'evaluation'
+          });
+        }
       });
+      
+      // Separate live and evaluation accounts
+      const liveAccounts = allAccounts.filter(acc => acc.accountType === 'live');
+      const evaluationAccounts = allAccounts.filter(acc => acc.accountType === 'evaluation');
+      
+      // Return both types if they exist
+      const result = {};
+      if (liveAccounts.length > 0) result.liveAccounts = liveAccounts;
+      if (evaluationAccounts.length > 0) result.evaluationAccounts = evaluationAccounts;
+      
+      if (Object.keys(result).length > 0) {
+        return res.json(result);
+      }
     }
     
     // Final fallback to user profile MT5 credentials (legacy)
@@ -695,10 +692,10 @@ app.post('/api/user/challenge/:id/review', authenticateToken, async (req, res) =
 // Add payment method
 app.post('/api/user/payment-methods', authenticateToken, async (req, res) => {
   try {
-    const { type, name, accountName, bankName, accountNumber, walletAddress } = req.body;
+    const { type, name, accountName, bankName, bankCode, accountNumber, walletAddress } = req.body;
     const user = await User.findById(req.user.userId);
     
-    user.paymentMethods.push({ type, name, accountName, bankName, accountNumber, walletAddress });
+    user.paymentMethods.push({ type, name, accountName, bankName, bankCode, accountNumber, walletAddress });
     await user.save();
     
     res.json({ message: 'Payment method added successfully' });
@@ -711,7 +708,17 @@ app.post('/api/user/payment-methods', authenticateToken, async (req, res) => {
 app.delete('/api/user/payment-methods/:id', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
-    user.paymentMethods.id(req.params.id).remove();
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Find and remove the payment method
+    const methodIndex = user.paymentMethods.findIndex(method => method._id.toString() === req.params.id);
+    if (methodIndex === -1) {
+      return res.status(404).json({ message: 'Payment method not found' });
+    }
+    
+    user.paymentMethods.splice(methodIndex, 1);
     await user.save();
     
     res.json({ message: 'Payment method deleted successfully' });
@@ -866,7 +873,8 @@ app.get('/api/admin/payouts', authenticateAdmin, async (req, res) => {
             mt5Data = JSON.parse(decryptedData);
           }
         } catch (error) {
-          console.error('Error decrypting MT5 data:', error);
+          console.error('Error decrypting MT5 data for payout:', payout._id, error.message);
+          mt5Data = { error: 'Failed to decrypt MT5 data' };
         }
       }
       return {
@@ -968,6 +976,11 @@ app.put('/api/admin/challenges/:id/assign-mt5', authenticateAdmin, async (req, r
       return res.status(404).json({ message: 'Challenge not found' });
     }
     
+    // Initialize mt5Accounts array if it doesn't exist
+    if (!challenge.mt5Accounts) {
+      challenge.mt5Accounts = [];
+    }
+    
     // Deactivate previous MT5 accounts
     challenge.mt5Accounts.forEach(acc => acc.active = false);
     
@@ -976,7 +989,7 @@ app.put('/api/admin/challenges/:id/assign-mt5', authenticateAdmin, async (req, r
       server,
       login,
       password,
-      phase: challenge.currentPhase,
+      phase: challenge.currentPhase || 1,
       accountType,
       active: true
     });
@@ -1321,6 +1334,78 @@ app.get('/api/payment/config', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get list of banks from Paystack
+app.get('/api/payment/banks', async (req, res) => {
+  try {
+    const settings = await PlatformSettings.findOne();
+    const secretKey = settings?.paystack?.testMode 
+      ? settings.paystack.testSecretKey 
+      : settings.paystack.liveSecretKey;
+    
+    if (!secretKey) {
+      return res.status(500).json({ message: 'Payment configuration not set' });
+    }
+    
+    const response = await axios.get('https://api.paystack.co/bank', {
+      headers: {
+        Authorization: `Bearer ${secretKey}`
+      }
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch banks', error: error.message });
+  }
+});
+
+// Resolve bank account details
+app.post('/api/payment/resolve-account', authenticateToken, async (req, res) => {
+  try {
+    const { account_number, bank_code } = req.body;
+    
+    if (!account_number || !bank_code) {
+      return res.status(400).json({ message: 'Account number and bank code are required' });
+    }
+    
+    const settings = await PlatformSettings.findOne();
+    const secretKey = settings?.paystack?.testMode 
+      ? settings.paystack.testSecretKey 
+      : settings.paystack.liveSecretKey;
+    
+    if (!secretKey) {
+      return res.status(500).json({ message: 'Payment configuration not set' });
+    }
+    
+    const response = await axios.get(`https://api.paystack.co/bank/resolve`, {
+      params: {
+        account_number,
+        bank_code
+      },
+      headers: {
+        Authorization: `Bearer ${secretKey}`
+      }
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    console.error('Account resolution error:', error.response?.data || error.message);
+    
+    // Handle specific Paystack errors
+    if (error.response?.data?.message?.includes('daily limit')) {
+      return res.status(429).json({ 
+        message: 'Daily verification limit reached. Please enter account name manually or try again tomorrow.',
+        limitExceeded: true
+      });
+    }
+    
+    if (error.response?.status === 422) {
+      return res.status(422).json({ message: 'Invalid account details' });
+    }
+    
+    res.status(500).json({ message: 'Failed to resolve account', error: error.message });
   }
 });
 

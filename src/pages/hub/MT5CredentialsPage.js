@@ -60,7 +60,7 @@ const MT5CredentialsPage = ({ onBack }) => {
       </div>
 
       <GlassCard className="p-6">
-        {!mt5Data?.liveAccounts && !mt5Data?.mt5Login ? (
+        {!mt5Data?.liveAccounts && !mt5Data?.evaluationAccounts && !mt5Data?.mt5Login ? (
           <div className="text-center py-12">
             <ExternalLink className="text-gray-400 mx-auto mb-4" size={48} />
             <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>No MT5 Account Assigned</h3>
@@ -74,101 +74,156 @@ const MT5CredentialsPage = ({ onBack }) => {
               <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Trading Accounts</h2>
             </div>
             
-            {mt5Data?.liveAccounts ? (
-              <div className="space-y-6">
-                {mt5Data.liveAccounts.map((account, index) => (
-                  <div key={index} className={`p-6 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-gray-50'} border-l-4 border-emerald-500`}>
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          {account.accountSize} {account.challengeType.toUpperCase()} - LIVE ACCOUNT
-                        </h3>
-                        <p className={`text-xs ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>Funded Account</p>
-                      </div>
-                      <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-medium rounded-full">LIVE</span>
+            <div className="space-y-6">
+              {/* Live Accounts */}
+              {mt5Data?.liveAccounts?.map((account, index) => (
+                <div key={`live-${index}`} className={`p-6 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-gray-50'} border-l-4 border-emerald-500`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {account.accountSize} {account.challengeType.toUpperCase()} - LIVE ACCOUNT
+                      </h3>
+                      <p className={`text-xs ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>Funded Account</p>
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-white'}`}>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className={`text-sm font-medium ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Server</p>
-                          <button onClick={() => copyToClipboard(account.mt5Server)} className="p-1 hover:bg-white/10 rounded">
+                    <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-medium rounded-full">LIVE</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-white'}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className={`text-sm font-medium ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Server</p>
+                        <button onClick={() => copyToClipboard(account.mt5Server)} className="p-1 hover:bg-white/10 rounded">
+                          <Copy size={14} className={isDark ? 'text-white/40' : 'text-gray-400'} />
+                        </button>
+                      </div>
+                      <span className={`font-mono text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>{account.mt5Server}</span>
+                    </div>
+
+                    <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-white'}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className={`text-sm font-medium ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Login</p>
+                        <button onClick={() => copyToClipboard(account.mt5Login)} className="p-1 hover:bg-white/10 rounded">
+                          <Copy size={14} className={isDark ? 'text-white/40' : 'text-gray-400'} />
+                        </button>
+                      </div>
+                      <span className={`font-mono text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>{account.mt5Login}</span>
+                    </div>
+
+                    <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-white'}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className={`text-sm font-medium ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Password</p>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => togglePassword(`live-${index}`)} className="p-1 hover:bg-white/10 rounded">
+                            {showPassword[`live-${index}`] ? <EyeOff size={14} /> : <Eye size={14} />}
+                          </button>
+                          <button onClick={() => copyToClipboard(account.mt5Password)} className="p-1 hover:bg-white/10 rounded">
                             <Copy size={14} className={isDark ? 'text-white/40' : 'text-gray-400'} />
                           </button>
                         </div>
-                        <span className={`font-mono text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>{account.mt5Server}</span>
                       </div>
+                      <span className={`font-mono text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {showPassword[`live-${index}`] ? account.mt5Password : '••••••••••'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Evaluation Accounts */}
+              {mt5Data?.evaluationAccounts?.map((account, index) => (
+                <div key={`eval-${index}`} className={`p-6 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-gray-50'} border-l-4 border-blue-500`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {account.accountSize} {account.challengeType.toUpperCase()} - EVALUATION
+                      </h3>
+                      <p className={`text-xs ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Challenge Account</p>
+                    </div>
+                    <span className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-medium rounded-full">EVAL</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-white'}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className={`text-sm font-medium ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Server</p>
+                        <button onClick={() => copyToClipboard(account.mt5Server)} className="p-1 hover:bg-white/10 rounded">
+                          <Copy size={14} className={isDark ? 'text-white/40' : 'text-gray-400'} />
+                        </button>
+                      </div>
+                      <span className={`font-mono text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>{account.mt5Server}</span>
+                    </div>
 
-                      <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-white'}`}>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className={`text-sm font-medium ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Login</p>
-                          <button onClick={() => copyToClipboard(account.mt5Login)} className="p-1 hover:bg-white/10 rounded">
+                    <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-white'}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className={`text-sm font-medium ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Login</p>
+                        <button onClick={() => copyToClipboard(account.mt5Login)} className="p-1 hover:bg-white/10 rounded">
+                          <Copy size={14} className={isDark ? 'text-white/40' : 'text-gray-400'} />
+                        </button>
+                      </div>
+                      <span className={`font-mono text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>{account.mt5Login}</span>
+                    </div>
+
+                    <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-white'}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className={`text-sm font-medium ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Password</p>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => togglePassword(`eval-${index}`)} className="p-1 hover:bg-white/10 rounded">
+                            {showPassword[`eval-${index}`] ? <EyeOff size={14} /> : <Eye size={14} />}
+                          </button>
+                          <button onClick={() => copyToClipboard(account.mt5Password)} className="p-1 hover:bg-white/10 rounded">
                             <Copy size={14} className={isDark ? 'text-white/40' : 'text-gray-400'} />
                           </button>
                         </div>
-                        <span className={`font-mono text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>{account.mt5Login}</span>
                       </div>
-
-                      <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-white'}`}>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className={`text-sm font-medium ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Password</p>
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => togglePassword(index)} className="p-1 hover:bg-white/10 rounded">
-                              {showPassword[index] ? <EyeOff size={14} /> : <Eye size={14} />}
-                            </button>
-                            <button onClick={() => copyToClipboard(account.mt5Password)} className="p-1 hover:bg-white/10 rounded">
-                              <Copy size={14} className={isDark ? 'text-white/40' : 'text-gray-400'} />
-                            </button>
-                          </div>
-                        </div>
-                        <span className={`font-mono text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          {showPassword[index] ? account.mt5Password : '••••••••••'}
-                        </span>
-                      </div>
+                      <span className={`font-mono text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {showPassword[`eval-${index}`] ? account.mt5Password : '••••••••••'}
+                      </span>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className={`p-6 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className={`text-sm font-medium ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Server</p>
-                    <button onClick={() => copyToClipboard(mt5Data.mt5Server)} className="p-1 hover:bg-white/10 rounded">
-                      <Copy size={14} className={isDark ? 'text-white/40' : 'text-gray-400'} />
-                    </button>
-                  </div>
-                  <span className={`font-mono text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>{mt5Data.mt5Server}</span>
                 </div>
-
-                <div className={`p-6 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className={`text-sm font-medium ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Login</p>
-                    <button onClick={() => copyToClipboard(mt5Data.mt5Login)} className="p-1 hover:bg-white/10 rounded">
-                      <Copy size={14} className={isDark ? 'text-white/40' : 'text-gray-400'} />
-                    </button>
-                  </div>
-                  <span className={`font-mono text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>{mt5Data.mt5Login}</span>
-                </div>
-
-                <div className={`p-6 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className={`text-sm font-medium ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Password</p>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => togglePassword(0)} className="p-1 hover:bg-white/10 rounded">
-                        {showPassword[0] ? <EyeOff size={14} /> : <Eye size={14} />}
-                      </button>
-                      <button onClick={() => copyToClipboard(mt5Data.mt5Password)} className="p-1 hover:bg-white/10 rounded">
+              ))}
+              {/* Legacy single account display */}
+              {!mt5Data?.liveAccounts && !mt5Data?.evaluationAccounts && mt5Data?.mt5Login && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className={`p-6 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className={`text-sm font-medium ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Server</p>
+                      <button onClick={() => copyToClipboard(mt5Data.mt5Server)} className="p-1 hover:bg-white/10 rounded">
                         <Copy size={14} className={isDark ? 'text-white/40' : 'text-gray-400'} />
                       </button>
                     </div>
+                    <span className={`font-mono text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>{mt5Data.mt5Server}</span>
                   </div>
-                  <span className={`font-mono text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {showPassword[0] ? mt5Data.mt5Password : '••••••••••'}
-                  </span>
+
+                  <div className={`p-6 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className={`text-sm font-medium ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Login</p>
+                      <button onClick={() => copyToClipboard(mt5Data.mt5Login)} className="p-1 hover:bg-white/10 rounded">
+                        <Copy size={14} className={isDark ? 'text-white/40' : 'text-gray-400'} />
+                      </button>
+                    </div>
+                    <span className={`font-mono text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>{mt5Data.mt5Login}</span>
+                  </div>
+
+                  <div className={`p-6 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className={`text-sm font-medium ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Password</p>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => togglePassword(0)} className="p-1 hover:bg-white/10 rounded">
+                          {showPassword[0] ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                        <button onClick={() => copyToClipboard(mt5Data.mt5Password)} className="p-1 hover:bg-white/10 rounded">
+                          <Copy size={14} className={isDark ? 'text-white/40' : 'text-gray-400'} />
+                        </button>
+                      </div>
+                    </div>
+                    <span className={`font-mono text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {showPassword[0] ? mt5Data.mt5Password : '••••••••••'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             <div className={`mt-6 p-4 rounded-2xl ${isDark ? 'bg-blue-500/10 border-blue-500/20' : 'bg-blue-50 border-blue-200'} border`}>
               <p className={`text-sm ${isDark ? 'text-blue-300' : 'text-blue-700'} mb-3`}>
