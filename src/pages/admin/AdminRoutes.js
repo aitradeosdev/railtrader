@@ -4,6 +4,7 @@ import UserManagementPage from './UserManagementPage';
 import AnalyticsPage from './AnalyticsPage';
 import SecuritySettingsPage from './SecuritySettingsPage';
 import PlatformSettingsPage from './PlatformSettingsPage';
+import PaystackSettingsPage from './PaystackSettingsPage';
 
 const AdminRoutes = () => {
   const [currentPage, setCurrentPage] = useState('main');
@@ -25,6 +26,8 @@ const AdminRoutes = () => {
       return <SecuritySettingsPage onBack={handleBack} />;
     case 'settings':
       return <PlatformSettingsPage onBack={handleBack} />;
+    case 'paystack':
+      return <PaystackSettingsPage onBack={handleBack} />;
     default:
       return <AdminMainPage onNavigate={handleNavigate} />;
   }

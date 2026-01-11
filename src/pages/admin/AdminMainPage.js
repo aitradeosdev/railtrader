@@ -1,4 +1,4 @@
-import { Settings } from 'lucide-react';
+import { Settings, CreditCard } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -12,6 +12,13 @@ const AdminMainPage = ({ onNavigate }) => {
       description: 'Configure platform settings and preferences',
       icon: Settings,
       color: 'text-orange-400'
+    },
+    {
+      id: 'paystack',
+      title: 'Paystack Settings',
+      description: 'Configure payment gateway and credentials',
+      icon: CreditCard,
+      color: 'text-emerald-400'
     }
   ];
 

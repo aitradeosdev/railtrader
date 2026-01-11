@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Settings, Globe, Mail, Database, CreditCard } from 'lucide-react';
+import { ArrowLeft, Settings, Globe, Mail, Database } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import SuccessNotification from '../../components/SuccessNotification';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -17,14 +17,7 @@ const PlatformSettingsPage = ({ onBack }) => {
     maintenanceMode: false,
     registrationEnabled: true,
     emailNotifications: true,
-    backupFrequency: 'daily',
-    paystack: {
-      testMode: true,
-      testPublicKey: '',
-      testSecretKey: '',
-      livePublicKey: '',
-      liveSecretKey: ''
-    }
+    backupFrequency: 'daily'
   });
   const [saving, setSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -70,14 +63,8 @@ const PlatformSettingsPage = ({ onBack }) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handlePaystackChange = (key, value) => {
-    setSettings(prev => ({
-      ...prev,
-      paystack: {
-        ...prev.paystack,
-        [key]: value
-      }
-    }));
+  const handleSettingChange = (key, value) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
   };
 
   return (
@@ -168,83 +155,6 @@ const PlatformSettingsPage = ({ onBack }) => {
                 />
                 <div className={`w-11 h-6 ${settings.registrationEnabled ? 'bg-emerald-500' : 'bg-red-500'} peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500`}></div>
               </label>
-            </div>
-          </div>
-        </GlassCard>
-
-        <GlassCard className="p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <CreditCard className="text-emerald-400" size={24} />
-            <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Paystack Configuration</h2>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Test Mode</p>
-                <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Use test credentials for development</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.paystack?.testMode || true}
-                  onChange={(e) => handlePaystackChange('testMode', e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Test Public Key
-              </label>
-              <input
-                type="text"
-                value={settings.paystack?.testPublicKey || ''}
-                onChange={(e) => handlePaystackChange('testPublicKey', e.target.value)}
-                placeholder="pk_test_..."
-                className={`w-full p-2 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none font-mono text-sm`}
-              />
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Test Secret Key
-              </label>
-              <input
-                type="password"
-                value={settings.paystack?.testSecretKey || ''}
-                onChange={(e) => handlePaystackChange('testSecretKey', e.target.value)}
-                placeholder="sk_test_..."
-                className={`w-full p-2 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none font-mono text-sm`}
-              />
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Live Public Key
-              </label>
-              <input
-                type="text"
-                value={settings.paystack?.livePublicKey || ''}
-                onChange={(e) => handlePaystackChange('livePublicKey', e.target.value)}
-                placeholder="pk_live_..."
-                className={`w-full p-2 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none font-mono text-sm`}
-              />
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Live Secret Key
-              </label>
-              <input
-                type="password"
-                value={settings.paystack?.liveSecretKey || ''}
-                onChange={(e) => handlePaystackChange('liveSecretKey', e.target.value)}
-                placeholder="sk_live_..."
-                className={`w-full p-2 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none font-mono text-sm`}
-              />
             </div>
           </div>
         </GlassCard>
