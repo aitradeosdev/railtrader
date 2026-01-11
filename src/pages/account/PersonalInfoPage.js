@@ -84,10 +84,10 @@ const PersonalInfoPage = ({ onBack }) => {
                 type="email"
                 name="email"
                 value={formData.email}
-                onChange={handleChange}
-                className={`w-full p-3 rounded-xl border ${isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
-                required
+                className={`w-full p-3 rounded-xl border ${isDark ? 'bg-white/5 border-white/10 text-white/60' : 'bg-gray-100 border-gray-200 text-gray-600'} cursor-not-allowed`}
+                readOnly
               />
+              <p className={`text-xs mt-1 ${isDark ? 'text-white/40' : 'text-gray-500'}`}>Email cannot be changed</p>
             </div>
           </div>
           <button 
