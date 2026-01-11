@@ -46,53 +46,24 @@ const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
         body: JSON.stringify({
           amount: config.totalPrice,
           challengeType: challenge.selectedType || '1-phase',
-          accountSize: challenge.accountSize || challenge.name.split(' ')[0]
+          accountSize: challenge.accountSize || challenge.name.split(' ')[0],
+          callbackUrl: `${window.location.origin}/challenge-success`
         })
       });
       
       const paymentData = await response.json();
       
-      if (paymentData.status) {
-        // Load Paystack script and initialize payment
-        const script = document.createElement('script');
-        script.src = 'https://js.paystack.co/v1/inline.js';
-        script.onload = () => {
-          const handler = window.PaystackPop.setup({
-            key: paystackConfig.publicKey,
-            email: paymentData.data.customer.email,
-            amount: paymentData.data.amount,
-            currency: 'NGN',
-            ref: paymentData.data.reference,
-            callback: async (response) => {
-              // Verify payment
-              try {
-                const verifyResponse = await fetch(`${apiUrl()}/api/payment/verify`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                  },
-                  body: JSON.stringify({ reference: response.reference })
-                });
-                
-                const verifyData = await verifyResponse.json();
-                if (verifyData.status === 'success') {
-                  onSuccess(challenge);
-                } else {
-                  alert('Payment verification failed');
-                }
-              } catch (error) {
-                console.error('Payment verification error:', error);
-                alert('Payment verification failed');
-              }
-            },
-            onClose: () => {
-              setProcessing(false);
-            }
-          });
-          handler.openIframe();
-        };
-        document.head.appendChild(script);
+      if (!response.ok) {
+        console.error('Payment initialization failed:', paymentData);
+        alert(`Payment initialization failed: ${paymentData.message || 'Unknown error'}`);
+        return;
+      }
+      
+      if (paymentData.status && paymentData.data.authorization_url) {
+        // Redirect to Paystack payment page
+        window.location.href = paymentData.data.authorization_url;
+      } else {
+        alert('Payment initialization failed');
       }
     } catch (error) {
       console.error('Error initializing payment:', error);

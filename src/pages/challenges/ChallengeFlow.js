@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ChallengesListPage from './ChallengesListPage';
 import ChallengeConfigPage from './ChallengeConfigPage';
 import ChallengePaymentPage from './ChallengePaymentPage';
@@ -9,6 +10,12 @@ const ChallengeFlow = ({ onGoHome }) => {
   const [currentStep, setCurrentStep] = useState('dashboard');
   const [selectedChallenge, setSelectedChallenge] = useState(null);
   const [challengeConfig, setChallengeConfig] = useState(null);
+  const [searchParams] = useSearchParams();
+
+  // Check for payment callback
+  if (searchParams.get('reference') && currentStep !== 'success') {
+    setCurrentStep('success');
+  }
 
   const handleSelectChallenge = (challenge) => {
     setSelectedChallenge(challenge);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Trophy, 
@@ -225,6 +226,19 @@ function AdminApp({ platformName }) {
 function UserApp({ platformName }) {
   const [activeTab, setActiveTab] = useState('overview');
   const { isDark, toggleTheme } = useTheme();
+  const [searchParams] = useSearchParams();
+
+  // Handle payment callback
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    const reference = searchParams.get('reference');
+    
+    if (tab === 'challenges' && reference) {
+      setActiveTab('challenges');
+    } else if (tab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const handleNavClick = (tab) => {
     setActiveTab(tab);

@@ -119,97 +119,101 @@ const PaystackSettingsPage = ({ onBack }) => {
           </div>
         </GlassCard>
 
-        <GlassCard className="p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-6 h-6 bg-amber-500 rounded flex items-center justify-center">
-              <span className="text-white text-xs font-bold">T</span>
+        {settings.paystack?.testMode && (
+          <GlassCard className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-6 h-6 bg-amber-500 rounded flex items-center justify-center">
+                <span className="text-white text-xs font-bold">T</span>
+              </div>
+              <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Test Credentials</h2>
             </div>
-            <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Test Credentials</h2>
-          </div>
-          
-          <div className="space-y-4">
-            <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Test Public Key
-              </label>
-              <input
-                type="text"
-                value={settings.paystack?.testPublicKey || ''}
-                onChange={(e) => handlePaystackChange('testPublicKey', e.target.value)}
-                placeholder="pk_test_..."
-                className={`w-full p-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none font-mono text-sm`}
-              />
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Test Secret Key
-              </label>
-              <div className="relative">
+            
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
+                  Test Public Key
+                </label>
                 <input
-                  type={showSecrets.testSecret ? "text" : "password"}
-                  value={settings.paystack?.testSecretKey || ''}
-                  onChange={(e) => handlePaystackChange('testSecretKey', e.target.value)}
-                  placeholder="sk_test_..."
-                  className={`w-full p-3 pr-12 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none font-mono text-sm`}
+                  type="text"
+                  value={settings.paystack?.testPublicKey || ''}
+                  onChange={(e) => handlePaystackChange('testPublicKey', e.target.value)}
+                  placeholder="pk_test_..."
+                  className={`w-full p-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none font-mono text-sm`}
                 />
-                <button
-                  type="button"
-                  onClick={() => toggleSecretVisibility('testSecret')}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isDark ? 'text-white/60 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
-                >
-                  {showSecrets.testSecret ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
+                  Test Secret Key
+                </label>
+                <div className="relative">
+                  <input
+                    type={showSecrets.testSecret ? "text" : "password"}
+                    value={settings.paystack?.testSecretKey || ''}
+                    onChange={(e) => handlePaystackChange('testSecretKey', e.target.value)}
+                    placeholder="sk_test_..."
+                    className={`w-full p-3 pr-12 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none font-mono text-sm`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleSecretVisibility('testSecret')}
+                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isDark ? 'text-white/60 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                  >
+                    {showSecrets.testSecret ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        </GlassCard>
+          </GlassCard>
+        )}
 
-        <GlassCard className="p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-6 h-6 bg-emerald-500 rounded flex items-center justify-center">
-              <span className="text-white text-xs font-bold">L</span>
+        {!settings.paystack?.testMode && (
+          <GlassCard className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-6 h-6 bg-emerald-500 rounded flex items-center justify-center">
+                <span className="text-white text-xs font-bold">L</span>
+              </div>
+              <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Live Credentials</h2>
             </div>
-            <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Live Credentials</h2>
-          </div>
-          
-          <div className="space-y-4">
-            <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Live Public Key
-              </label>
-              <input
-                type="text"
-                value={settings.paystack?.livePublicKey || ''}
-                onChange={(e) => handlePaystackChange('livePublicKey', e.target.value)}
-                placeholder="pk_live_..."
-                className={`w-full p-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none font-mono text-sm`}
-              />
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Live Secret Key
-              </label>
-              <div className="relative">
+            
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
+                  Live Public Key
+                </label>
                 <input
-                  type={showSecrets.liveSecret ? "text" : "password"}
-                  value={settings.paystack?.liveSecretKey || ''}
-                  onChange={(e) => handlePaystackChange('liveSecretKey', e.target.value)}
-                  placeholder="sk_live_..."
-                  className={`w-full p-3 pr-12 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none font-mono text-sm`}
+                  type="text"
+                  value={settings.paystack?.livePublicKey || ''}
+                  onChange={(e) => handlePaystackChange('livePublicKey', e.target.value)}
+                  placeholder="pk_live_..."
+                  className={`w-full p-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none font-mono text-sm`}
                 />
-                <button
-                  type="button"
-                  onClick={() => toggleSecretVisibility('liveSecret')}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isDark ? 'text-white/60 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
-                >
-                  {showSecrets.liveSecret ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
+                  Live Secret Key
+                </label>
+                <div className="relative">
+                  <input
+                    type={showSecrets.liveSecret ? "text" : "password"}
+                    value={settings.paystack?.liveSecretKey || ''}
+                    onChange={(e) => handlePaystackChange('liveSecretKey', e.target.value)}
+                    placeholder="sk_live_..."
+                    className={`w-full p-3 pr-12 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none font-mono text-sm`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleSecretVisibility('liveSecret')}
+                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isDark ? 'text-white/60 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                  >
+                    {showSecrets.liveSecret ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        </GlassCard>
+          </GlassCard>
+        )}
 
         <GlassCard className="p-6">
           <div className="flex items-center gap-3 mb-4">

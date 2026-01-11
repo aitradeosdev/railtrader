@@ -63,10 +63,6 @@ const PlatformSettingsPage = ({ onBack }) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSettingChange = (key, value) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">

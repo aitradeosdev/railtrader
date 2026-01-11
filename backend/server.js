@@ -1175,7 +1175,7 @@ app.get('/api/platform-settings', async (req, res) => {
 // Paystack payment endpoints
 app.post('/api/payment/initialize', authenticateToken, async (req, res) => {
   try {
-    const { amount, challengeType, accountSize } = req.body;
+    const { amount, challengeType, accountSize, callbackUrl } = req.body;
     const user = await User.findById(req.user.userId);
     const settings = await PlatformSettings.findOne();
     
@@ -1191,18 +1191,29 @@ app.post('/api/payment/initialize', authenticateToken, async (req, res) => {
       return res.status(500).json({ message: 'Payment configuration not set' });
     }
     
-    const response = await axios.post('https://api.paystack.co/transaction/initialize', {
+    // Validate required fields
+    if (!amount || !user.email) {
+      return res.status(400).json({ message: 'Missing required payment data' });
+    }
+    
+    const paymentData = {
       email: user.email,
-      amount: amount * 100, // Convert to kobo
+      amount: Math.round(amount * 100), // Convert to kobo and ensure integer
       currency: 'NGN',
+      callback_url: `${req.get('origin')}/?tab=challenges`,
       metadata: {
-        userId: user._id,
-        challengeType,
-        accountSize,
+        userId: user._id.toString(),
+        challengeType: challengeType || '1-phase',
+        accountSize: accountSize || 'Unknown',
         firstName: user.firstName,
-        lastName: user.lastName
+        lastName: user.lastName,
+        email: user.email
       }
-    }, {
+    };
+    
+    console.log('Sending to Paystack:', paymentData);
+    
+    const response = await axios.post('https://api.paystack.co/transaction/initialize', paymentData, {
       headers: {
         Authorization: `Bearer ${secretKey}`,
         'Content-Type': 'application/json'
@@ -1217,49 +1228,148 @@ app.post('/api/payment/initialize', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/payment/verify', authenticateToken, async (req, res) => {
+  console.log('=== PAYMENT VERIFICATION START ===');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  console.log('User:', req.user);
+  console.log('Environment:', process.env.NODE_ENV);
+  
   try {
-    const { reference } = req.body;
-    const settings = await PlatformSettings.findOne();
+    const { reference, challengePlanId } = req.body;
     
+    // Validate required fields
+    if (!reference) {
+      console.log('❌ Missing reference field');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Payment reference is required' 
+      });
+    }
+    console.log('✅ Reference present:', reference);
+
+    // Check database connection
+    console.log('🔍 Checking database connection...');
+    if (!mongoose.connection.readyState) {
+      console.log('❌ Database not connected');
+      return res.status(500).json({ success: false, message: 'Database connection error' });
+    }
+    console.log('✅ Database connected');
+
+    // Find user
+    console.log('🔍 Finding user...');
+    let user;
+    try {
+      user = await User.findById(req.user.userId);
+      console.log('User found:', user ? 'Yes' : 'No');
+    } catch (dbError) {
+      console.log('❌ Database error finding user:', dbError);
+      return res.status(500).json({ success: false, message: 'Database error' });
+    }
+    
+    if (!user) {
+      console.log('❌ User not found for ID:', req.user.userId);
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    console.log('✅ User found:', user.email);
+
+    // Check platform settings
+    console.log('🔍 Checking platform settings...');
+    let settings;
+    try {
+      settings = await PlatformSettings.findOne();
+      console.log('Settings found:', settings ? 'Yes' : 'No');
+    } catch (dbError) {
+      console.log('❌ Database error finding settings:', dbError);
+      return res.status(500).json({ success: false, message: 'Database error' });
+    }
+
     const secretKey = settings?.paystack?.testMode 
       ? settings.paystack.testSecretKey 
       : settings.paystack.liveSecretKey;
     
-    const response = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, {
-      headers: {
-        Authorization: `Bearer ${secretKey}`
-      }
+    if (!secretKey) {
+      console.log('❌ Paystack secret key not configured');
+      return res.status(500).json({ success: false, message: 'Payment configuration error' });
+    }
+    console.log('✅ Paystack secret key configured');
+
+    // Verify payment with Paystack
+    console.log('🔍 Verifying payment with Paystack for reference:', reference);
+    let paystackResponse, paystackData;
+    try {
+      paystackResponse = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, {
+        headers: {
+          Authorization: `Bearer ${secretKey}`
+        }
+      });
+      console.log('Paystack API response status:', paystackResponse.status);
+      
+      paystackData = paystackResponse.data;
+      console.log('Paystack API response data:', JSON.stringify(paystackData, null, 2));
+    } catch (paystackError) {
+      console.log('❌ Paystack API error:', paystackError.response?.data || paystackError.message);
+      return res.status(500).json({ success: false, message: 'Payment verification service error' });
+    }
+
+    if (!paystackData.status || paystackData.data.status !== 'success') {
+      console.log('❌ Payment verification failed:', paystackData);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Payment verification failed' 
+      });
+    }
+    console.log('✅ Payment verified successfully');
+
+    // Extract payment data
+    const { metadata, customer } = paystackData.data;
+    const userEmail = customer?.email || metadata?.email || user.email;
+    
+    // Create challenge
+    console.log('🔍 Creating challenge...');
+    const challengeData = {
+      userId: req.user.userId,
+      userInfo: {
+        firstName: metadata?.firstName || user.firstName,
+        lastName: metadata?.lastName || user.lastName,
+        email: userEmail
+      },
+      challengeType: metadata?.challengeType || '1-phase',
+      accountSize: metadata?.accountSize || '10k',
+      amount: paystackData.data.amount / 100 // Convert from kobo
+    };
+    console.log('Challenge data prepared:', JSON.stringify(challengeData, null, 2));
+
+    let challengeRequest;
+    try {
+      challengeRequest = new ChallengeRequest(challengeData);
+      await challengeRequest.save();
+      console.log('✅ Challenge created with ID:', challengeRequest._id);
+    } catch (dbError) {
+      console.log('❌ Database error creating challenge:', dbError);
+      return res.status(500).json({ success: false, message: 'Failed to create challenge' });
+    }
+    
+    console.log('✅ Payment verification completed successfully');
+    res.json({
+      success: true,
+      message: 'Payment verified and challenge created',
+      challenge: challengeRequest
     });
     
-    if (response.data.status && response.data.data.status === 'success') {
-      const { metadata } = response.data.data;
-      
-      // Create challenge request
-      const challengeRequest = new ChallengeRequest({
-        userId: metadata.userId,
-        userInfo: {
-          firstName: metadata.firstName,
-          lastName: metadata.lastName,
-          email: response.data.data.customer.email
-        },
-        challengeType: metadata.challengeType,
-        accountSize: metadata.accountSize,
-        amount: response.data.data.amount / 100 // Convert from kobo
-      });
-      
-      await challengeRequest.save();
-      
-      res.json({ 
-        status: 'success', 
-        message: 'Payment verified and challenge created',
-        challenge: challengeRequest
-      });
-    } else {
-      res.status(400).json({ message: 'Payment verification failed' });
-    }
   } catch (error) {
-    console.error('Paystack verification error:', error.response?.data || error.message);
-    res.status(500).json({ message: 'Payment verification failed', error: error.message });
+    console.log('❌ PAYMENT VERIFICATION ERROR:');
+    console.log('Error name:', error.name);
+    console.log('Error message:', error.message);
+    console.log('Error stack:', error.stack);
+    console.log('=== PAYMENT VERIFICATION END ===');
+    
+    res.status(500).json({ 
+      success: false, 
+      message: 'Payment verification failed',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 });
 
