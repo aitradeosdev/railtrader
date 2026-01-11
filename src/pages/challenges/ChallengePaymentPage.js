@@ -122,8 +122,10 @@ const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
         
         <div className="mt-6 space-y-4">
           <div className={`p-4 rounded-xl ${isDark ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-blue-50 border border-blue-200'}`}>
-            <p className={`text-sm ${isDark ? 'text-blue-400' : 'text-blue-600'} mb-2`}>💳 Secure Payment with Paystack</p>
-            <p className={`text-xs ${isDark ? 'text-blue-400/70' : 'text-blue-600/70'}`}>Your payment is secured by Paystack. You can pay with cards, bank transfer, or USSD.</p>
+            <div className="flex items-center justify-center mb-2">
+              <img src="/paystack-secured.svg" alt="Secured by Paystack" className="h-8" />
+            </div>
+            <p className={`text-xs ${isDark ? 'text-blue-400/70' : 'text-blue-600/70'} text-center`}>Your payment is secured by Paystack. You can pay with cards, bank transfer, or USSD.</p>
           </div>
           
           <button
