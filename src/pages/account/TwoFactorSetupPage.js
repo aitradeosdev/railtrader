@@ -112,7 +112,9 @@ const TwoFactorSetupPage = ({ onBack }) => {
           <GlassCard className="p-6">
             <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Step 1: Scan QR Code</h2>
             <div className="text-center mb-6">
-              <img src={qrCode} alt="QR Code" className="mx-auto mb-4 rounded-xl" />
+              <div className="inline-block p-4 bg-white rounded-xl mb-4">
+                <img src={qrCode} alt="QR Code" className="w-48 h-48 max-w-full" />
+              </div>
               <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>
                 Scan this QR code with your authenticator app
               </p>
@@ -120,13 +122,13 @@ const TwoFactorSetupPage = ({ onBack }) => {
             
             <div className="mt-6">
               <p className={`text-sm font-medium ${isDark ? 'text-white/70' : 'text-gray-700'} mb-2`}>Or enter this code manually:</p>
-              <div className="flex items-center gap-2">
-                <code className={`flex-1 p-3 rounded-xl ${isDark ? 'bg-white/5 border border-white/10 text-white' : 'bg-gray-100 border border-gray-200 text-gray-900'} font-mono text-sm`}>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <code className={`flex-1 p-3 rounded-xl ${isDark ? 'bg-white/5 border border-white/10 text-white' : 'bg-gray-100 border border-gray-200 text-gray-900'} font-mono text-xs sm:text-sm break-all`}>
                   {secret}
                 </code>
                 <button
                   onClick={copySecret}
-                  className={`p-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'}`}
+                  className={`p-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} flex-shrink-0`}
                 >
                   {copied ? <Check size={16} /> : <Copy size={16} />}
                 </button>
@@ -139,7 +141,7 @@ const TwoFactorSetupPage = ({ onBack }) => {
             <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'} mb-4`}>
               Enter the 6-digit code from your authenticator app:
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <input
                 type="text"
                 value={verificationCode}
@@ -151,7 +153,7 @@ const TwoFactorSetupPage = ({ onBack }) => {
               <button
                 onClick={verifyTwoFactor}
                 disabled={loading || verificationCode.length !== 6}
-                className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
               >
                 {loading ? 'Verifying...' : 'Verify'}
               </button>
