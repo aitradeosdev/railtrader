@@ -225,7 +225,7 @@ function AdminApp({ platformName }) {
           )}
 
           {/* Admin Main Content */}
-          <main className="flex-1 overflow-y-auto px-6 md:px-10 pb-40 md:pb-10 no-scrollbar">
+          <main className="flex-1 overflow-y-auto px-6 md:px-10 pb-32 lg:pb-10 no-scrollbar">
             <div className="max-w-6xl mx-auto h-full">
               {activeTab === 'overview' && <AdminOverviewPage />}
               {activeTab === 'users' && <AdminUsersFlow />}
@@ -364,7 +364,7 @@ function UserApp({ platformName }) {
             </div>
           </header>
 
-          <main className="flex-1 overflow-y-auto px-6 md:px-10 pb-40 md:pb-10 no-scrollbar">
+          <main className="flex-1 overflow-y-auto px-6 md:px-10 pb-32 lg:pb-10 no-scrollbar">
             <div className="max-w-6xl mx-auto h-full">
               {activeTab === 'overview' && <OverviewPage />}
               {activeTab === 'challenges' && <ChallengeFlow onGoHome={() => setActiveTab('overview')} />}

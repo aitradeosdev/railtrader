@@ -20,7 +20,11 @@ const KYCManagementFlow = () => {
     }
   };
 
-  return renderContent();
+  return (
+    <div className="pb-6">
+      {renderContent()}
+    </div>
+  );
 };
 
 export default KYCManagementFlow;
