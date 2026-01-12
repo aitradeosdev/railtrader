@@ -13,22 +13,24 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (token) {
-      fetchUser();
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
+      fetchUserWithToken(storedToken);
     } else {
       setLoading(false);
     }
-  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
-  const fetchUser = async () => {
+  const fetchUserWithToken = async (authToken) => {
     try {
       const response = await fetch(`${apiUrl()}/api/user`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${authToken}`
         }
       });
 
@@ -46,6 +48,11 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchUser = async () => {
+    if (!token) return;
+    return fetchUserWithToken(token);
   };
 
   const register = async (userData) => {
@@ -169,7 +176,7 @@ export const AuthProvider = ({ children }) => {
         return { success: false, message: 'Network error' };
       }
     },
-    isAuthenticated: !!user
+    isAuthenticated: !!user && !!token
   };
 
   return (

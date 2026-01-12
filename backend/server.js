@@ -347,7 +347,7 @@ app.post('/api/register', checkMaintenanceMode, checkRegistrationEnabled, async 
     await user.save();
 
     // Generate token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
     res.status(201).json({
       token,
@@ -1517,11 +1517,29 @@ app.post('/api/user/kyc/initiate', authenticateToken, async (req, res) => {
 app.get('/api/user/kyc/status', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select('kycStatus kycData');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Auto-cancel if in_progress for more than 10 minutes
+    if (user.kycStatus === 'in_progress' && user.kycData?.startedAt) {
+      const startTime = new Date(user.kycData.startedAt);
+      const now = new Date();
+      const elapsed = now - startTime;
+      
+      if (elapsed > 600000) { // 10 minutes in milliseconds
+        user.kycStatus = 'pending';
+        user.kycData = { ...user.kycData, startedAt: null };
+        await user.save();
+      }
+    }
+    
     res.json({
       status: user.kycStatus,
       verificationLevel: user.kycData?.verificationLevel,
       verifiedAt: user.kycData?.verifiedAt,
-      rejectionReason: user.kycData?.rejectionReason
+      rejectionReason: user.kycData?.rejectionReason,
+      startedAt: user.kycData?.startedAt
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

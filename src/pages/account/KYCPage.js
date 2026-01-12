@@ -33,7 +33,7 @@ const KYCPage = ({ onBack }) => {
   useEffect(() => {
     fetchKYCStatus();
     
-    // Set up timer for in_progress status
+    // Simple timer to show remaining time
     const interval = setInterval(() => {
       if (kycStatus?.status === 'in_progress' && kycStatus.startedAt) {
         const startTime = new Date(kycStatus.startedAt);
@@ -42,18 +42,18 @@ const KYCPage = ({ onBack }) => {
         const remaining = 600000 - elapsed; // 10 minutes in ms
         
         if (remaining <= 0) {
-          // Auto-cancel after 10 minutes
-          setKycStatus({ status: 'pending' });
-          refreshUser();
-          setTimeRemaining(null);
+          setTimeRemaining(0);
+          fetchKYCStatus(); // Refresh to get updated status from server
         } else {
           setTimeRemaining(Math.ceil(remaining / 60000)); // minutes remaining
         }
+      } else {
+        setTimeRemaining(null);
       }
     }, 1000);
     
     return () => clearInterval(interval);
-  }, [kycStatus, refreshUser]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [kycStatus?.startedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const initiateKYC = async () => {
     setLoading(true);
@@ -65,7 +65,12 @@ const KYCPage = ({ onBack }) => {
       
       if (response.ok) {
         const data = await response.json();
-        window.open(data.verificationUrl, '_blank');
+        // For PWA, redirect to verification URL instead of opening popup
+        if (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+          window.location.href = data.verificationUrl;
+        } else {
+          window.open(data.verificationUrl, '_blank');
+        }
         fetchKYCStatus();
       } else {
         const error = await response.json();
