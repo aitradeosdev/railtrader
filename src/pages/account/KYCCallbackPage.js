@@ -17,11 +17,13 @@ const KYCCallbackPage = () => {
   const updateKYCStatus = useCallback(async (diditStatus) => {
     try {
       // Map Didit status to our KYC status
-      let kycStatus = 'pending';
+      let kycStatus = 'in_progress'; // Default to in_progress for review states
       if (diditStatus === 'Approved' || diditStatus === 'success') {
         kycStatus = 'verified';
       } else if (diditStatus === 'Declined' || diditStatus === 'failed') {
         kycStatus = 'rejected';
+      } else if (diditStatus === 'Submitted' || diditStatus === 'pending_review' || diditStatus === 'review') {
+        kycStatus = 'in_progress'; // Handle review status as in_progress
       }
       
       // Update user KYC status directly
@@ -41,7 +43,7 @@ const KYCCallbackPage = () => {
     } catch (error) {
       console.error('Error updating KYC status:', error);
     }
-    return null;
+    return 'in_progress';
   }, [token, refreshUser]);
 
   useEffect(() => {
@@ -58,9 +60,13 @@ const KYCCallbackPage = () => {
           setStatus('failed');
           setMessage('Verification was declined. Please try again.');
           setTimeout(() => navigate('/account/kyc'), 3000);
+        } else if (updatedStatus === 'in_progress') {
+          setStatus('pending');
+          setMessage('Verification submitted for review.');
+          setTimeout(() => navigate('/account/kyc'), 3000);
         } else {
-          setStatus('failed');
-          setMessage('Verification could not be processed.');
+          setStatus('pending');
+          setMessage('Verification is being processed.');
           setTimeout(() => navigate('/account/kyc'), 3000);
         }
       });

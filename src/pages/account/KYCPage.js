@@ -160,9 +160,13 @@ const KYCPage = ({ onBack }) => {
             )}
             
             {kycStatus.status === 'rejected' && kycStatus.rejectionReason && (
-              <p className="text-sm text-red-400 mt-2">
-                Reason: {kycStatus.rejectionReason}
-              </p>
+              <div className="text-sm text-red-400 mt-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                <p className="font-medium mb-1">Verification declined:</p>
+                <p>{kycStatus.rejectionReason}</p>
+                <p className="mt-2 text-xs text-red-300">
+                  Please ensure your account details match your ID document exactly, then try again.
+                </p>
+              </div>
             )}
             
             {kycStatus.status === 'in_progress' && (
@@ -207,7 +211,21 @@ const KYCPage = ({ onBack }) => {
               )}
             </p>
             <button
-              onClick={fetchKYCStatus}
+              onClick={async () => {
+                try {
+                  const response = await fetch(`${apiUrl()}/api/user/kyc/refresh`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                  });
+                  if (response.ok) {
+                    const data = await response.json();
+                    setKycStatus(data);
+                    refreshUser();
+                  }
+                } catch (error) {
+                  console.error('Error refreshing KYC status:', error);
+                }
+              }}
               className="w-full py-3 px-6 rounded-xl font-medium bg-gray-600 text-white hover:bg-gray-700 transition-all"
             >
               Refresh Status

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Mail, ArrowRight } from 'lucide-react';
+import { User, Mail, Calendar, ArrowRight } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 
 const RegisterBasicInfoPage = ({ onContinue, onSwitchToLogin }) => {
@@ -7,7 +7,8 @@ const RegisterBasicInfoPage = ({ onContinue, onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
-    email: ''
+    email: '',
+    dateOfBirth: ''
   });
 
   const handleChange = (e) => {
@@ -16,7 +17,7 @@ const RegisterBasicInfoPage = ({ onContinue, onSwitchToLogin }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (formData.firstName && formData.lastName && formData.email) {
+    if (formData.firstName && formData.lastName && formData.email && formData.dateOfBirth) {
       onContinue(formData);
     }
   };
@@ -74,6 +75,21 @@ const RegisterBasicInfoPage = ({ onContinue, onSwitchToLogin }) => {
                 onChange={handleChange}
                 className={`w-full pl-12 pr-4 py-3 rounded-xl border ${isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900'} placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 placeholder="Enter your email"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className={`block text-sm font-medium ${isDark ? 'text-white/70' : 'text-gray-700'} mb-2`}>Date of Birth</label>
+            <div className="relative">
+              <Calendar className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isDark ? 'text-white/40' : 'text-gray-400'}`} size={20} />
+              <input
+                type="date"
+                name="dateOfBirth"
+                value={formData.dateOfBirth}
+                onChange={handleChange}
+                className={`w-full pl-12 pr-4 py-3 rounded-xl border ${isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900'} placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 required
               />
             </div>

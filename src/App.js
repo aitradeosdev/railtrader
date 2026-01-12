@@ -229,9 +229,6 @@ function UserApp({ platformName }) {
   const { isDark, toggleTheme } = useTheme();
   const [searchParams] = useSearchParams();
 
-  // Check if this is a KYC callback
-  const isKYCCallback = searchParams.get('kyc_callback') === 'true';
-  
   // Handle payment callback
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -243,6 +240,9 @@ function UserApp({ platformName }) {
       setActiveTab(tab);
     }
   }, [searchParams]);
+
+  // Check if this is a KYC callback
+  const isKYCCallback = window.location.pathname === '/kyc/callback';
   
   if (isKYCCallback) {
     return <KYCCallbackPage />;

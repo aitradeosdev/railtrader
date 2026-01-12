@@ -1,13 +1,16 @@
-import { ArrowLeft, Key, Smartphone, Monitor, Sun, Moon, Shield } from 'lucide-react';
+import { ArrowLeft, Key, Smartphone, Monitor, Sun, Moon, Shield, Trash2 } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiUrl } from '../../utils/api';
+import { useState } from 'react';
 
 const AccountSettingsPage = ({ onBack, onNavigate }) => {
   const { isDark, themeMode, setTheme } = useTheme();
   const { user, token, refreshUser } = useAuth();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const disableTwoFactor = async () => {
     try {
@@ -24,6 +27,26 @@ const AccountSettingsPage = ({ onBack, onNavigate }) => {
     } catch (error) {
       console.error('Error disabling 2FA:', error);
     }
+  };
+
+  const deleteAccount = async () => {
+    setDeleteLoading(true);
+    try {
+      const response = await fetch(`${apiUrl()}/api/user/account`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        localStorage.removeItem('token');
+        window.location.href = '/';
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+    }
+    setDeleteLoading(false);
   };
 
   const themeOptions = [
@@ -43,6 +66,18 @@ const AccountSettingsPage = ({ onBack, onNavigate }) => {
           <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} text-sm`}>Security and preferences</p>
         </div>
       </div>
+
+      {!user?.dateOfBirth && (
+        <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-sm mb-4">
+          <strong>Profile Incomplete:</strong> Please set your date of birth in Personal Information to enable all features.
+          <button 
+            onClick={() => onNavigate('personalInfo')}
+            className="ml-2 underline hover:no-underline"
+          >
+            Update now
+          </button>
+        </div>
+      )}
 
       <GlassCard className="p-6">
         <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Appearance</h2>
@@ -152,6 +187,53 @@ const AccountSettingsPage = ({ onBack, onNavigate }) => {
           </div>
         </div>
       </GlassCard>
+
+      <GlassCard className="p-6">
+        <h2 className={`text-xl font-bold text-red-400 mb-4`}>Danger Zone</h2>
+        <div className="p-4 rounded-2xl bg-red-500/5 border border-red-500/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Trash2 className="text-red-400" size={20} />
+              <div>
+                <p className="font-semibold text-red-400">Delete Account</p>
+                <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Permanently delete your account and all data</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowDeleteConfirm(true)}
+              className="px-4 py-2 bg-red-600 text-white rounded-xl text-sm hover:bg-red-700"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </GlassCard>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`w-full max-w-md p-6 rounded-2xl ${isDark ? 'bg-gray-900' : 'bg-white'} border ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+            <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Delete Account</h3>
+            <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} mb-6`}>
+              This action cannot be undone. This will permanently delete your account, KYC verification data, and remove all associated information.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowDeleteConfirm(false)}
+                className={`flex-1 py-3 rounded-xl border ${isDark ? 'border-white/10 text-white hover:bg-white/5' : 'border-gray-200 text-gray-900 hover:bg-gray-50'}`}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={deleteAccount}
+                disabled={deleteLoading}
+                className="flex-1 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleteLoading ? 'Deleting...' : 'Delete Account'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Logout Button */}
       <div className="lg:hidden">

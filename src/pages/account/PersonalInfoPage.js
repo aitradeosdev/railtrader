@@ -13,7 +13,8 @@ const PersonalInfoPage = ({ onBack }) => {
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
-    email: user?.email || ''
+    email: user?.email || '',
+    dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : ''
   });
 
   const handleChange = (e) => {
@@ -47,6 +48,12 @@ const PersonalInfoPage = ({ onBack }) => {
         </div>
       </div>
 
+      {!user?.dateOfBirth && (
+        <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-sm mb-4">
+          <strong>Action Required:</strong> Please set your date of birth to complete your profile and enable KYC verification.
+        </div>
+      )}
+
       {message && (
         <div className={`p-3 rounded-xl ${message.includes('success') ? 'bg-green-500/10 border border-green-500/20 text-green-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'} text-sm mb-4`}>
           {message}
@@ -76,6 +83,16 @@ const PersonalInfoPage = ({ onBack }) => {
                 onChange={handleChange}
                 className={`w-full p-3 rounded-xl border ${isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
                 required
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className={`block text-sm font-medium ${isDark ? 'text-white/70' : 'text-gray-700'} mb-2`}>Date of Birth</label>
+              <input
+                type="date"
+                name="dateOfBirth"
+                value={formData.dateOfBirth}
+                onChange={handleChange}
+                className={`w-full p-3 rounded-xl border ${isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
               />
             </div>
             <div className="md:col-span-2">

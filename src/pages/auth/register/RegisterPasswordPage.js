@@ -42,6 +42,7 @@ const RegisterPasswordPage = ({ basicInfo, onRegister, onBack }) => {
       email: basicInfo.email,
       firstName: basicInfo.firstName,
       lastName: basicInfo.lastName,
+      dateOfBirth: basicInfo.dateOfBirth,
       password: formData.password
     });
     
