@@ -8,6 +8,7 @@ import ChangePasswordPage from './ChangePasswordPage';
 import TwoFactorSetupPage from './TwoFactorSetupPage';
 import DocumentsPage from './DocumentsPage';
 import NotificationPreferencesPage from './NotificationPreferencesPage';
+import KYCVerificationPage from './KYCVerificationPage';
 
 const AccountFlow = () => {
   const [currentPage, setCurrentPage] = useState('main');
@@ -17,7 +18,7 @@ const AccountFlow = () => {
   };
 
   const handleBack = () => {
-    if (currentPage === 'changePassword' || currentPage === 'twoFactorSetup') {
+    if (currentPage === 'changePassword' || currentPage === 'twoFactorSetup' || currentPage === 'kycVerification') {
       setCurrentPage('settings');
     } else {
       setCurrentPage('main');
@@ -37,6 +38,8 @@ const AccountFlow = () => {
       return <ChangePasswordPage onBack={handleBack} />;
     case 'twoFactorSetup':
       return <TwoFactorSetupPage onBack={handleBack} />;
+    case 'kycVerification':
+      return <KYCVerificationPage onBack={handleBack} />;
     case 'documents':
       return <DocumentsPage onBack={handleBack} />;
     case 'notifications':

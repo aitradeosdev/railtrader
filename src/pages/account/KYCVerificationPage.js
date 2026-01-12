@@ -6,12 +6,11 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiUrl } from '../../utils/api';
 
-const KYCPage = ({ onBack }) => {
+const KYCVerificationPage = ({ onBack }) => {
   const { isDark } = useTheme();
-  const { token, refreshUser } = useAuth();
+  const { token } = useAuth();
   const [kycStatus, setKycStatus] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(null);
 
   const fetchKYCStatus = useCallback(async () => {
     try {
@@ -21,39 +20,15 @@ const KYCPage = ({ onBack }) => {
       if (response.ok) {
         const data = await response.json();
         setKycStatus(data);
-        // Refresh user data to update KYC status in main app
-        refreshUser();
       }
     } catch (error) {
       console.error('Error fetching KYC status:', error);
     }
-  }, [token, refreshUser]);
+  }, [token]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchKYCStatus();
-    
-    // Set up timer for in_progress status
-    const interval = setInterval(() => {
-      if (kycStatus?.status === 'in_progress' && kycStatus.startedAt) {
-        const startTime = new Date(kycStatus.startedAt);
-        const now = new Date();
-        const elapsed = now - startTime;
-        const remaining = 600000 - elapsed; // 10 minutes in ms
-        
-        if (remaining <= 0) {
-          // Auto-cancel after 10 minutes
-          setKycStatus({ status: 'pending' });
-          refreshUser();
-          setTimeRemaining(null);
-        } else {
-          setTimeRemaining(Math.ceil(remaining / 60000)); // minutes remaining
-        }
-      }
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  }, [kycStatus, refreshUser]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchKYCStatus]);
 
   const initiateKYC = async () => {
     setLoading(true);
@@ -192,26 +167,16 @@ const KYCPage = ({ onBack }) => {
         )}
 
         {kycStatus?.status === 'in_progress' && (
-          <div className="space-y-3">
-            <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>
-              Your verification is being processed. This may take a few minutes.
-              {timeRemaining && (
-                <span className="block mt-1 text-yellow-500 font-medium">
-                  Session expires in {timeRemaining} minute{timeRemaining !== 1 ? 's' : ''}
-                </span>
-              )}
-            </p>
-            <button
-              onClick={fetchKYCStatus}
-              className="w-full py-3 px-6 rounded-xl font-medium bg-gray-600 text-white hover:bg-gray-700 transition-all"
-            >
-              Refresh Status
-            </button>
-          </div>
+          <button
+            onClick={fetchKYCStatus}
+            className="w-full py-3 px-6 rounded-xl font-medium bg-gray-600 text-white hover:bg-gray-700 transition-all"
+          >
+            Refresh Status
+          </button>
         )}
 
         {kycStatus?.status === 'verified' && (
-          <div className={`p-4 rounded-xl bg-green-500/10 border border-green-500/20`}>
+          <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20">
             <p className="text-green-400 text-center font-medium">
               ✓ Your identity has been successfully verified
             </p>
@@ -224,4 +189,4 @@ const KYCPage = ({ onBack }) => {
   );
 };
 
-export default KYCPage;
+export default KYCVerificationPage;

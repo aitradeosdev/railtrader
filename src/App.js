@@ -22,6 +22,7 @@ import PayoutFlow from './pages/payout/PayoutFlow';
 import HubFlow from './pages/hub/HubFlow';
 import AccountFlow from './pages/account/AccountFlow';
 import NotificationPage from './pages/NotificationPage';
+import KYCCallbackPage from './pages/account/KYCCallbackPage';
 
 import AdminRoutes from './pages/admin/AdminRoutes';
 import AdminOverviewPage from './pages/admin/AdminOverviewPage';
@@ -228,6 +229,9 @@ function UserApp({ platformName }) {
   const { isDark, toggleTheme } = useTheme();
   const [searchParams] = useSearchParams();
 
+  // Check if this is a KYC callback
+  const isKYCCallback = searchParams.get('kyc_callback') === 'true';
+  
   // Handle payment callback
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -239,6 +243,10 @@ function UserApp({ platformName }) {
       setActiveTab(tab);
     }
   }, [searchParams]);
+  
+  if (isKYCCallback) {
+    return <KYCCallbackPage />;
+  }
 
   const handleNavClick = (tab) => {
     setActiveTab(tab);

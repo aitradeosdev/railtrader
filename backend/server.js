@@ -110,6 +110,18 @@ const userSchema = new mongoose.Schema({
     password: { type: String },
     server: { type: String, default: 'RailTrader-Live' }
   },
+  kycStatus: { 
+    type: String, 
+    enum: ['pending', 'in_progress', 'verified', 'rejected'], 
+    default: 'pending' 
+  },
+  kycData: {
+    diditSessionId: { type: String },
+    verificationLevel: { type: String },
+    documents: [{ type: String }],
+    verifiedAt: { type: Date },
+    rejectionReason: { type: String }
+  },
   paymentMethods: [{
     type: { type: String, enum: ['bank', 'crypto'], required: true },
     name: { type: String, required: true },
@@ -349,6 +361,7 @@ app.post('/api/register', checkMaintenanceMode, checkRegistrationEnabled, async 
         totalLoss: user.totalLoss,
         winRate: user.winRate,
         twoFactorEnabled: user.twoFactorEnabled,
+        kycStatus: user.kycStatus,
         isAdmin: user.isAdmin || false
       }
     });
@@ -406,6 +419,7 @@ app.post('/api/login', checkMaintenanceMode, async (req, res) => {
         totalLoss: user.totalLoss,
         winRate: user.winRate,
         twoFactorEnabled: user.twoFactorEnabled,
+        kycStatus: user.kycStatus,
         isAdmin: user.isAdmin || false
       }
     });
@@ -1441,6 +1455,139 @@ app.post('/api/payment/resolve-account', authenticateToken, async (req, res) => 
     }
     
     res.status(500).json({ message: 'Failed to resolve account', error: error.message });
+  }
+});
+
+// KYC Routes
+app.post('/api/user/kyc/initiate', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.kycStatus === 'verified') {
+      return res.status(400).json({ message: 'KYC already verified' });
+    }
+
+    // Create Didit session using correct API format
+    console.log('Using workflow ID:', process.env.DIDIT_WORKFLOW_ID);
+    const diditResponse = await axios.post('https://verification.didit.me/v2/session/', {
+      workflow_id: process.env.DIDIT_WORKFLOW_ID || '11111111-2222-3333-4444-555555555555',
+      callback: `${req.get('origin')}/?tab=profile&kyc_callback=true`,
+      vendor_data: user._id.toString(),
+      metadata: {
+        user_type: 'standard',
+        account_id: user._id.toString()
+      },
+      contact_details: {
+        email: user.email,
+        email_lang: 'en',
+        first_name: user.firstName,
+        last_name: user.lastName
+      }
+    }, {
+      headers: {
+        'X-Api-Key': process.env.DIDIT_API_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    // Update user with session ID and timestamp
+    user.kycStatus = 'in_progress';
+    user.kycData = {
+      diditSessionId: diditResponse.data.session_id,
+      verificationLevel: null,
+      documents: [],
+      verifiedAt: null,
+      startedAt: new Date()
+    };
+    await user.save();
+
+    res.json({
+      sessionId: diditResponse.data.session_id,
+      verificationUrl: diditResponse.data.url
+    });
+  } catch (error) {
+    console.error('KYC initiation error:', error.response?.data || error.message);
+    res.status(500).json({ message: 'Failed to initiate KYC verification' });
+  }
+});
+
+app.get('/api/user/kyc/status', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('kycStatus kycData');
+    res.json({
+      status: user.kycStatus,
+      verificationLevel: user.kycData?.verificationLevel,
+      verifiedAt: user.kycData?.verifiedAt,
+      rejectionReason: user.kycData?.rejectionReason
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.post('/api/user/kyc/update-status', authenticateToken, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const user = await User.findById(req.user.userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    user.kycStatus = status;
+    if (status === 'verified') {
+      user.kycData.verifiedAt = new Date();
+    } else if (status === 'rejected') {
+      user.kycData.rejectionReason = 'Verification declined by provider';
+    }
+    
+    await user.save();
+    res.json({ message: 'KYC status updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.post('/api/webhooks/didit', async (req, res) => {
+  try {
+    const signature = req.headers['x-didit-signature'];
+    const payload = JSON.stringify(req.body);
+    
+    // Verify webhook signature
+    const expectedSignature = crypto.createHmac('sha256', process.env.DIDIT_WEBHOOK_SECRET)
+      .update(payload)
+      .digest('hex');
+    
+    if (signature !== `sha256=${expectedSignature}`) {
+      return res.status(401).json({ message: 'Invalid signature' });
+    }
+
+    const { session_id, status, user_id, verification_level, documents } = req.body;
+    
+    const user = await User.findById(user_id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update KYC status based on Didit response
+    if (status === 'verified') {
+      user.kycStatus = 'verified';
+      user.kycData.verificationLevel = verification_level;
+      user.kycData.documents = documents || [];
+      user.kycData.verifiedAt = new Date();
+    } else if (status === 'rejected') {
+      user.kycStatus = 'rejected';
+      user.kycData.rejectionReason = req.body.rejection_reason;
+    }
+
+    await user.save();
+    res.json({ message: 'Webhook processed successfully' });
+  } catch (error) {
+    console.error('Didit webhook error:', error);
+    res.status(500).json({ message: 'Webhook processing failed' });
   }
 });
 
