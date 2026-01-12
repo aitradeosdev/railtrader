@@ -70,9 +70,13 @@ const PersonalInfoPage = ({ onBack }) => {
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                className={`w-full p-3 rounded-xl border ${isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
+                disabled={user?.kycStatus === 'verified'}
+                className={`w-full p-3 rounded-xl border ${user?.kycStatus === 'verified' ? (isDark ? 'bg-white/5 border-white/10 text-white/60 cursor-not-allowed' : 'bg-gray-100 border-gray-200 text-gray-600 cursor-not-allowed') : (isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900')}`}
                 required
               />
+              {user?.kycStatus === 'verified' && (
+                <p className={`text-xs mt-1 ${isDark ? 'text-white/40' : 'text-gray-500'}`}>Cannot be changed after KYC verification</p>
+              )}
             </div>
             <div>
               <label className={`block text-sm font-medium ${isDark ? 'text-white/70' : 'text-gray-700'} mb-2`}>Last Name</label>
@@ -81,9 +85,13 @@ const PersonalInfoPage = ({ onBack }) => {
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                className={`w-full p-3 rounded-xl border ${isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
+                disabled={user?.kycStatus === 'verified'}
+                className={`w-full p-3 rounded-xl border ${user?.kycStatus === 'verified' ? (isDark ? 'bg-white/5 border-white/10 text-white/60 cursor-not-allowed' : 'bg-gray-100 border-gray-200 text-gray-600 cursor-not-allowed') : (isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900')}`}
                 required
               />
+              {user?.kycStatus === 'verified' && (
+                <p className={`text-xs mt-1 ${isDark ? 'text-white/40' : 'text-gray-500'}`}>Cannot be changed after KYC verification</p>
+              )}
             </div>
             <div className="md:col-span-2">
               <label className={`block text-sm font-medium ${isDark ? 'text-white/70' : 'text-gray-700'} mb-2`}>Date of Birth</label>
@@ -92,8 +100,12 @@ const PersonalInfoPage = ({ onBack }) => {
                 name="dateOfBirth"
                 value={formData.dateOfBirth}
                 onChange={handleChange}
-                className={`w-full p-3 rounded-xl border ${isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
+                disabled={user?.kycStatus === 'verified'}
+                className={`w-full p-3 rounded-xl border ${user?.kycStatus === 'verified' ? (isDark ? 'bg-white/5 border-white/10 text-white/60 cursor-not-allowed' : 'bg-gray-100 border-gray-200 text-gray-600 cursor-not-allowed') : (isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900')}`}
               />
+              {user?.kycStatus === 'verified' && (
+                <p className={`text-xs mt-1 ${isDark ? 'text-white/40' : 'text-gray-500'}`}>Cannot be changed after KYC verification</p>
+              )}
             </div>
             <div className="md:col-span-2">
               <label className={`block text-sm font-medium ${isDark ? 'text-white/70' : 'text-gray-700'} mb-2`}>Email</label>
@@ -109,12 +121,17 @@ const PersonalInfoPage = ({ onBack }) => {
           </div>
           <button 
             type="submit"
-            disabled={loading}
-            className="flex items-center gap-2 mt-6 px-6 py-3 bg-blue-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading || user?.kycStatus === 'verified'}
+            className={`flex items-center gap-2 mt-6 px-6 py-3 rounded-xl font-medium ${user?.kycStatus === 'verified' ? 'bg-gray-400 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white'} disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             <Save size={16} />
-            {loading ? 'Saving...' : 'Save Changes'}
+            {user?.kycStatus === 'verified' ? 'Profile Locked' : (loading ? 'Saving...' : 'Save Changes')}
           </button>
+          {user?.kycStatus === 'verified' && (
+            <p className={`text-xs mt-2 ${isDark ? 'text-white/40' : 'text-gray-500'}`}>
+              Personal information is locked after KYC verification for security purposes.
+            </p>
+          )}
         </GlassCard>
       </form>
 

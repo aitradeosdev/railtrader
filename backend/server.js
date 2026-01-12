@@ -442,16 +442,27 @@ app.get('/api/user', checkMaintenanceMode, authenticateToken, async (req, res) =
 app.put('/api/user/profile', checkMaintenanceMode, authenticateToken, async (req, res) => {
   try {
     const { firstName, lastName, email, dateOfBirth } = req.body;
+    const user = await User.findById(req.user.userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Prevent changes to personal info after KYC verification
+    if (user.kycStatus === 'verified') {
+      return res.status(400).json({ message: 'Personal information cannot be changed after KYC verification' });
+    }
+    
     const updateData = { firstName, lastName, email };
     if (dateOfBirth) {
       updateData.dateOfBirth = new Date(dateOfBirth);
     }
-    const user = await User.findByIdAndUpdate(
+    const updatedUser = await User.findByIdAndUpdate(
       req.user.userId,
       updateData,
       { new: true }
     ).select('-password');
-    res.json(user);
+    res.json(updatedUser);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -1581,33 +1592,7 @@ app.post('/api/user/kyc/refresh', authenticateToken, async (req, res) => {
     });
 
     const sessionData = diditResponse.data;
-    let kycStatus = user.kycStatus;
-    
-    // Map Didit status to our status
-    if (sessionData.status === 'Approved') {
-      kycStatus = 'verified';
-      user.kycData.verifiedAt = new Date();
-    } else if (sessionData.status === 'Declined') {
-      kycStatus = 'rejected';
-      // Get detailed rejection reason from Didit response
-      let rejectionReason = 'Verification declined';
-      if (sessionData.reviews && sessionData.reviews.length > 0) {
-        const latestReview = sessionData.reviews[sessionData.reviews.length - 1];
-        if (latestReview.comment) {
-          rejectionReason = latestReview.comment;
-        }
-      }
-      // Check for specific ID verification issues
-      if (sessionData.id_verification && sessionData.id_verification.warnings) {
-        const warnings = sessionData.id_verification.warnings;
-        if (warnings.length > 0) {
-          rejectionReason += '. Issues found: ' + warnings.map(w => w.message || w.type).join(', ');
-        }
-      }
-      user.kycData.rejectionReason = rejectionReason;
-    } else if (sessionData.status === 'In Review' || sessionData.status === 'Pending Review') {
-      kycStatus = 'in_progress'; // Handle review status as in_progress
-    }
+    const kycStatus = mapDiditStatusToKYC(sessionData, user);
     
     user.kycStatus = kycStatus;
     await user.save();
@@ -1657,48 +1642,144 @@ app.post('/api/user/kyc/update-status', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/webhooks/didit', async (req, res) => {
+// KYC Management Routes
+app.get('/api/admin/kyc/stats', authenticateAdmin, async (req, res) => {
   try {
-    const signature = req.headers['x-didit-signature'];
-    const payload = JSON.stringify(req.body);
+    const total = await User.countDocuments({});
+    const verified = await User.countDocuments({ kycStatus: 'verified' });
+    const pending = await User.countDocuments({ kycStatus: 'in_progress' });
+    const rejected = await User.countDocuments({ kycStatus: 'rejected' });
     
-    // Verify webhook signature
-    const expectedSignature = crypto.createHmac('sha256', process.env.DIDIT_WEBHOOK_SECRET)
-      .update(payload)
-      .digest('hex');
-    
-    if (signature !== `sha256=${expectedSignature}`) {
-      return res.status(401).json({ message: 'Invalid signature' });
-    }
-
-    const { session_id, status, vendor_data } = req.body;
-    
-    const user = await User.findById(vendor_data);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Update KYC status based on Didit webhook
-    let kycStatus = user.kycStatus;
-    if (status === 'Approved') {
-      kycStatus = 'verified';
-      if (!user.kycData) user.kycData = {};
-      user.kycData.verifiedAt = new Date();
-    } else if (status === 'Declined') {
-      kycStatus = 'rejected';
-      if (!user.kycData) user.kycData = {};
-      user.kycData.rejectionReason = req.body.rejection_reason || 'Verification declined';
-    } else if (status === 'In Review' || status === 'Pending Review') {
-      kycStatus = 'in_progress';
-    }
-
-    user.kycStatus = kycStatus;
-    await user.save();
-    
-    res.json({ message: 'Webhook processed successfully' });
+    res.json({ total, verified, pending, rejected });
   } catch (error) {
-    console.error('Didit webhook error:', error);
-    res.status(500).json({ message: 'Webhook processing failed' });
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Helper function for KYC status mapping
+const mapDiditStatusToKYC = (sessionData, user) => {
+  let kycStatus = user.kycStatus;
+  
+  if (sessionData.status === 'Approved') {
+    kycStatus = 'verified';
+    if (!user.kycData) user.kycData = {};
+    user.kycData.verifiedAt = new Date();
+  } else if (sessionData.status === 'Declined') {
+    kycStatus = 'rejected';
+    let rejectionReason = 'Verification declined';
+    if (sessionData.reviews && sessionData.reviews.length > 0) {
+      const latestReview = sessionData.reviews[sessionData.reviews.length - 1];
+      if (latestReview.comment) {
+        rejectionReason = latestReview.comment;
+      }
+    }
+    if (sessionData.id_verification && sessionData.id_verification.warnings) {
+      const warnings = sessionData.id_verification.warnings;
+      if (warnings.length > 0) {
+        rejectionReason += '. Issues found: ' + warnings.map(w => w.message || w.type).join(', ');
+      }
+    }
+    if (!user.kycData) user.kycData = {};
+    user.kycData.rejectionReason = rejectionReason;
+  } else if (sessionData.status === 'In Review' || sessionData.status === 'Pending Review') {
+    kycStatus = 'in_progress';
+  }
+  
+  return kycStatus;
+};
+
+// Bulk refresh all KYC statuses
+app.post('/api/admin/kyc/refresh-all', authenticateAdmin, async (req, res) => {
+  try {
+    const users = await User.find({ 
+      'kycData.diditSessionId': { $exists: true },
+      kycStatus: { $in: ['in_progress', 'pending'] }
+    });
+    
+    let updated = 0;
+    let errors = 0;
+    const bulkOps = [];
+    
+    for (const user of users) {
+      try {
+        const diditResponse = await axios.get(`https://verification.didit.me/v2/session/${user.kycData.diditSessionId}/decision/`, {
+          headers: {
+            'X-Api-Key': process.env.DIDIT_API_KEY,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const sessionData = diditResponse.data;
+        const newStatus = mapDiditStatusToKYC(sessionData, user);
+        
+        if (newStatus !== user.kycStatus) {
+          bulkOps.push({
+            updateOne: {
+              filter: { _id: user._id },
+              update: { 
+                kycStatus: newStatus,
+                kycData: user.kycData
+              }
+            }
+          });
+          updated++;
+        }
+        
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error(`Error refreshing KYC for user ${user._id}:`, error.message);
+        errors++;
+      }
+    }
+    
+    // Execute bulk operations
+    if (bulkOps.length > 0) {
+      await User.bulkWrite(bulkOps);
+    }
+    
+    res.json({ 
+      message: `Refreshed ${users.length} users. ${updated} status changes, ${errors} errors.`,
+      processed: users.length,
+      updated,
+      errors
+    });
+  } catch (error) {
+    console.error('Bulk KYC refresh error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.get('/api/admin/kyc/verified', authenticateAdmin, async (req, res) => {
+  try {
+    const users = await User.find({ kycStatus: 'verified' })
+      .select('firstName lastName email dateOfBirth kycData')
+      .sort({ 'kycData.verifiedAt': -1 });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.get('/api/admin/kyc/pending', authenticateAdmin, async (req, res) => {
+  try {
+    const users = await User.find({ kycStatus: 'in_progress' })
+      .select('firstName lastName email dateOfBirth kycData')
+      .sort({ 'kycData.startedAt': -1 });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.get('/api/admin/kyc/rejected', authenticateAdmin, async (req, res) => {
+  try {
+    const users = await User.find({ kycStatus: 'rejected' })
+      .select('firstName lastName email dateOfBirth kycData')
+      .sort({ 'kycData.startedAt': -1 });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
@@ -1706,3 +1787,65 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Auto-refresh KYC statuses every 5 minutes
+let isAutoRefreshing = false;
+setInterval(async () => {
+  if (isAutoRefreshing) return; // Prevent overlapping executions
+  
+  try {
+    isAutoRefreshing = true;
+    const users = await User.find({ 
+      'kycData.diditSessionId': { $exists: true },
+      kycStatus: { $in: ['in_progress', 'pending'] }
+    });
+    
+    if (users.length === 0) return;
+    
+    console.log(`Auto-refreshing KYC status for ${users.length} users...`);
+    const bulkOps = [];
+    let updated = 0;
+    
+    for (const user of users) {
+      try {
+        const diditResponse = await axios.get(`https://verification.didit.me/v2/session/${user.kycData.diditSessionId}/decision/`, {
+          headers: {
+            'X-Api-Key': process.env.DIDIT_API_KEY,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const sessionData = diditResponse.data;
+        const newStatus = mapDiditStatusToKYC(sessionData, user);
+        
+        if (newStatus !== user.kycStatus) {
+          bulkOps.push({
+            updateOne: {
+              filter: { _id: user._id },
+              update: { 
+                kycStatus: newStatus,
+                kycData: user.kycData
+              }
+            }
+          });
+          updated++;
+        }
+        
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } catch (error) {
+        console.error(`Auto-refresh KYC error for user ${user._id}:`, error.message);
+      }
+    }
+    
+    // Execute bulk operations
+    if (bulkOps.length > 0) {
+      await User.bulkWrite(bulkOps);
+      console.log(`Auto-refresh completed: ${updated} status changes`);
+    }
+  } catch (error) {
+    console.error('Auto-refresh KYC error:', error.message);
+  } finally {
+    isAutoRefreshing = false;
+  }
+}, 5 * 60 * 1000); // 5 minutes

@@ -8,8 +8,13 @@ import { apiUrl } from '../../utils/api';
 
 const KYCPage = ({ onBack }) => {
   const { isDark } = useTheme();
-  const { token, refreshUser } = useAuth();
-  const [kycStatus, setKycStatus] = useState(null);
+  const { token, refreshUser, user } = useAuth();
+  const [kycStatus, setKycStatus] = useState({
+    status: user?.kycStatus || 'pending',
+    verifiedAt: user?.kycData?.verifiedAt,
+    rejectionReason: user?.kycData?.rejectionReason,
+    startedAt: user?.kycData?.startedAt
+  });
   const [loading, setLoading] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(null);
 
@@ -29,9 +34,11 @@ const KYCPage = ({ onBack }) => {
     }
   }, [token, refreshUser]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    fetchKYCStatus();
+    // Only fetch if we don't have current data or if status might have changed
+    if (!kycStatus.status || kycStatus.status === 'in_progress') {
+      fetchKYCStatus();
+    }
     
     // Simple timer to show remaining time
     const interval = setInterval(() => {
@@ -53,7 +60,7 @@ const KYCPage = ({ onBack }) => {
     }, 1000);
     
     return () => clearInterval(interval);
-  }, [kycStatus?.startedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [kycStatus?.startedAt, fetchKYCStatus, kycStatus.status]);
 
   const initiateKYC = async () => {
     setLoading(true);
