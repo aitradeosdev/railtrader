@@ -3,11 +3,13 @@ import { ArrowLeft, Trophy, User, Clock, CheckCircle, AlertCircle } from 'lucide
 import { GlassCard } from '../../../components/UIComponents';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useCurrency } from '../../../contexts/CurrencyContext';
 import { apiUrl } from '../../../utils/api';
 
 const ChallengeDetailPage = ({ challengeId, onBack }) => {
   const { isDark } = useTheme();
   const { token } = useAuth();
+  const { currency } = useCurrency();
   const [challenge, setChallenge] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [notification, setNotification] = useState(null);
@@ -179,7 +181,7 @@ const ChallengeDetailPage = ({ challengeId, onBack }) => {
             Challenge Details
           </h1>
           <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} text-sm`}>
-            {challenge.userId.firstName} {challenge.userId.lastName} - {challenge.accountSize} {challenge.challengeType.toUpperCase()}
+            {challenge.userInfo?.firstName || challenge.userId?.firstName || 'User'} {challenge.userInfo?.lastName || challenge.userId?.lastName || ''} - {challenge.accountSize} {challenge.challengeType.toUpperCase()}
           </p>
         </div>
       </div>
@@ -193,11 +195,11 @@ const ChallengeDetailPage = ({ challengeId, onBack }) => {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Name:</span>
-              <span className={isDark ? 'text-white' : 'text-gray-900'}>{challenge.userId.firstName} {challenge.userId.lastName}</span>
+              <span className={isDark ? 'text-white' : 'text-gray-900'}>{challenge.userInfo?.firstName || challenge.userId?.firstName || 'N/A'} {challenge.userInfo?.lastName || challenge.userId?.lastName || ''}</span>
             </div>
             <div className="flex justify-between">
               <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Email:</span>
-              <span className={isDark ? 'text-white' : 'text-gray-900'}>{challenge.userId.email}</span>
+              <span className={isDark ? 'text-white' : 'text-gray-900'}>{challenge.userInfo?.email || challenge.userId?.email || 'N/A'}</span>
             </div>
             <div className="flex justify-between">
               <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Created:</span>
@@ -225,7 +227,7 @@ const ChallengeDetailPage = ({ challengeId, onBack }) => {
             </div>
             <div className="flex justify-between">
               <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Amount:</span>
-              <span className={isDark ? 'text-white' : 'text-gray-900'}>${challenge.amount}</span>
+              <span className={isDark ? 'text-white' : 'text-gray-900'}>{currency}{challenge.amount}</span>
             </div>
           </div>
         </GlassCard>
@@ -317,7 +319,7 @@ const ChallengeDetailPage = ({ challengeId, onBack }) => {
               <div className="flex justify-between">
                 <span className={isDark ? 'text-white/60' : 'text-gray-600'}>User:</span>
                 <span className={isDark ? 'text-white' : 'text-gray-900'}>
-                  {challenge.userId.firstName} {challenge.userId.lastName}
+                  {challenge.userInfo?.firstName || challenge.userId?.firstName || 'N/A'} {challenge.userInfo?.lastName || challenge.userId?.lastName || ''}
                 </span>
               </div>
               <div className="flex justify-between">

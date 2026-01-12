@@ -11,6 +11,8 @@ const UserDashboard = ({ onNavigate }) => {
   const { token } = useAuth();
   const { currency } = useCurrency();
   const [users, setUsers] = useState([]);
+  const [challenges, setChallenges] = useState([]);
+  const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -19,7 +21,33 @@ const UserDashboard = ({ onNavigate }) => {
 
   useEffect(() => {
     fetchUsers();
+    fetchChallenges();
+    fetchStats();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch(`${apiUrl()}/api/admin/stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setStats(data);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  const fetchChallenges = async () => {
+    try {
+      const response = await fetch(`${apiUrl()}/api/admin/challenges`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setChallenges(data);
+    } catch (error) {
+      console.error('Error fetching challenges:', error);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -47,6 +75,34 @@ const UserDashboard = ({ onNavigate }) => {
     } catch (error) {
       console.error('Error deleting user:', error);
     }
+  };
+
+  const getUserTotalBalance = (user) => {
+    let totalBalance = user.accountBalance || 0;
+    
+    const userChallenges = challenges.filter(c => 
+      (c.userId && c.userId._id === user._id) || 
+      (c.userInfo && c.userInfo.email === user.email)
+    );
+    
+    totalBalance += userChallenges.reduce((total, challenge) => {
+      if (challenge.status === 'funded' || challenge.status === 'mt5_assigned') {
+        let accountSizeNum = 0;
+        if (challenge.accountSize && typeof challenge.accountSize === 'string') {
+          const sizeMatch = challenge.accountSize.toLowerCase().match(/(\d+)k?/);
+          if (sizeMatch) {
+            const baseNum = parseInt(sizeMatch[1]);
+            accountSizeNum = challenge.accountSize.toLowerCase().includes('k') ? baseNum * 1000 : baseNum;
+          }
+        } else if (typeof challenge.accountSize === 'number') {
+          accountSizeNum = challenge.accountSize;
+        }
+        return total + accountSizeNum;
+      }
+      return total;
+    }, 0);
+    
+    return totalBalance;
   };
 
   const filteredAndSortedUsers = users
@@ -79,8 +135,24 @@ const UserDashboard = ({ onNavigate }) => {
       return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
     });
 
-  const totalBalance = users.reduce((sum, user) => sum + (user.accountBalance || 0), 0);
-  const totalProfit = users.reduce((sum, user) => sum + (user.totalProfit || 0), 0);
+  const totalBalance = users.reduce((sum, user) => sum + (user.accountBalance || 0), 0) + 
+    challenges.reduce((total, challenge) => {
+      if (challenge.status === 'funded') {
+        let accountSizeNum = 0;
+        if (challenge.accountSize && typeof challenge.accountSize === 'string') {
+          const sizeMatch = challenge.accountSize.toLowerCase().match(/(\d+)k?/);
+          if (sizeMatch) {
+            const baseNum = parseInt(sizeMatch[1]);
+            accountSizeNum = challenge.accountSize.toLowerCase().includes('k') ? baseNum * 1000 : baseNum;
+          }
+        } else if (typeof challenge.accountSize === 'number') {
+          accountSizeNum = challenge.accountSize;
+        }
+        return total + accountSizeNum;
+      }
+      return total;
+    }, 0);
+  const totalProfit = stats.platformProfit || 0;
   const adminCount = users.filter(user => user.isAdmin).length;
   const twoFACount = users.filter(user => user.twoFactorEnabled).length;
 
@@ -245,7 +317,7 @@ const UserDashboard = ({ onNavigate }) => {
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <p className={`text-xs ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Balance</p>
-                  <p className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{currency}{(user.accountBalance || 0).toLocaleString()}</p>
+                  <p className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{currency}{getUserTotalBalance(user).toLocaleString()}</p>
                 </div>
                 <div>
                   <p className={`text-xs ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Win Rate</p>

@@ -3,12 +3,15 @@ import { Trophy, User, Search, ArrowRight } from 'lucide-react';
 import { GlassCard } from '../../../components/UIComponents';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useCurrency } from '../../../contexts/CurrencyContext';
 import { apiUrl } from '../../../utils/api';
 
 const ChallengeManagementPage = ({ onNavigateToChallenge }) => {
   const { isDark } = useTheme();
   const { token } = useAuth();
+  const { currency } = useCurrency();
   const [challenges, setChallenges] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [notification] = useState(null);
 
@@ -25,6 +28,8 @@ const ChallengeManagementPage = ({ onNavigateToChallenge }) => {
       setChallenges(data);
     } catch (error) {
       console.error('Error fetching challenges:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,7 +93,11 @@ const ChallengeManagementPage = ({ onNavigateToChallenge }) => {
       <GlassCard className="p-6">
         <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-6`}>All Challenges</h2>
         
-        {filteredChallenges.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        ) : filteredChallenges.length === 0 ? (
           <div className="text-center py-12">
             <Trophy className={`mx-auto mb-4 ${isDark ? 'text-white/40' : 'text-gray-400'}`} size={48} />
             <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>No Challenges Found</h3>
@@ -109,7 +118,7 @@ const ChallengeManagementPage = ({ onNavigateToChallenge }) => {
                        (challenge.userId ? `${challenge.userId.firstName} ${challenge.userId.lastName}` : 'Deleted User')}
                     </h3>
                     <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>
-                      {challenge.accountSize} {challenge.challengeType?.toUpperCase() || 'UNKNOWN'} - ${challenge.amount} (Phase {challenge.currentPhase})
+                      {challenge.accountSize} {challenge.challengeType?.toUpperCase() || 'UNKNOWN'} - {currency}{challenge.amount} (Phase {challenge.currentPhase})
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`text-xs ${getStatusColor(challenge.status)}`}>

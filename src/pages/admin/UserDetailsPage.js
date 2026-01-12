@@ -11,11 +11,25 @@ const UserDetailsPage = ({ onBack, userId }) => {
   const { token } = useAuth();
   const { currency } = useCurrency();
   const [user, setUser] = useState(null);
+  const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchUser();
+    fetchChallenges();
   }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchChallenges = async () => {
+    try {
+      const response = await fetch(`${apiUrl()}/api/admin/challenges`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setChallenges(data);
+    } catch (error) {
+      console.error('Error fetching challenges:', error);
+    }
+  };
 
   const fetchUser = async () => {
     try {
@@ -50,6 +64,34 @@ const UserDetailsPage = ({ onBack, userId }) => {
       </div>
     );
   }
+
+  const getUserTotalBalance = () => {
+    let totalBalance = user.accountBalance || 0;
+    
+    const userChallenges = challenges.filter(c => 
+      (c.userId && c.userId._id === user._id) || 
+      (c.userInfo && c.userInfo.email === user.email)
+    );
+    
+    totalBalance += userChallenges.reduce((total, challenge) => {
+      if (challenge.status === 'funded' || challenge.status === 'mt5_assigned') {
+        let accountSizeNum = 0;
+        if (challenge.accountSize && typeof challenge.accountSize === 'string') {
+          const sizeMatch = challenge.accountSize.toLowerCase().match(/(\d+)k?/);
+          if (sizeMatch) {
+            const baseNum = parseInt(sizeMatch[1]);
+            accountSizeNum = challenge.accountSize.toLowerCase().includes('k') ? baseNum * 1000 : baseNum;
+          }
+        } else if (typeof challenge.accountSize === 'number') {
+          accountSizeNum = challenge.accountSize;
+        }
+        return total + accountSizeNum;
+      }
+      return total;
+    }, 0);
+    
+    return totalBalance;
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-20 md:pb-0">
@@ -143,7 +185,7 @@ const UserDetailsPage = ({ onBack, userId }) => {
               <div>
                 <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>Account Balance</p>
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {currency}{user.accountBalance.toLocaleString()}
+                  {currency}{getUserTotalBalance().toLocaleString()}
                 </p>
               </div>
             </div>
