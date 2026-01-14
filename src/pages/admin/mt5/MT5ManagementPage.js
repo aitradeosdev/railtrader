@@ -111,10 +111,10 @@ const MT5ManagementPage = ({ onNavigateToUser }) => {
             {pendingLiveRequests.map(request => (
               <div key={request._id} className="flex items-center justify-between">
                 <span className={`text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {request.userId.firstName} {request.userId.lastName} - Live Account ({request.accountSize})
+                  {request.userId?.firstName || request.userInfo?.firstName || 'User'} {request.userId?.lastName || request.userInfo?.lastName || ''} - Live Account ({request.accountSize})
                 </span>
                 <button
-                  onClick={() => onNavigateToUser(request.userId._id)}
+                  onClick={() => onNavigateToUser(request.userId?._id || request.userId)}
                   className="px-3 py-1 bg-orange-600 text-white text-xs rounded hover:bg-orange-700 flex items-center gap-1"
                 >
                   Assign Live <ArrowRight size={12} />
@@ -134,10 +134,10 @@ const MT5ManagementPage = ({ onNavigateToUser }) => {
             {pendingMT5Requests.map(request => (
               <div key={request._id} className="flex items-center justify-between">
                 <span className={`text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {request.userId.firstName} {request.userId.lastName} - Phase {request.phase}
+                  {request.userId?.firstName || request.userInfo?.firstName || 'User'} {request.userId?.lastName || request.userInfo?.lastName || ''} - Phase {request.phase}
                 </span>
                 <button
-                  onClick={() => onNavigateToUser(request.userId._id)}
+                  onClick={() => onNavigateToUser(request.userId?._id || request.userId)}
                   className="px-3 py-1 bg-amber-600 text-white text-xs rounded hover:bg-amber-700 flex items-center gap-1"
                 >
                   Manage <ArrowRight size={12} />
