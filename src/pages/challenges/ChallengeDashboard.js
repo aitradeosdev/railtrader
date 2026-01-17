@@ -10,6 +10,7 @@ const ChallengeDashboard = ({ onBuyNew }) => {
   const { token } = useAuth();
   const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [reviewingChallenges, setReviewingChallenges] = useState(new Set());
 
   useEffect(() => {
     fetchChallenges();
@@ -31,16 +32,36 @@ const ChallengeDashboard = ({ onBuyNew }) => {
 
   const handleRequestReview = async (challengeId) => {
     try {
+      console.log('Requesting review for challenge:', challengeId);
+      setReviewingChallenges(prev => new Set([...prev, challengeId]));
+      
       const response = await fetch(`${apiUrl()}/api/user/challenge/${challengeId}/review`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
+      
+      console.log('Review response status:', response.status);
+      const data = await response.json();
+      console.log('Review response data:', data);
       
       if (response.ok) {
         fetchChallenges();
+      } else {
+        console.error('Review request failed:', data);
+        alert(`Review request failed: ${data.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error requesting review:', error);
+      alert(`Error requesting review: ${error.message}`);
+    } finally {
+      setReviewingChallenges(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(challengeId);
+        return newSet;
+      });
     }
   };
 
@@ -73,6 +94,7 @@ const ChallengeDashboard = ({ onBuyNew }) => {
   const getStatusText = (status, challenge) => {
     const phase = challenge?.currentPhase || 1;
     const challengeType = challenge?.challengeType || '1-phase';
+    const reviewStatus = challenge?.reviewStatus;
     
     switch (status) {
       case 'pending': 
@@ -80,20 +102,25 @@ const ChallengeDashboard = ({ onBuyNew }) => {
       case 'mt5_assigned': 
         return `MT5 Assigned - Check Trading Hub for Phase ${phase} credentials`;
       case 'evaluation': 
-        if (challengeType === '1-phase') {
-          return 'Evaluation Under Review';
-        } else if (challengeType === '2-phase' && phase === 1) {
-          return 'Phase 1 Evaluation Under Review';
-        } else if (challengeType === '2-phase' && phase === 2) {
-          return 'Phase 2 Evaluation Under Review';
+        if (reviewStatus === 'reviewing') {
+          return 'Automated Review in Progress...';
+        } else if (reviewStatus === 'completed') {
+          return 'Review Completed - Processing Results';
         }
-        return 'Evaluation Under Review';
+        if (challengeType === '1-phase') {
+          return 'Ready for Review - Click "Request Review" to start automated evaluation';
+        } else if (challengeType === '2-phase' && phase === 1) {
+          return 'Phase 1 Ready for Review - Click "Request Review" to start automated evaluation';
+        } else if (challengeType === '2-phase' && phase === 2) {
+          return 'Phase 2 Ready for Review - Click "Request Review" to start automated evaluation';
+        }
+        return 'Ready for Review';
       case 'pending_funding':
         return 'Approved for Funding - Live Account Assignment Pending';
       case 'funded': 
         return 'Funded Account Approved - Check Trading Hub for Live credentials';
       case 'rejected': 
-        return 'Challenge Rejected';
+        return 'Challenge Rejected - Review failed automated evaluation';
       default: 
         return 'Unknown Status';
     }
@@ -205,14 +232,44 @@ const ChallengeDashboard = ({ onBuyNew }) => {
                 {challenge.status === 'mt5_assigned' && (
                   <button
                     onClick={() => handleRequestReview(challenge._id)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                    disabled={reviewingChallenges.has(challenge._id)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    Request Review
+                    {reviewingChallenges.has(challenge._id) && (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    )}
+                    {reviewingChallenges.has(challenge._id) ? 'Submitting...' : 'Request Automated Review'}
                   </button>
+                )}
+                {challenge.status === 'evaluation' && challenge.reviewStatus === 'reviewing' && (
+                  <div className="px-4 py-2 bg-purple-600 text-white rounded-xl flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Automated Review in Progress
+                  </div>
                 )}
                 {challenge.status === 'funded' && (
                   <div className="px-4 py-2 bg-emerald-600 text-white rounded-xl">
                     Funded Account Active
+                  </div>
+                )}
+                {challenge.status === 'rejected' && challenge.brymixResult && (
+                  <div className="w-full">
+                    <div className="px-4 py-2 bg-red-600 text-white rounded-xl mb-2">
+                      Challenge Failed Automated Review
+                    </div>
+                    {challenge.brymixResult.violations && challenge.brymixResult.violations.length > 0 && (
+                      <div className={`p-3 rounded-xl ${isDark ? 'bg-red-900/20' : 'bg-red-50'} text-sm`}>
+                        <h5 className={`font-semibold ${isDark ? 'text-red-400' : 'text-red-700'} mb-2`}>Violations Found:</h5>
+                        <ul className={`space-y-1 ${isDark ? 'text-red-300' : 'text-red-600'}`}>
+                          {challenge.brymixResult.violations.slice(0, 3).map((violation, idx) => (
+                            <li key={idx}>• {violation.description}</li>
+                          ))}
+                          {challenge.brymixResult.violations.length > 3 && (
+                            <li>• And {challenge.brymixResult.violations.length - 3} more violations...</li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

@@ -11,11 +11,64 @@ require('dotenv').config();
 
 const app = express();
 
+// Brymix webhook endpoint - MUST be before any body parser middleware
+app.post('/api/webhook/challenge-result', express.raw({type: 'application/json'}), async (req, res) => {
+  try {
+    const signature = req.headers['x-signature'];
+    const payload = req.body.toString('utf8');
+    
+    // Verify signature
+    const expected = crypto
+      .createHmac('sha256', process.env.BRYMIX_WEBHOOK_SECRET)
+      .update(payload, 'utf8')
+      .digest('hex');
+    
+    if (signature !== expected) {
+      return res.status(401).json({error: 'Invalid signature'});
+    }
+    
+    const result = JSON.parse(payload);
+    const { challenge_id, status, violations, metrics } = result;
+    
+    const challenge = await ChallengeRequest.findById(challenge_id);
+    if (!challenge) {
+      return res.status(404).json({error: 'Challenge not found'});
+    }
+    
+    challenge.brymixResult = result;
+    challenge.reviewStatus = 'completed';
+    
+    if (status === 'passed') {
+      if (challenge.challengeType === '1-phase') {
+        challenge.status = 'pending_funding';
+        challenge.needsLiveAccount = true;
+      } else if (challenge.challengeType === '2-phase') {
+        if (challenge.currentPhase === 1) {
+          challenge.currentPhase = 2;
+          challenge.status = 'pending';
+          challenge.needsMT5 = true;
+        } else {
+          challenge.status = 'pending_funding';
+          challenge.needsLiveAccount = true;
+        }
+      }
+    } else {
+      challenge.status = 'rejected';
+    }
+    
+    await challenge.save();
+    res.json({status: 'received'});
+  } catch (error) {
+    console.error('Brymix webhook error:', error);
+    res.status(500).json({error: 'Internal server error'});
+  }
+});
+
 // CORS configuration
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://railtrader.vercel.app'] 
-    : ['http://localhost:3000'],
+    ? [process.env.FRONTEND_URL_PROD] 
+    : [process.env.FRONTEND_URL_DEV],
   credentials: true
 }));
 
@@ -77,7 +130,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 })
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => {
-    console.error('MongoDB connection error:', err);
+    console.error('MongoDB connection error:', err.message);
     console.log('Retrying connection in 5 seconds...');
     setTimeout(() => {
       mongoose.connect(process.env.MONGODB_URI, {
@@ -85,6 +138,9 @@ mongoose.connect(process.env.MONGODB_URI, {
         useUnifiedTopology: true,
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
+      }).catch(retryErr => {
+        console.error('MongoDB retry failed:', retryErr.message);
+        console.log('Server will continue without database connection');
       });
     }, 5000);
   });
@@ -211,6 +267,9 @@ const challengeRequestSchema = new mongoose.Schema({
     assignedAt: { type: Date, default: Date.now },
     active: { type: Boolean, default: true }
   }],
+  brymixJobId: { type: String },
+  reviewStatus: { type: String, enum: ['pending', 'reviewing', 'completed'], default: 'pending' },
+  brymixResult: { type: mongoose.Schema.Types.Mixed },
   createdAt: { type: Date, default: Date.now },
   adminNotes: { type: String }
 });
@@ -236,6 +295,62 @@ const platformSettingsSchema = new mongoose.Schema({
 });
 
 const PlatformSettings = mongoose.model('PlatformSettings', platformSettingsSchema);
+
+// Helper functions for Brymix integration
+const parseAccountSize = (accountSize) => {
+  if (!accountSize) return 10000;
+  const match = accountSize.toLowerCase().match(/(\d+)k?/);
+  if (match) {
+    const num = parseInt(match[1]);
+    return accountSize.toLowerCase().includes('k') ? num * 1000 : num;
+  }
+  return 10000;
+};
+
+// Helper function to get challenge rules
+const getChallengeRules = async (challengeType, accountSize, currentPhase) => {
+  try {
+    const accountSizeNum = parseAccountSize(accountSize);
+    
+    const plan = await ChallengePlan.findOne({
+      accountSize: accountSizeNum,
+      active: true 
+    });
+    
+    if (plan && plan.phases) {
+      // Use challenge type to determine which phase rules to use
+      const phaseToUse = challengeType === '1-phase' ? 1 : 2;
+      
+      if (plan.phases[phaseToUse]) {
+        return {
+          max_drawdown_percent: plan.phases[phaseToUse].maxDrawdown,
+          profit_target_percent: plan.phases[phaseToUse].profitTarget
+        };
+      }
+    }
+  } catch (error) {
+    console.error('Error getting challenge rules:', error);
+  }
+  
+  // Default rules if plan not found
+  return {
+    max_drawdown_percent: 10.0,
+    profit_target_percent: 10.0
+  };
+};
+
+
+
+const verifyBrymixSignature = (payload, signature) => {
+  if (!signature || !payload) return false;
+  const expected = crypto
+    .createHmac('sha256', process.env.BRYMIX_WEBHOOK_SECRET)
+    .update(payload, 'utf8')
+    .digest('hex');
+  return signature === expected;
+};
+
+
 
 // Auth middleware
 const authenticateToken = (req, res, next) => {
@@ -710,15 +825,54 @@ app.post('/api/user/challenge/:id/review', authenticateToken, async (req, res) =
       return res.status(403).json({ message: 'Unauthorized' });
     }
     
+    // Get active MT5 account
+    const activeMT5 = challenge.mt5Accounts.find(acc => acc.active);
+    if (!activeMT5) {
+      return res.status(400).json({ message: 'No active MT5 account found' });
+    }
+    
+    // Get challenge rules - use currentPhase for the correct phase rules
+    const rules = await getChallengeRules(challenge.challengeType, challenge.accountSize, challenge.currentPhase);
+    const initialBalance = parseAccountSize(challenge.accountSize);
+    
+    // Submit to Brymix API
+    const brymixPayload = {
+      user_id: challenge.userId.toString(),
+      challenge_id: challenge._id.toString(),
+      mt5_login: activeMT5.login,
+      mt5_password: activeMT5.password,
+      mt5_server: activeMT5.server,
+      initial_balance: initialBalance,
+      rules,
+      callback_url: process.env.NODE_ENV === 'production' 
+        ? process.env.BRYMIX_CALLBACK_URL_PROD
+        : process.env.BRYMIX_CALLBACK_URL_DEV
+    };
+    
+    const response = await axios.post(process.env.BRYMIX_API_URL, brymixPayload, {
+      headers: {
+        'X-API-Key': process.env.BRYMIX_API_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    // Update challenge with job ID
+    challenge.brymixJobId = response.data.job_id;
+    challenge.reviewStatus = 'reviewing';
     challenge.status = 'evaluation';
     await challenge.save();
     
-    res.json({ message: 'Evaluation review submitted' });
+    res.json({ 
+      message: 'Review submitted to automated system',
+      jobId: response.data.job_id
+    });
   } catch (error) {
     console.error('Review submission error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+
 
 // Add payment method
 app.post('/api/user/payment-methods', authenticateToken, async (req, res) => {
@@ -1292,7 +1446,7 @@ app.post('/api/payment/initialize', authenticateToken, async (req, res) => {
     
 
     
-    const response = await axios.post('https://api.paystack.co/transaction/initialize', paymentData, {
+    const response = await axios.post(`${process.env.PAYSTACK_API_URL}/transaction/initialize`, paymentData, {
       headers: {
         Authorization: `Bearer ${secretKey}`,
         'Content-Type': 'application/json'
@@ -1338,7 +1492,7 @@ app.post('/api/payment/verify', authenticateToken, async (req, res) => {
       return res.status(500).json({ success: false, message: 'Payment configuration error' });
     }
 
-    const paystackResponse = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, {
+    const paystackResponse = await axios.get(`${process.env.PAYSTACK_API_URL}/transaction/verify/${reference}`, {
       headers: {
         Authorization: `Bearer ${secretKey}`
       }
@@ -1415,7 +1569,7 @@ app.get('/api/payment/banks', async (req, res) => {
       return res.status(500).json({ message: 'Payment configuration not set' });
     }
     
-    const response = await axios.get('https://api.paystack.co/bank', {
+    const response = await axios.get(`${process.env.PAYSTACK_API_URL}/bank`, {
       headers: {
         Authorization: `Bearer ${secretKey}`
       }
@@ -1445,7 +1599,7 @@ app.post('/api/payment/resolve-account', authenticateToken, async (req, res) => 
       return res.status(500).json({ message: 'Payment configuration not set' });
     }
     
-    const response = await axios.get(`https://api.paystack.co/bank/resolve`, {
+    const response = await axios.get(`${process.env.PAYSTACK_API_URL}/bank/resolve`, {
       params: {
         account_number,
         bank_code
@@ -1505,7 +1659,7 @@ app.post('/api/user/kyc/initiate', authenticateToken, async (req, res) => {
     }
 
     // Create Didit session
-    const diditResponse = await axios.post('https://verification.didit.me/v2/session/', {
+    const diditResponse = await axios.post(`${process.env.DIDIT_API_URL}/session/`, {
       workflow_id: process.env.DIDIT_WORKFLOW_ID,
       callback: `${req.get('origin')}/kyc/callback`,
       vendor_data: user._id.toString(),
@@ -1584,7 +1738,7 @@ app.post('/api/user/kyc/refresh', authenticateToken, async (req, res) => {
     }
 
     // Check actual status with Didit API
-    const diditResponse = await axios.get(`https://verification.didit.me/v2/session/${user.kycData.diditSessionId}/decision/`, {
+    const diditResponse = await axios.get(`${process.env.DIDIT_API_URL}/session/${user.kycData.diditSessionId}/decision/`, {
       headers: {
         'X-Api-Key': process.env.DIDIT_API_KEY,
         'Content-Type': 'application/json'
@@ -1702,7 +1856,7 @@ app.post('/api/admin/kyc/refresh-all', authenticateAdmin, async (req, res) => {
     
     for (const user of users) {
       try {
-        const diditResponse = await axios.get(`https://verification.didit.me/v2/session/${user.kycData.diditSessionId}/decision/`, {
+        const diditResponse = await axios.get(`${process.env.DIDIT_API_URL}/session/${user.kycData.diditSessionId}/decision/`, {
           headers: {
             'X-Api-Key': process.env.DIDIT_API_KEY,
             'Content-Type': 'application/json'
@@ -1728,7 +1882,6 @@ app.post('/api/admin/kyc/refresh-all', authenticateAdmin, async (req, res) => {
         // Small delay to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 100));
       } catch (error) {
-        console.error(`Error refreshing KYC for user ${user._id}:`, error.message);
         errors++;
       }
     }
@@ -1802,13 +1955,12 @@ setInterval(async () => {
     
     if (users.length === 0) return;
     
-    console.log(`Auto-refreshing KYC status for ${users.length} users...`);
     const bulkOps = [];
     let updated = 0;
     
     for (const user of users) {
       try {
-        const diditResponse = await axios.get(`https://verification.didit.me/v2/session/${user.kycData.diditSessionId}/decision/`, {
+        const diditResponse = await axios.get(`${process.env.DIDIT_API_URL}/session/${user.kycData.diditSessionId}/decision/`, {
           headers: {
             'X-Api-Key': process.env.DIDIT_API_KEY,
             'Content-Type': 'application/json'
@@ -1834,17 +1986,16 @@ setInterval(async () => {
         // Small delay to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 200));
       } catch (error) {
-        console.error(`Auto-refresh KYC error for user ${user._id}:`, error.message);
+        // Silent error handling
       }
     }
     
     // Execute bulk operations
     if (bulkOps.length > 0) {
       await User.bulkWrite(bulkOps);
-      console.log(`Auto-refresh completed: ${updated} status changes`);
     }
   } catch (error) {
-    console.error('Auto-refresh KYC error:', error.message);
+    // Silent error handling
   } finally {
     isAutoRefreshing = false;
   }

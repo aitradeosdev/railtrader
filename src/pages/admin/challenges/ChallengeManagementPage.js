@@ -124,6 +124,12 @@ const ChallengeManagementPage = ({ onNavigateToChallenge }) => {
                       <span className={`text-xs ${getStatusColor(challenge.status)}`}>
                         {challenge.status.toUpperCase().replace('_', ' ')}
                       </span>
+                      {challenge.reviewStatus === 'reviewing' && (
+                        <span className="text-xs text-purple-400 flex items-center gap-1">
+                          <div className="animate-spin rounded-full h-2 w-2 border border-purple-400 border-t-transparent"></div>
+                          AUTO-REVIEW
+                        </span>
+                      )}
                       <span className={`text-xs ${isDark ? 'text-white/40' : 'text-gray-500'}`}>
                         {new Date(challenge.createdAt).toLocaleDateString()}
                       </span>

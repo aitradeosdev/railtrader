@@ -15,6 +15,49 @@ const ChallengeSuccessPage = ({ challenge, onGoHome }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [verificationStatus, setVerificationStatus] = useState('checking');
   const [challengeData, setChallengeData] = useState(challenge);
+  const [challengePlans, setChallengePlans] = useState([]);
+
+  // Fetch challenge plans to get correct profit targets
+  useEffect(() => {
+    const fetchChallengePlans = async () => {
+      try {
+        const response = await fetch(`${apiUrl()}/api/challenge-plans`);
+        const plans = await response.json();
+        setChallengePlans(plans);
+      } catch (error) {
+        console.error('Error fetching challenge plans:', error);
+      }
+    };
+    fetchChallengePlans();
+  }, []);
+
+  // Get correct profit target based on challenge type and account size
+  const getProfitTarget = () => {
+    if (!challengeData || !challengePlans.length) return 20;
+    
+    // Parse account size
+    let accountSizeNum = 0;
+    if (challengeData.accountSize && typeof challengeData.accountSize === 'string') {
+      const sizeMatch = challengeData.accountSize.toLowerCase().match(/(\d+)k?/);
+      if (sizeMatch) {
+        const baseNum = parseInt(sizeMatch[1]);
+        accountSizeNum = challengeData.accountSize.toLowerCase().includes('k') ? baseNum * 1000 : baseNum;
+      }
+    }
+    
+    // Find matching plan
+    const plan = challengePlans.find(p => p.accountSize === accountSizeNum);
+    if (!plan || !plan.phases) return 20;
+    
+    // Return correct phase profit target based on challenge type
+    if (challengeData.challengeType === '1-phase') {
+      return plan.phases[1]?.profitTarget || 20;
+    } else if (challengeData.challengeType === '2-phase') {
+      return plan.phases[2]?.profitTarget || 15;
+    }
+    
+    return 20;
+  };
 
   const verifyPayment = useCallback(async (reference) => {
     try {
@@ -114,7 +157,7 @@ const ChallengeSuccessPage = ({ challenge, onGoHome }) => {
             </div>
             <div className={`p-4 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
               <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Profit Target</h3>
-              <p className="text-2xl font-black text-emerald-400">{challengeData?.phases?.[challengeData?.selectedType === '1-phase' ? 1 : 2]?.profitTarget || challengeData?.phases?.[1]?.profitTarget || 20}%</p>
+              <p className="text-2xl font-black text-emerald-400">{getProfitTarget()}%</p>
             </div>
           </div>
 
