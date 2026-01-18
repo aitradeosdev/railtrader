@@ -68,3 +68,22 @@
 .font-size-medium .text-5xl {
   font-size: var(--font-size-5xl) !important;
 }
+
+/* Mobile nav responsive adjustments */
+.font-size-small .mobile-nav {
+  padding: 6px !important;
+}
+
+.font-size-small .mobile-nav button {
+  padding: 8px !important;
+  gap: 2px !important;
+}
+
+.font-size-medium .mobile-nav {
+  padding: 8px !important;
+}
+
+.font-size-medium .mobile-nav button {
+  padding: 12px !important;
+  gap: 4px !important;
+}

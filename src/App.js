@@ -241,7 +241,7 @@ function AdminApp({ platformName }) {
           </main>
 
           {/* Admin Mobile Navigation */}
-          <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[100]">
+          <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[100] mobile-nav">
             <div className={`flex justify-around items-center p-2 rounded-[2.5rem] ${isDark ? 'bg-white/10' : 'bg-white/90'} backdrop-blur-3xl ${isDark ? 'border-white/20' : 'border-gray-200'} border shadow-2xl`}>
               {adminNavItems.filter(item => !item.hideOnMobile).slice(0, 5).map(item => (
                 <button 
@@ -376,7 +376,7 @@ function UserApp({ platformName }) {
             </div>
           </main>
 
-          <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[100]">
+          <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[100] mobile-nav">
             <div className={`flex justify-around items-center p-2 rounded-[2.5rem] ${isDark ? 'bg-white/10' : 'bg-white/90'} backdrop-blur-3xl ${isDark ? 'border-white/20' : 'border-gray-200'} border shadow-2xl`}>
               {navItems.map(item => (
                 <button 
