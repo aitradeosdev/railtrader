@@ -1,26 +1,59 @@
 import { ArrowRight, TrendingUp, Shield, Zap, Users, ChevronDown } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { apiUrl } from '../../utils/api';
 
 const LandingPage = ({ onGetStarted, onNavigate }) => {
   const { isDark } = useTheme();
+  const { currency } = useCurrency();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openFeature, setOpenFeature] = useState(null);
+  const [maxFunding, setMaxFunding] = useState(null);
+  const [maxProfitSplit, setMaxProfitSplit] = useState(null);
+  const [platformBalance] = useState(25000000);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchChallengeData();
+  }, []);
+
+  const fetchChallengeData = async () => {
+    try {
+      const response = await fetch(`${apiUrl()}/api/challenge-plans`);
+      
+      if (response.ok) {
+        const challengeData = await response.json();
+        
+        if (challengeData.length > 0) {
+          const maxAccount = Math.max(...challengeData.map(c => c.accountSize));
+          const maxSplit = Math.max(...challengeData.map(c => c.phases['2']?.profitSplit || 0));
+          
+          setMaxFunding(maxAccount / 1000);
+          setMaxProfitSplit(maxSplit);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching challenge data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const features = [
     { 
       icon: TrendingUp, 
       title: 'Funded Accounts', 
-      desc: 'Get up to $200K in trading capital',
-      details: 'Start with our evaluation challenge and unlock trading capital up to $200,000. No personal risk - trade with our money and keep the majority of profits you generate.'
+      desc: maxFunding ? `Get up to ${currency}${maxFunding}K in trading capital` : 'Loading...',
+      details: maxFunding ? `Start with our evaluation challenge and unlock trading capital up to ${currency}${(maxFunding * 1000).toLocaleString()}. No personal risk - trade with our money and keep the majority of profits you generate.` : 'Loading...'
     },
     { 
       icon: Shield, 
       title: 'Profit Sharing', 
-      desc: 'Keep up to 90% of your profits',
-      details: 'Our generous profit splits start at 80% and can reach up to 90% based on your performance. The more you trade successfully, the higher your profit share becomes.'
+      desc: maxProfitSplit ? `Keep up to ${maxProfitSplit}% of your profits` : 'Loading...',
+      details: maxProfitSplit ? `Our generous profit splits start at 75% and can reach up to ${maxProfitSplit}% based on your performance. The more you trade successfully, the higher your profit share becomes.` : 'Loading...'
     },
     { 
       icon: Zap, 
@@ -37,11 +70,21 @@ const LandingPage = ({ onGetStarted, onNavigate }) => {
   ];
 
   const stats = [
-    { value: '5K+', label: 'Funded Traders' },
-    { value: '$50M+', label: 'Capital Deployed' },
-    { value: '85%', label: 'Payout Rate' },
-    { value: '$200K', label: 'Max Funding' }
+    { value: '2.5K+', label: 'Funded Traders' },
+    { value: `${currency}${(platformBalance/1000000).toFixed(0)}M+`, label: 'Capital Deployed' },
+    { value: maxProfitSplit ? `${maxProfitSplit}%` : '...', label: 'Payout Rate' },
+    { value: maxFunding ? `${currency}${maxFunding}K` : '...', label: 'Max Funding' }
   ];
+
+  if (loading) {
+    return (
+      <div className={`min-h-screen ${isDark ? 'bg-[#020202]' : 'bg-gray-100'} ${isDark ? 'text-white' : 'text-gray-900'} font-sans overflow-hidden selection:bg-blue-500/30`}>
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-[#020202]' : 'bg-gray-100'} ${isDark ? 'text-white' : 'text-gray-900'} font-sans overflow-hidden selection:bg-blue-500/30`}>
@@ -110,7 +153,7 @@ const LandingPage = ({ onGetStarted, onNavigate }) => {
                   Get <span className="text-blue-500">Funded</span>
                 </h1>
                 <p className={`text-xl ${isDark ? 'text-white/60' : 'text-gray-600'} mb-8`}>
-                  Join RailTrader's proprietary trading firm. Pass our evaluation challenge and trade with up to $200K of our capital while keeping up to 90% of profits.
+                  Join RailTrader's proprietary trading firm. Pass our evaluation challenge and trade with {maxFunding ? `up to ${currency}${maxFunding}K` : '...'} while keeping {maxProfitSplit ? `up to ${maxProfitSplit}%` : '...'} of profits.
                 </p>
                 <button 
                   onClick={onGetStarted}

@@ -1,4 +1,4 @@
-import { Star, Zap, Crown, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { GlassCard } from '../../components/UIComponents';
@@ -54,15 +54,6 @@ const ChallengesPage = ({ onGetStarted, onNavigate, onAuthRequest }) => {
     if (!challenge.phases) return {};
     const phaseKey = selectedType === '1-phase' ? '1' : '2';
     return challenge.phases[phaseKey] || {};
-  };
-
-  const getIcon = (tier) => {
-    switch (tier) {
-      case 1: return Star;
-      case 2: return Zap;
-      case 3: return Crown;
-      default: return Star;
-    }
   };
 
   if (loading) {
@@ -177,7 +168,7 @@ const ChallengesPage = ({ onGetStarted, onNavigate, onAuthRequest }) => {
                   </button>
                 </GlassCard>
               );
-            })}}
+            })}
           </div>
         </div>
       </div>

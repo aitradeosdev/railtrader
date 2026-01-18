@@ -2,16 +2,43 @@ import { Users, Award, Globe, TrendingUp, ArrowLeft, ChevronDown } from 'lucide-
 import { useTheme } from '../../contexts/ThemeContext';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { apiUrl } from '../../utils/api';
 
 const AboutPage = ({ onNavigate }) => {
   const { isDark } = useTheme();
   const [openFaq, setOpenFaq] = useState(null);
+  const [maxProfitSplit, setMaxProfitSplit] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const faqs = [
+  useEffect(() => {
+    fetchChallengeData();
+  }, []);
+
+  const fetchChallengeData = async () => {
+    try {
+      const response = await fetch(`${apiUrl()}/api/challenge-plans`);
+      
+      if (response.ok) {
+        const challengeData = await response.json();
+        
+        if (challengeData.length > 0) {
+          const maxSplit = Math.max(...challengeData.map(c => c.phases['2']?.profitSplit || 0));
+          setMaxProfitSplit(maxSplit);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching challenge data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update FAQ when maxProfitSplit changes
+  const updatedFaqs = [
     {
       question: 'What makes RailTrader different from other prop firms?',
-      answer: 'RailTrader focuses on simplicity and trader success. We have only 2 main rules, offer up to 90% profit splits, and provide same-day payouts. Our evaluation process is straightforward with no hidden requirements or complex conditions.'
+      answer: maxProfitSplit ? `RailTrader focuses on simplicity and trader success. We have only 2 main rules, offer up to ${maxProfitSplit}% profit splits, and provide same-day payouts. Our evaluation process is straightforward with no hidden requirements or complex conditions.` : 'Loading...'
     },
     {
       question: 'How long does it take to get funded after passing the evaluation?',
@@ -20,12 +47,18 @@ const AboutPage = ({ onNavigate }) => {
     {
       question: 'What trading platforms do you support?',
       answer: 'We provide access to MetaTrader 5 (MT5) with all major forex pairs, indices, commodities, and cryptocurrency CFDs. Our platform offers advanced charting tools, expert advisors, and real-time market data from premium providers.'
-    },
-    {
-      question: 'Can I scale my account size after getting funded?',
-      answer: 'Yes! Based on your consistent performance and adherence to our rules, we offer account scaling opportunities. Successful traders can progress from $10K accounts up to $250K+ accounts with improved profit sharing percentages.'
     }
   ];
+
+  if (loading) {
+    return (
+      <div className={`min-h-screen ${isDark ? 'bg-[#020202]' : 'bg-gray-100'} ${isDark ? 'text-white' : 'text-gray-900'} font-sans overflow-hidden selection:bg-blue-500/30`}>
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-[#020202]' : 'bg-gray-100'} ${isDark ? 'text-white' : 'text-gray-900'} font-sans overflow-hidden selection:bg-blue-500/30`}>
@@ -52,7 +85,7 @@ const AboutPage = ({ onNavigate }) => {
               Our mission is simple: provide talented traders with the capital they need while maintaining the industry's most trader-friendly terms. We believe in keeping rules minimal, payouts fast, and profit splits generous.
             </p>
             <p className={`text-lg ${isDark ? 'text-white/70' : 'text-gray-600'} leading-relaxed`}>
-              What started as a vision to revolutionize prop trading has grown into a thriving community of over 5,000 funded traders across 150+ countries. We've deployed over $50 million in trading capital and maintain an industry-leading 85% average payout rate.
+              What started as a vision to revolutionize prop trading has grown into a thriving community of traders in Nigeria. We maintain an industry-leading 80% profit split rate for our funded traders.
             </p>
           </GlassCard>
 
@@ -60,7 +93,7 @@ const AboutPage = ({ onNavigate }) => {
           <div className="mb-8">
             <h2 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-6 text-center tracking-tight`}>Frequently Asked Questions</h2>
             <div className="space-y-4">
-              {faqs.map((faq, i) => (
+              {updatedFaqs.map((faq, i) => (
                 <GlassCard key={i} className="overflow-hidden">
                   <button
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
@@ -88,10 +121,10 @@ const AboutPage = ({ onNavigate }) => {
 
           <div className="grid md:grid-cols-2 gap-6">
             {[
-              { icon: Users, title: '5K+ Funded Traders', desc: 'Active funded traders worldwide generating consistent profits' },
-              { icon: Award, title: 'Best Prop Firm 2026', desc: 'Industry recognition for innovation and trader satisfaction' },
-              { icon: Globe, title: '150+ Countries', desc: 'Global reach with localized support and payment methods' },
-              { icon: TrendingUp, title: '$50M+ Deployed', desc: 'Total capital deployed to successful traders across all account sizes' }
+              { icon: Users, title: 'Growing Community', desc: 'Active funded traders generating consistent profits' },
+              { icon: Award, title: 'Trader Focused', desc: 'Built for trader success with industry-leading terms' },
+              { icon: Globe, title: 'Nigeria Focused', desc: 'Specialized support for Nigerian traders with local payment methods' },
+              { icon: TrendingUp, title: 'Capital Deployment', desc: 'Providing trading capital to successful traders across all account sizes' }
             ].map((item, i) => (
               <GlassCard key={i} className="p-6">
                 <item.icon className="text-blue-500 mb-4" size={32} />

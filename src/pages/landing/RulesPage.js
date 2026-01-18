@@ -2,11 +2,44 @@ import { Shield, Clock, ArrowLeft, ChevronDown } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { apiUrl } from '../../utils/api';
 
 const RulesPage = ({ onNavigate }) => {
   const { isDark } = useTheme();
   const [openRule, setOpenRule] = useState(null);
+  const [challengeData, setChallengeData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchChallengeData();
+  }, []);
+
+  const fetchChallengeData = async () => {
+    try {
+      const response = await fetch(`${apiUrl()}/api/challenge-plans`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setChallengeData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching challenge data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get challenge details from API data
+  const twoPhaseChallenge = challengeData.find(c => c.phases && Object.keys(c.phases).length === 2);
+  const onePhaseChallenge = challengeData.find(c => c.phases && Object.keys(c.phases).length === 1);
+  
+  const twoPhaseProfit = twoPhaseChallenge?.phases['2']?.profitSplit;
+  const onePhaseProfit = onePhaseChallenge?.phases['1']?.profitSplit;
+  const twoPhaseDrawdown = twoPhaseChallenge?.maxDrawdown;
+  const onePhaseDrawdown = onePhaseChallenge?.maxDrawdown;
+  const twoPhaseTarget = twoPhaseChallenge?.phases['1']?.profitTarget;
+  const onePhaseTarget = onePhaseChallenge?.phases['1']?.profitTarget;
 
   const rules = [
     {
@@ -25,9 +58,21 @@ const RulesPage = ({ onNavigate }) => {
       icon: Shield,
       title: 'Maximum Drawdown and Target',
       desc: 'Choose your challenge structure - different rewards, different limits',
-      details: 'Pick your path to funding: Go with our 2-Phase Challenge for higher rewards (85% profit split) but tighter limits (20% max drawdown, 15% target), or choose the 1-Phase Challenge for more breathing room (25% max drawdown, 20% target) with 80% profit split. Your choice determines your journey to getting funded - both lead to the same destination: a funded trading account.'
+      details: twoPhaseProfit && onePhaseProfit && twoPhaseDrawdown && onePhaseDrawdown && twoPhaseTarget && onePhaseTarget ? 
+        `Pick your path to funding: Go with our 2-Phase Challenge for higher rewards (${twoPhaseProfit}% profit split) but tighter limits (${twoPhaseDrawdown}% max drawdown, ${twoPhaseTarget}% target), or choose the 1-Phase Challenge for more breathing room (${onePhaseDrawdown}% max drawdown, ${onePhaseTarget}% target) with ${onePhaseProfit}% profit split. Your choice determines your journey to getting funded - both lead to the same destination: a funded trading account.` :
+        'Loading challenge details...'
     }
   ];
+
+  if (loading) {
+    return (
+      <div className={`min-h-screen ${isDark ? 'bg-[#020202]' : 'bg-gray-100'} ${isDark ? 'text-white' : 'text-gray-900'} font-sans overflow-hidden selection:bg-blue-500/30`}>
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-[#020202]' : 'bg-gray-100'} ${isDark ? 'text-white' : 'text-gray-900'} font-sans overflow-hidden selection:bg-blue-500/30`}>

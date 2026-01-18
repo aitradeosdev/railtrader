@@ -12,7 +12,7 @@ export const useCurrency = () => {
 };
 
 export const CurrencyProvider = ({ children }) => {
-  const [currency, setCurrency] = useState('$');
+  const [currency, setCurrency] = useState('₦');
 
   useEffect(() => {
     fetchCurrency();
