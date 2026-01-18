@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, DollarSign, AlertCircle } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
@@ -9,10 +9,37 @@ import { apiUrl } from '../../utils/api';
 
 const PayoutAmountPage = ({ selectedMethod, availableBalance, onBack, onConfirm }) => {
   const { isDark } = useTheme();
-  const { token } = useAuth();
+  const { token, refreshUser } = useAuth();
   const { currency } = useCurrency();
   const [amount, setAmount] = useState('');
   const [processing, setProcessing] = useState(false);
+
+  // Real-time data refresh
+  const refreshData = useCallback(async () => {
+    await refreshUser();
+  }, [refreshUser]);
+
+  useEffect(() => {
+    // Initial refresh
+    refreshData();
+
+    // Set up interval for periodic refresh (every 30 seconds)
+    const interval = setInterval(refreshData, 30000);
+
+    // Refresh when page becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refreshData]);
 
   const minPayout = selectedMethod.type === 'crypto' ? 100 : 500;
   const fee = selectedMethod.type === 'crypto' ? 25 : 15;

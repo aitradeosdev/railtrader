@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, CreditCard, Wallet, Plus, Trash2, Loader2 } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
@@ -8,7 +8,7 @@ import { apiUrl } from '../../utils/api';
 
 const PaymentMethodsPage = ({ onBack }) => {
   const { isDark } = useTheme();
-  const { token, user } = useAuth();
+  const { token, user, refreshUser } = useAuth();
   const [activeTab, setActiveTab] = useState('bank');
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -17,10 +17,37 @@ const PaymentMethodsPage = ({ onBack }) => {
   const [isResolving, setIsResolving] = useState(false);
   const [resolutionError, setResolutionError] = useState('');
 
+  // Real-time data refresh
+  const refreshData = useCallback(async () => {
+    await refreshUser();
+  }, [refreshUser]);
+
   useEffect(() => {
     setPaymentMethods(user?.paymentMethods || []);
     fetchBanks();
   }, [user]);
+
+  useEffect(() => {
+    // Initial refresh
+    refreshData();
+
+    // Set up interval for periodic refresh (every 30 seconds)
+    const interval = setInterval(refreshData, 30000);
+
+    // Refresh when page becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refreshData]);
 
   const fetchBanks = async () => {
     try {
@@ -81,15 +108,8 @@ const PaymentMethodsPage = ({ onBack }) => {
       });
       
       if (response.ok) {
-        // Fetch updated user data to get the new payment method with proper ID
-        const userResponse = await fetch(`${apiUrl()}/api/user`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (userResponse.ok) {
-          const updatedUser = await userResponse.json();
-          setPaymentMethods(updatedUser.paymentMethods || []);
-        }
+        // Refresh user data to get updated payment methods
+        await refreshData();
         
         setNewMethod({ type: 'bank', name: '', accountName: '', bankName: '', bankCode: '', accountNumber: '', walletAddress: '' });
         setShowAddForm(false);
@@ -108,7 +128,8 @@ const PaymentMethodsPage = ({ onBack }) => {
       });
       
       if (response.ok) {
-        setPaymentMethods(paymentMethods.filter(method => method._id !== methodId));
+        // Refresh user data to get updated payment methods
+        await refreshData();
       } else {
         console.error('Failed to delete payment method');
       }

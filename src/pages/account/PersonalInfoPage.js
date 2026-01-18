@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const PersonalInfoPage = ({ onBack }) => {
   const { isDark } = useTheme();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, refreshUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [formData, setFormData] = useState({
@@ -16,6 +16,33 @@ const PersonalInfoPage = ({ onBack }) => {
     email: user?.email || '',
     dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : ''
   });
+
+  // Auto-refresh user data when component mounts and periodically
+  useEffect(() => {
+    const refreshData = async () => {
+      await refreshUser();
+    };
+    
+    // Initial refresh
+    refreshData();
+    
+    // Set up interval for periodic refresh (every 30 seconds)
+    const interval = setInterval(refreshData, 30000);
+    
+    return () => clearInterval(interval);
+  }, [refreshUser]);
+
+  // Update form data when user data changes
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : ''
+      });
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

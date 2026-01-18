@@ -978,6 +978,78 @@ app.get('/api/user/dashboard-stats', authenticateToken, async (req, res) => {
   }
 });
 
+// Get user activity feed
+app.get('/api/user/activity', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Only get this user's data
+    const challenges = await ChallengeRequest.find({ userId }).sort({ createdAt: -1 }).limit(5);
+    const payouts = await PayoutRequest.find({ userId }).sort({ createdAt: -1 }).limit(3);
+    
+    const activities = [];
+    
+    // Add recent payouts (only user's own payouts)
+    payouts.forEach(payout => {
+      if (payout.status === 'approved') {
+        activities.push({
+          type: 'payout',
+          title: 'Payout',
+          value: `+$${payout.amount.toLocaleString()}`,
+          color: 'text-emerald-400',
+          date: payout.createdAt
+        });
+      }
+    });
+    
+    // Add challenge activities (only user's own challenges)
+    challenges.forEach(challenge => {
+      if (challenge.status === 'funded') {
+        activities.push({
+          type: 'achievement',
+          title: 'New Badge',
+          value: 'Funded Trader',
+          color: 'text-amber-400',
+          date: challenge.createdAt
+        });
+      }
+      
+      if (challenge.brymixResult && challenge.brymixResult.violations && challenge.brymixResult.violations.length > 0) {
+        activities.push({
+          type: 'risk',
+          title: 'Risk Alert',
+          value: 'Review Required',
+          color: 'text-rose-400',
+          date: challenge.createdAt
+        });
+      }
+    });
+    
+    // Add account creation activity if no other activities exist
+    if (activities.length === 0) {
+      activities.push({
+        type: 'welcome',
+        title: 'Welcome',
+        value: 'Account Created',
+        color: 'text-blue-400',
+        date: user.createdAt
+      });
+    }
+    
+    // Sort by date and limit to 5 most recent
+    activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    res.json({ activities: activities.slice(0, 5) });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
   try {
     const totalUsers = await User.countDocuments({});

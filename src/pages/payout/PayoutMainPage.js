@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { CreditCard, Wallet, ArrowRight } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
@@ -8,9 +8,36 @@ import { useCurrency } from '../../contexts/CurrencyContext';
 
 const PayoutMainPage = ({ onSelectMethod }) => {
   const { isDark } = useTheme();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { currency } = useCurrency();
   const [selectedMethod, setSelectedMethod] = useState(null);
+
+  // Real-time data refresh
+  const refreshData = useCallback(async () => {
+    await refreshUser();
+  }, [refreshUser]);
+
+  useEffect(() => {
+    // Initial refresh
+    refreshData();
+
+    // Set up interval for periodic refresh (every 30 seconds)
+    const interval = setInterval(refreshData, 30000);
+
+    // Refresh when page becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refreshData]);
 
   // Get saved payment methods from user data
   const savedMethods = user?.paymentMethods || [];

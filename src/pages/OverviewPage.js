@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { GlassCard, MetricCard } from '../components/UIComponents';
 import Footer from '../components/Footer';
 import { useTheme } from '../contexts/ThemeContext';
@@ -8,28 +8,67 @@ import { apiUrl } from '../utils/api';
 
 const OverviewPage = () => {
   const { isDark } = useTheme();
-  const { user, token } = useAuth();
+  const { user, token, refreshUser } = useAuth();
   const { currency } = useCurrency();
   const [challengeBalances, setChallengeBalances] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAllActivities, setShowAllActivities] = useState(false);
+  const [showAllChallenges, setShowAllChallenges] = useState(false);
   
-  useEffect(() => {
-    fetchDashboardStats();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  
-  const fetchDashboardStats = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
-      const response = await fetch(`${apiUrl()}/api/user/dashboard-stats`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
-      setChallengeBalances(data.challengeBalances || []);
+      const [statsRes, activityRes] = await Promise.all([
+        fetch(`${apiUrl()}/api/user/dashboard-stats`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${apiUrl()}/api/user/activity`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
+      
+      const [statsData, activityData] = await Promise.all([
+        statsRes.json(),
+        activityRes.json()
+      ]);
+      
+      setChallengeBalances(statsData.challengeBalances || []);
+      setActivities(activityData.activities || []);
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
+      console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  // Real-time data refresh
+  const refreshData = useCallback(async () => {
+    await Promise.all([refreshUser(), fetchDashboardData()]);
+  }, [refreshUser, fetchDashboardData]);
+  
+  useEffect(() => {
+    // Initial data fetch
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  useEffect(() => {
+    // Set up interval for periodic refresh (every 30 seconds)
+    const interval = setInterval(refreshData, 30000);
+
+    // Refresh when page becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refreshData]);
   
   if (!user) return null;
   
@@ -65,9 +104,19 @@ const OverviewPage = () => {
 
     {challengeBalances.length > 0 && (
       <GlassCard className="p-6">
-        <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Challenge Balances</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Challenge Balances</h2>
+          {challengeBalances.length > 2 && (
+            <button 
+              onClick={() => setShowAllChallenges(!showAllChallenges)}
+              className={`text-sm ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'} transition-colors`}
+            >
+              {showAllChallenges ? 'View Less' : 'View All'}
+            </button>
+          )}
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {challengeBalances.map((challenge, index) => (
+          {(showAllChallenges ? challengeBalances : challengeBalances.slice(0, 2)).map((challenge, index) => (
             <div key={index} className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
               <div className="flex justify-between items-center mb-2">
                 <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -88,32 +137,32 @@ const OverviewPage = () => {
       </GlassCard>
     )}
 
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <GlassCard className="lg:col-span-2 p-6 md:p-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className={`text-xl md:text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Performance</h2>
-          <div className={`flex ${isDark ? 'bg-white/5' : 'bg-white/20'} rounded-full p-1 ${isDark ? 'border-white/10' : 'border-white/30'} border text-[10px]`}>
-            {['1D', '1W', '1M'].map(t => (
-              <button key={t} className={`px-3 py-1 rounded-full transition-all ${t === '1W' ? (isDark ? 'bg-white text-black' : 'bg-gray-900 text-white') : (isDark ? 'text-white/60' : 'text-gray-600')}`}>{t}</button>
-            ))}
-          </div>
-        </div>
-        <div className="h-48 md:h-64 w-full flex items-end gap-1 md:gap-2">
-           {[30, 50, 40, 80, 60, 90, 70, 85, 95, 100].map((h, i) => (
-             <div key={i} style={{ height: `${h}%` }} className="flex-1 bg-gradient-to-t from-blue-500/40 to-blue-300/10 rounded-t-md md:rounded-t-lg transition-all duration-700" />
-           ))}
-        </div>
-      </GlassCard>
-
+    <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
       <GlassCard className="p-6 md:p-8">
-        <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-6`}>Activity</h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Activity</h2>
+          {activities.length > 2 && (
+            <button 
+              onClick={() => setShowAllActivities(!showAllActivities)}
+              className={`text-sm ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'} transition-colors`}
+            >
+              {showAllActivities ? 'View Less' : 'View All'}
+            </button>
+          )}
+        </div>
         <div className="space-y-4">
-          {[{ t: "Payout", v: "+$2.5k", c: "text-emerald-400" }, { t: "Risk Alert", v: "Limit", c: "text-rose-400" }, { t: "New Badge", v: "Unlocked", c: "text-amber-400" }].map((item, i) => (
-            <div key={i} className={`flex items-center justify-between p-3 rounded-2xl ${isDark ? 'bg-white/5 border-white/5' : 'bg-white/20 border-white/30'} border`}>
-              <span className={`${isDark ? 'text-white/60' : 'text-gray-600'} text-sm`}>{item.t}</span>
-              <span className={`text-sm font-bold ${item.c}`}>{item.v}</span>
-            </div>
-          ))}
+          {loading ? (
+            <div className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'} text-center py-8`}>Loading activities...</div>
+          ) : activities.length > 0 ? (
+            (showAllActivities ? activities : activities.slice(0, 2)).map((activity, i) => (
+              <div key={i} className={`flex items-center justify-between p-3 rounded-2xl ${isDark ? 'bg-white/5 border-white/5' : 'bg-white/20 border-white/30'} border hover:${isDark ? 'bg-white/10' : 'bg-white/30'} transition-colors`}>
+                <span className={`${isDark ? 'text-white/60' : 'text-gray-600'} text-sm`}>{activity.title}</span>
+                <span className={`text-sm font-bold ${activity.color}`}>{activity.value}</span>
+              </div>
+            ))
+          ) : (
+            <div className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'} text-center py-8`}>No recent activity</div>
+          )}
         </div>
       </GlassCard>
     </div>
