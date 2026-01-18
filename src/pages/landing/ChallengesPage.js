@@ -1,52 +1,49 @@
 import { Star, Zap, Crown, ArrowLeft } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { apiUrl } from '../../utils/api';
 import ChallengeConfigPage from '../challenges/ChallengeConfigPage';
 
 const ChallengesPage = ({ onGetStarted, onNavigate, onAuthRequest }) => {
   const { isDark } = useTheme();
+  const { currency } = useCurrency();
   const [currentStep, setCurrentStep] = useState('list');
   const [selectedChallenge, setSelectedChallenge] = useState(null);
   const [selectedType, setSelectedType] = useState('1-phase');
+  const [challenges, setChallenges] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const challenges = [
-    { 
-      id: 1, 
-      name: "$10k Starter", 
-      amount: 10000, 
-      tier: 1, 
-      icon: Star,
-      phases: {
-        1: { price: 99, profitSplit: 80, maxDrawdown: 25, profitTarget: 20 },
-        2: { price: 149, profitSplit: 85, maxDrawdown: 20, profitTarget: 15 }
-      }
-    },
-    { 
-      id: 2, 
-      name: "$100k Pro", 
-      amount: 100000, 
-      tier: 2, 
-      icon: Zap, 
-      popular: true,
-      phases: {
-        1: { price: 499, profitSplit: 80, maxDrawdown: 25, profitTarget: 20 },
-        2: { price: 699, profitSplit: 85, maxDrawdown: 20, profitTarget: 15 }
-      }
-    },
-    { 
-      id: 3, 
-      name: "$250k Elite", 
-      amount: 250000, 
-      tier: 3, 
-      icon: Crown,
-      phases: {
-        1: { price: 999, profitSplit: 80, maxDrawdown: 25, profitTarget: 20 },
-        2: { price: 1299, profitSplit: 85, maxDrawdown: 20, profitTarget: 15 }
-      }
+  useEffect(() => {
+    fetchChallenges();
+  }, []);
+
+  const fetchChallenges = async () => {
+    try {
+      const response = await fetch(`${apiUrl()}/api/challenge-plans`);
+      const data = await response.json();
+      setChallenges(data);
+    } catch (error) {
+      console.error('Error fetching challenges:', error);
+      // Fallback to hardcoded data if API fails
+      setChallenges([
+        { 
+          _id: '1', 
+          name: "10k Starter", 
+          accountSize: 10000, 
+          tier: 1, 
+          phases: {
+            1: { price: 99, profitSplit: 80, maxDrawdown: 25, profitTarget: 20 },
+            2: { price: 149, profitSplit: 85, maxDrawdown: 20, profitTarget: 15 }
+          }
+        }
+      ]);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const handleSelectChallenge = (challenge) => {
     setSelectedChallenge(challenge);
@@ -67,8 +64,29 @@ const ChallengesPage = ({ onGetStarted, onNavigate, onAuthRequest }) => {
   };
 
   const getCurrentPhaseData = (challenge) => {
-    return challenge.phases[selectedType === '1-phase' ? 1 : 2];
+    if (!challenge.phases) return {};
+    const phaseKey = selectedType === '1-phase' ? '1' : '2';
+    return challenge.phases[phaseKey] || {};
   };
+
+  const getIcon = (tier) => {
+    switch (tier) {
+      case 1: return Star;
+      case 2: return Zap;
+      case 3: return Crown;
+      default: return Star;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className={`min-h-screen ${isDark ? 'bg-[#020202]' : 'bg-gray-100'} ${isDark ? 'text-white' : 'text-gray-900'} font-sans overflow-hidden selection:bg-blue-500/30`}>
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (currentStep === 'config' && selectedChallenge) {
     return (
@@ -137,30 +155,31 @@ const ChallengesPage = ({ onGetStarted, onNavigate, onAuthRequest }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {challenges.map((challenge, i) => {
               const phaseData = getCurrentPhaseData(challenge);
+              const isPopular = challenge.tier === 2;
               return (
-                <GlassCard key={challenge.id} className={`p-6 md:p-8 flex flex-col border-2 ${challenge.popular ? 'border-blue-500/50 scale-105' : (isDark ? 'border-white/10' : 'border-gray-200')} hover:scale-105 transition-all duration-300`}>
-                  {challenge.popular && (
+                <GlassCard key={challenge._id} className={`p-6 md:p-8 flex flex-col border-2 ${isPopular ? 'border-blue-500/50 scale-105' : (isDark ? 'border-white/10' : 'border-gray-200')} hover:scale-105 transition-all duration-300`}>
+                  {isPopular && (
                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-full">
                       Most Popular
                     </div>
                   )}
                   
                   <h3 className={`${isDark ? 'text-white/50' : 'text-gray-500'} text-xs font-bold uppercase mb-2`}>Tier {challenge.tier}</h3>
-                  <div className={`text-4xl md:text-5xl font-black ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>{challenge.name.split(' ')[0]}</div>
+                  <div className={`text-4xl md:text-5xl font-black ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>{challenge.name}</div>
                   
                   <div className={`space-y-3 mb-8 text-sm ${isDark ? 'text-white/70' : 'text-gray-600'}`}>
-                    <div className="flex justify-between"><span>Account Size</span><span>${challenge.amount.toLocaleString()}</span></div>
-                    <div className="flex justify-between"><span>Profit Target</span><span>{phaseData.profitTarget}%</span></div>
-                    <div className="flex justify-between"><span>Max Drawdown</span><span>{phaseData.maxDrawdown}%</span></div>
-                    <div className="flex justify-between"><span>Profit Split</span><span>{phaseData.profitSplit}%</span></div>
+                    <div className="flex justify-between"><span>Account Size</span><span>{currency}{challenge.accountSize.toLocaleString()}</span></div>
+                    <div className="flex justify-between"><span>Profit Target</span><span>{phaseData.profitTarget || 0}%</span></div>
+                    <div className="flex justify-between"><span>Max Drawdown</span><span>{phaseData.maxDrawdown || 0}%</span></div>
+                    <div className="flex justify-between"><span>Profit Split</span><span>{phaseData.profitSplit || 0}%</span></div>
                     <div className="flex justify-between"><span>Type</span><span>{selectedType === '1-phase' ? '1-Phase' : '2-Phase'}</span></div>
-                    <div className="flex justify-between font-bold"><span>Price</span><span>${phaseData.price}</span></div>
+                    <div className="flex justify-between font-bold"><span>Price</span><span>{currency}{phaseData.price || 0}</span></div>
                   </div>
                   
                   <button 
                     onClick={() => handleSelectChallenge({...challenge, selectedType})}
                     className={`w-full py-4 rounded-2xl font-bold transition-all duration-200 ${
-                      challenge.popular 
+                      isPopular 
                         ? 'bg-gradient-to-r from-blue-500/90 to-blue-600/90 backdrop-blur-xl text-white hover:scale-105 active:scale-95 shadow-2xl shadow-blue-500/30 border border-white/20' 
                         : isDark 
                           ? 'bg-white/10 backdrop-blur-xl text-white border border-white/20 hover:scale-105 active:scale-95 shadow-lg' 
