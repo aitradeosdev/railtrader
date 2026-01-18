@@ -1,13 +1,15 @@
-import { ArrowLeft, Key, Smartphone, Monitor, Sun, Moon, Shield, Trash2 } from 'lucide-react';
+import { ArrowLeft, Key, Smartphone, Monitor, Sun, Moon, Shield, Trash2, Type } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useFontSize } from '../../contexts/FontSizeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiUrl } from '../../utils/api';
 import { useState } from 'react';
 
 const AccountSettingsPage = ({ onBack, onNavigate }) => {
   const { isDark, themeMode, setTheme } = useTheme();
+  const { fontSize, setFontSize } = useFontSize();
   const { user, token, refreshUser } = useAuth();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -55,6 +57,11 @@ const AccountSettingsPage = ({ onBack, onNavigate }) => {
     { value: 'system', label: 'System', icon: Monitor }
   ];
 
+  const fontSizeOptions = [
+    { value: 'small', label: 'Small' },
+    { value: 'medium', label: 'Medium' }
+  ];
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-20 md:pb-0">
       <div className="flex items-center gap-4">
@@ -81,7 +88,7 @@ const AccountSettingsPage = ({ onBack, onNavigate }) => {
 
       <GlassCard className="p-6">
         <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Appearance</h2>
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div>
             <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-3`}>Theme</p>
             <div className="grid grid-cols-3 gap-3">
@@ -106,6 +113,40 @@ const AccountSettingsPage = ({ onBack, onNavigate }) => {
                   }`} size={24} />
                   <p className={`text-sm font-medium ${
                     themeMode === value
+                      ? 'text-blue-500'
+                      : isDark
+                      ? 'text-white'
+                      : 'text-gray-900'
+                  }`}>{label}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div>
+            <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-3`}>Font Size</p>
+            <div className="grid grid-cols-2 gap-3">
+              {fontSizeOptions.map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => setFontSize(value)}
+                  className={`p-4 rounded-xl border-2 transition-all ${
+                    fontSize === value
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : isDark
+                      ? 'border-white/10 bg-white/5 hover:bg-white/10'
+                      : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <Type className={`mx-auto mb-2 ${
+                    fontSize === value
+                      ? 'text-blue-500'
+                      : isDark
+                      ? 'text-white/60'
+                      : 'text-gray-600'
+                  }`} size={value === 'small' ? 20 : 24} />
+                  <p className={`text-sm font-medium ${
+                    fontSize === value
                       ? 'text-blue-500'
                       : isDark
                       ? 'text-white'

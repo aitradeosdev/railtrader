@@ -13,6 +13,7 @@ import {
 import { useTheme } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CurrencyProvider } from './contexts/CurrencyContext';
+import { FontSizeProvider } from './contexts/FontSizeContext';
 import { apiUrl } from './utils/api';
 import LandingFlow from './pages/landing/LandingFlow';
 import AuthFlow from './pages/auth/AuthFlow';
@@ -409,7 +410,9 @@ export default function App() {
   return (
     <AuthProvider>
       <CurrencyProvider>
-        <AppContent />
+        <FontSizeProvider>
+          <AppContent />
+        </FontSizeProvider>
       </CurrencyProvider>
     </AuthProvider>
   );

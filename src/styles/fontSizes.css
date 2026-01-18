@@ -1,0 +1,70 @@
+/* Font Size Classes */
+.font-size-small {
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 24px;
+  --font-size-4xl: 28px;
+  --font-size-5xl: 32px;
+}
+
+.font-size-medium {
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+  --font-size-5xl: 48px;
+}
+
+/* Apply font sizes to text elements */
+.font-size-small *,
+.font-size-medium * {
+  font-size: var(--font-size-base) !important;
+}
+
+.font-size-small .text-xs,
+.font-size-medium .text-xs {
+  font-size: var(--font-size-xs) !important;
+}
+
+.font-size-small .text-sm,
+.font-size-medium .text-sm {
+  font-size: var(--font-size-sm) !important;
+}
+
+.font-size-small .text-lg,
+.font-size-medium .text-lg {
+  font-size: var(--font-size-lg) !important;
+}
+
+.font-size-small .text-xl,
+.font-size-medium .text-xl {
+  font-size: var(--font-size-xl) !important;
+}
+
+.font-size-small .text-2xl,
+.font-size-medium .text-2xl {
+  font-size: var(--font-size-2xl) !important;
+}
+
+.font-size-small .text-3xl,
+.font-size-medium .text-3xl {
+  font-size: var(--font-size-3xl) !important;
+}
+
+.font-size-small .text-4xl,
+.font-size-medium .text-4xl {
+  font-size: var(--font-size-4xl) !important;
+}
+
+.font-size-small .text-5xl,
+.font-size-medium .text-5xl {
+  font-size: var(--font-size-5xl) !important;
+}
