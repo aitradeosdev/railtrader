@@ -27,19 +27,6 @@ const ChallengesPage = ({ onGetStarted, onNavigate, onAuthRequest }) => {
       setChallenges(data);
     } catch (error) {
       console.error('Error fetching challenges:', error);
-      // Fallback to hardcoded data if API fails
-      setChallenges([
-        { 
-          _id: '1', 
-          name: "10k Starter", 
-          accountSize: 10000, 
-          tier: 1, 
-          phases: {
-            1: { price: 99, profitSplit: 80, maxDrawdown: 25, profitTarget: 20 },
-            2: { price: 149, profitSplit: 85, maxDrawdown: 20, profitTarget: 15 }
-          }
-        }
-      ]);
     } finally {
       setLoading(false);
     }
