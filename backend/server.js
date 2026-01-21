@@ -387,6 +387,22 @@ const verifyBrymixSignature = (payload, signature) => {
 
 
 
+// Auth middleware that allows suspended users (for notifications)
+const authenticateTokenAllowSuspended = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.sendStatus(401);
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+};
+
 // Auth middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -994,7 +1010,7 @@ app.get('/api/user/challenges', authenticateToken, async (req, res) => {
 });
 
 // Notification endpoints
-app.get('/api/user/notifications', authenticateToken, async (req, res) => {
+app.get('/api/user/notifications', authenticateTokenAllowSuspended, async (req, res) => {
   try {
     const notifications = await Notification.find({ userId: req.user.userId })
       .sort({ createdAt: -1 })
@@ -1005,7 +1021,7 @@ app.get('/api/user/notifications', authenticateToken, async (req, res) => {
   }
 });
 
-app.get('/api/user/notification-preferences', authenticateToken, async (req, res) => {
+app.get('/api/user/notification-preferences', authenticateTokenAllowSuspended, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select('notificationPreferences');
     res.json(user.notificationPreferences || {
@@ -1020,7 +1036,7 @@ app.get('/api/user/notification-preferences', authenticateToken, async (req, res
   }
 });
 
-app.put('/api/user/notification-preferences', authenticateToken, async (req, res) => {
+app.put('/api/user/notification-preferences', authenticateTokenAllowSuspended, async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.user.userId, {
       notificationPreferences: req.body
@@ -1031,7 +1047,7 @@ app.put('/api/user/notification-preferences', authenticateToken, async (req, res
   }
 });
 
-app.put('/api/user/notifications/:id/read', authenticateToken, async (req, res) => {
+app.put('/api/user/notifications/:id/read', authenticateTokenAllowSuspended, async (req, res) => {
   try {
     await Notification.findOneAndUpdate(
       { _id: req.params.id, userId: req.user.userId },
@@ -1043,7 +1059,7 @@ app.put('/api/user/notifications/:id/read', authenticateToken, async (req, res) 
   }
 });
 
-app.put('/api/user/notifications/read-all', authenticateToken, async (req, res) => {
+app.put('/api/user/notifications/read-all', authenticateTokenAllowSuspended, async (req, res) => {
   try {
     await Notification.updateMany(
       { userId: req.user.userId },
@@ -1055,7 +1071,7 @@ app.put('/api/user/notifications/read-all', authenticateToken, async (req, res) 
   }
 });
 
-app.delete('/api/user/notifications/:id', authenticateToken, async (req, res) => {
+app.delete('/api/user/notifications/:id', authenticateTokenAllowSuspended, async (req, res) => {
   try {
     await Notification.findOneAndDelete({
       _id: req.params.id,
