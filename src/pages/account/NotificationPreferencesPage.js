@@ -13,8 +13,7 @@ const NotificationPreferencesPage = ({ onBack }) => {
     { id: 'payouts', title: 'Payouts', description: 'Notifications about payout processing' },
     { id: 'challenges', title: 'Challenge Updates', description: 'Updates about your active challenges' },
     { id: 'kyc', title: 'KYC Updates', description: 'Identity verification status updates' },
-    { id: 'account', title: 'Account Security', description: 'Login alerts and security notifications' },
-    { id: 'marketing', title: 'Marketing', description: 'Promotional offers and updates' }
+    { id: 'account', title: 'Account Security', description: 'Login alerts and security notifications' }
   ];
 
   const handleToggle = (type) => {

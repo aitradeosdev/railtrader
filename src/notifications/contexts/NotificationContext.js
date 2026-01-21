@@ -18,8 +18,7 @@ export const NotificationProvider = ({ children }) => {
     payouts: true,
     challenges: true,
     kyc: true,
-    account: true,
-    marketing: false
+    account: true
   });
 
   const fetchNotifications = async () => {

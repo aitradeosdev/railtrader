@@ -122,7 +122,7 @@ railtrader/
 
 ### Notification System
 - **Real-time Delivery**: Server-Sent Events for instant notifications
-- **5 Notification Types**: Payouts, Challenges, KYC, Account Security, Marketing
+- **4 Notification Types**: Payouts, Challenges, KYC, Account Security
 - **User Preferences**: Granular control over notification types
 - **Toast Notifications**: In-app popup notifications
 - **Unread Badges**: Visual indicators for new notifications
