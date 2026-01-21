@@ -85,7 +85,7 @@ export const NotificationProvider = ({ children }) => {
         prev.map(n => n._id === id ? { ...n, read: true } : n)
       );
     } catch (error) {
-      console.error('Failed to mark as read:', error);
+      // Failed to mark as read
     }
   };
 
@@ -98,7 +98,7 @@ export const NotificationProvider = ({ children }) => {
       });
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     } catch (error) {
-      console.error('Failed to mark all as read:', error);
+      // Failed to mark all as read
     }
   };
 
@@ -111,7 +111,7 @@ export const NotificationProvider = ({ children }) => {
       });
       setNotifications(prev => prev.filter(n => n._id !== id));
     } catch (error) {
-      console.error('Failed to remove notification:', error);
+      // Failed to remove notification
     }
   };
 
@@ -138,11 +138,20 @@ export const NotificationProvider = ({ children }) => {
     fetchPreferences();
     
     let eventSource = null;
+    let reconnectTimer = null;
     
     const setupSSE = () => {
       const token = localStorage.getItem('token');
       if (token) {
+        if (eventSource) {
+          eventSource.close();
+        }
+        
         eventSource = new EventSource(`${apiUrl()}/api/user/notifications/stream?token=${token}`);
+        
+        eventSource.onopen = () => {
+          // SSE connected
+        };
         
         eventSource.onmessage = (event) => {
           try {
@@ -152,13 +161,14 @@ export const NotificationProvider = ({ children }) => {
               showToast(data.title, data.type);
             }
           } catch (error) {
-            console.error('Error parsing notification:', error);
+            // Error parsing notification
           }
         };
         
         eventSource.onerror = (error) => {
-          console.error('SSE error:', error);
           eventSource.close();
+          // Auto-reconnect after 3 seconds
+          reconnectTimer = setTimeout(setupSSE, 3000);
         };
       }
     };
@@ -166,23 +176,40 @@ export const NotificationProvider = ({ children }) => {
     // Initial SSE setup
     setupSSE();
     
-    // Reconnect SSE when app becomes visible (PWA fix)
+    // Handle app focus/blur for PWA
+    const handleFocus = () => {
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      setupSSE();
+      fetchNotifications();
+    };
+    
+    const handleBlur = () => {
+      // App blurred
+    };
+    
+    // Handle visibility change for PWA
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        if (eventSource) {
-          eventSource.close();
-        }
-        setTimeout(setupSSE, 1000); // Delay to ensure clean reconnection
-        fetchNotifications(); // Refresh notifications when app becomes active
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        setupSSE();
+        fetchNotifications();
       }
     };
     
+    // Multiple event listeners for better PWA support
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('blur', handleBlur);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
     return () => {
       if (eventSource) {
         eventSource.close();
       }
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('blur', handleBlur);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
