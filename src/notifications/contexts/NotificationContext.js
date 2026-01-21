@@ -137,30 +137,54 @@ export const NotificationProvider = ({ children }) => {
     fetchNotifications();
     fetchPreferences();
     
-    // Set up Server-Sent Events for real-time notifications
-    const token = localStorage.getItem('token');
-    if (token) {
-      const eventSource = new EventSource(`${apiUrl()}/api/user/notifications/stream?token=${token}`);
-      
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type !== 'ping') {
-            setNotifications(prev => [data, ...prev]);
-            showToast(data.title, data.type);
+    let eventSource = null;
+    
+    const setupSSE = () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        eventSource = new EventSource(`${apiUrl()}/api/user/notifications/stream?token=${token}`);
+        
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type !== 'ping') {
+              setNotifications(prev => [data, ...prev]);
+              showToast(data.title, data.type);
+            }
+          } catch (error) {
+            console.error('Error parsing notification:', error);
           }
-        } catch (error) {
-          console.error('Error parsing notification:', error);
+        };
+        
+        eventSource.onerror = (error) => {
+          console.error('SSE error:', error);
+          eventSource.close();
+        };
+      }
+    };
+    
+    // Initial SSE setup
+    setupSSE();
+    
+    // Reconnect SSE when app becomes visible (PWA fix)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        if (eventSource) {
+          eventSource.close();
         }
-      };
-      
-      eventSource.onerror = (error) => {
-        console.error('SSE error:', error);
+        setTimeout(setupSSE, 1000); // Delay to ensure clean reconnection
+        fetchNotifications(); // Refresh notifications when app becomes active
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      if (eventSource) {
         eventSource.close();
-      };
-      
-      return () => eventSource.close();
-    }
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const unreadCount = notifications.filter(n => !n.read).length;
