@@ -1,16 +1,28 @@
-import { ArrowLeft, Bell, Mail, Save } from 'lucide-react';
+import React from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useNotifications } from '../../notifications/contexts/NotificationContext';
 
 const NotificationPreferencesPage = ({ onBack }) => {
   const { isDark } = useTheme();
+  const { preferences, updatePreferences } = useNotifications();
 
   const notificationTypes = [
-    { id: 'payouts', title: 'Payouts', description: 'Notifications about payout processing', email: true, push: true },
-    { id: 'challenges', title: 'Challenge Updates', description: 'Updates about your active challenges', email: true, push: true },
-    { id: 'marketing', title: 'Marketing', description: 'Promotional offers and updates', email: false, push: false }
+    { id: 'payouts', title: 'Payouts', description: 'Notifications about payout processing' },
+    { id: 'challenges', title: 'Challenge Updates', description: 'Updates about your active challenges' },
+    { id: 'kyc', title: 'KYC Updates', description: 'Identity verification status updates' },
+    { id: 'account', title: 'Account Security', description: 'Login alerts and security notifications' },
+    { id: 'marketing', title: 'Marketing', description: 'Promotional offers and updates' }
   ];
+
+  const handleToggle = (type) => {
+    updatePreferences({
+      ...preferences,
+      [type]: !preferences[type]
+    });
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-20 md:pb-0">
@@ -31,10 +43,7 @@ const NotificationPreferencesPage = ({ onBack }) => {
               <tr className={`border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
                 <th className={`text-left py-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Notification Type</th>
                 <th className={`text-center py-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  <Mail size={20} className="mx-auto" />
-                </th>
-                <th className={`text-center py-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  <Bell size={20} className="mx-auto" />
+                  Enabled
                 </th>
               </tr>
             </thead>
@@ -49,13 +58,12 @@ const NotificationPreferencesPage = ({ onBack }) => {
                   </td>
                   <td className="text-center py-4">
                     <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" defaultChecked={type.email} />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </td>
-                  <td className="text-center py-4">
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" defaultChecked={type.push} />
+                      <input 
+                        type="checkbox" 
+                        className="sr-only peer" 
+                        checked={preferences[type.id] || false}
+                        onChange={() => handleToggle(type.id)}
+                      />
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                   </td>
@@ -65,10 +73,7 @@ const NotificationPreferencesPage = ({ onBack }) => {
           </table>
         </div>
         
-        <button className="flex items-center gap-2 mt-6 px-6 py-3 bg-blue-600 text-white rounded-xl font-medium">
-          <Save size={16} />
-          Save Preferences
-        </button>
+
       </GlassCard>
 
       <Footer />

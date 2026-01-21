@@ -189,10 +189,29 @@ const userSchema = new mongoose.Schema({
     walletAddress: { type: String },
     isDefault: { type: Boolean, default: false }
   }],
+  notificationPreferences: {
+    payouts: { type: Boolean, default: true },
+    challenges: { type: Boolean, default: true },
+    kyc: { type: Boolean, default: true },
+    account: { type: Boolean, default: true },
+    marketing: { type: Boolean, default: false }
+  },
   createdAt: { type: Date, default: Date.now }
 });
 
 const User = mongoose.model('User', userSchema);
+
+// Notification Schema
+const notificationSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  type: { type: String, enum: ['success', 'info', 'warning', 'error'], default: 'info' },
+  title: { type: String, required: true },
+  message: { type: String, required: true },
+  read: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Notification = mongoose.model('Notification', notificationSchema);
 
 // Challenge Plan Schema
 const challengePlanSchema = new mongoose.Schema({
@@ -521,6 +540,22 @@ app.post('/api/login', checkMaintenanceMode, async (req, res) => {
       }
     }
 
+    // Create login notification
+    if (user.notificationPreferences?.account !== false) {
+      const notification = await new Notification({
+        userId: user._id,
+        type: 'info',
+        title: 'Account Login',
+        message: 'Your account was accessed successfully.'
+      }).save();
+      
+      // Send real-time notification
+      if (global.notificationStreams && global.notificationStreams.has(user._id.toString())) {
+        const stream = global.notificationStreams.get(user._id.toString());
+        stream.write(`data: ${JSON.stringify(notification)}\n\n`);
+      }
+    }
+
     // Generate token
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
 
@@ -638,6 +673,23 @@ app.post('/api/user/2fa/verify', authenticateToken, async (req, res) => {
     
     if (verified) {
       await User.findByIdAndUpdate(req.user.userId, { twoFactorEnabled: true });
+      
+      // Create 2FA enabled notification
+      if (user.notificationPreferences?.account !== false) {
+        const notification = await new Notification({
+          userId: req.user.userId,
+          type: 'success',
+          title: '2FA Enabled',
+          message: 'Two-factor authentication has been successfully enabled for your account.'
+        }).save();
+        
+        // Send real-time notification
+        if (global.notificationStreams && global.notificationStreams.has(req.user.userId)) {
+          const stream = global.notificationStreams.get(req.user.userId);
+          stream.write(`data: ${JSON.stringify(notification)}\n\n`);
+        }
+      }
+      
       res.json({ message: '2FA enabled successfully' });
     } else {
       res.status(400).json({ message: 'Invalid verification code' });
@@ -756,6 +808,23 @@ app.post('/api/user/payout', authenticateToken, async (req, res) => {
     });
     
     await payoutRequest.save();
+    
+    // Create notification
+    if (user.notificationPreferences?.payouts !== false) {
+      const notification = await new Notification({
+        userId: req.user.userId,
+        type: 'info',
+        title: 'Payout Request Submitted',
+        message: `Your payout request for $${amount} has been submitted and is being reviewed.`
+      }).save();
+      
+      // Send real-time notification
+      if (global.notificationStreams && global.notificationStreams.has(req.user.userId)) {
+        const stream = global.notificationStreams.get(req.user.userId);
+        stream.write(`data: ${JSON.stringify(notification)}\n\n`);
+      }
+    }
+    
     res.json({ message: 'Payout request submitted successfully' });
   } catch (error) {
     console.error('Payout request error:', error);
@@ -809,6 +878,119 @@ app.get('/api/user/challenges', authenticateToken, async (req, res) => {
     res.json(challenges);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Notification endpoints
+app.get('/api/user/notifications', authenticateToken, async (req, res) => {
+  try {
+    const notifications = await Notification.find({ userId: req.user.userId })
+      .sort({ createdAt: -1 })
+      .limit(50);
+    res.json(notifications);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.get('/api/user/notification-preferences', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('notificationPreferences');
+    res.json(user.notificationPreferences || {
+      payouts: true,
+      challenges: true,
+      kyc: true,
+      account: true,
+      marketing: false
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.put('/api/user/notification-preferences', authenticateToken, async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user.userId, {
+      notificationPreferences: req.body
+    });
+    res.json({ message: 'Preferences updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.put('/api/user/notifications/:id/read', authenticateToken, async (req, res) => {
+  try {
+    await Notification.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.userId },
+      { read: true }
+    );
+    res.json({ message: 'Notification marked as read' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.put('/api/user/notifications/read-all', authenticateToken, async (req, res) => {
+  try {
+    await Notification.updateMany(
+      { userId: req.user.userId },
+      { read: true }
+    );
+    res.json({ message: 'All notifications marked as read' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.delete('/api/user/notifications/:id', authenticateToken, async (req, res) => {
+  try {
+    await Notification.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user.userId
+    });
+    res.json({ message: 'Notification deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Server-Sent Events for real-time notifications
+app.get('/api/user/notifications/stream', async (req, res) => {
+  const token = req.query.token;
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*'
+    });
+    
+    // Store connection for this user
+    if (!global.notificationStreams) {
+      global.notificationStreams = new Map();
+    }
+    global.notificationStreams.set(decoded.userId, res);
+    
+    // Keep connection alive
+    const keepAlive = setInterval(() => {
+      res.write('data: {"type":"ping"}\n\n');
+    }, 30000);
+    
+    req.on('close', () => {
+      clearInterval(keepAlive);
+      global.notificationStreams.delete(decoded.userId);
+    });
+    
+  } catch (error) {
+    res.status(401).json({ message: 'Invalid token' });
   }
 });
 
@@ -1157,6 +1339,36 @@ app.put('/api/admin/payouts/:id', authenticateAdmin, async (req, res) => {
       { new: true }
     ).populate('userId', 'firstName lastName email');
     
+    // Create notification for user
+    const payoutUser = await User.findById(payout.userId._id);
+    if (status === 'approved' && payoutUser.notificationPreferences?.payouts !== false) {
+      const notification = await new Notification({
+        userId: payout.userId._id,
+        type: 'success',
+        title: 'Payout Approved',
+        message: `Your payout request for $${payout.amount} has been approved and processed.`
+      }).save();
+      
+      // Send real-time notification
+      if (global.notificationStreams && global.notificationStreams.has(payout.userId._id.toString())) {
+        const stream = global.notificationStreams.get(payout.userId._id.toString());
+        stream.write(`data: ${JSON.stringify(notification)}\n\n`);
+      }
+    } else if (status === 'rejected' && payoutUser.notificationPreferences?.payouts !== false) {
+      const notification = await new Notification({
+        userId: payout.userId._id,
+        type: 'error',
+        title: 'Payout Rejected',
+        message: `Your payout request for $${payout.amount} has been rejected. ${adminNotes || ''}`
+      }).save();
+      
+      // Send real-time notification
+      if (global.notificationStreams && global.notificationStreams.has(payout.userId._id.toString())) {
+        const stream = global.notificationStreams.get(payout.userId._id.toString());
+        stream.write(`data: ${JSON.stringify(notification)}\n\n`);
+      }
+    }
+    
     res.json(payout);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -1254,8 +1466,42 @@ app.put('/api/admin/challenges/:id/assign-mt5', authenticateAdmin, async (req, r
     if (accountType === 'live') {
       challenge.status = 'funded';
       challenge.needsLiveAccount = false;
+      
+      // Create notification for funded account
+      const challengeUser = await User.findById(challenge.userId);
+      if (challengeUser.notificationPreferences?.challenges !== false) {
+        const notification = await new Notification({
+          userId: challenge.userId,
+          type: 'success',
+          title: 'Account Funded!',
+          message: `Congratulations! Your ${challenge.accountSize} challenge has been funded. Your live trading account is now ready.`
+        }).save();
+        
+        // Send real-time notification
+        if (global.notificationStreams && global.notificationStreams.has(challenge.userId.toString())) {
+          const stream = global.notificationStreams.get(challenge.userId.toString());
+          stream.write(`data: ${JSON.stringify(notification)}\n\n`);
+        }
+      }
     } else {
       challenge.status = 'mt5_assigned';
+      
+      // Create notification for MT5 assignment
+      const challengeUser2 = await User.findById(challenge.userId);
+      if (challengeUser2.notificationPreferences?.challenges !== false) {
+        const notification = await new Notification({
+          userId: challenge.userId,
+          type: 'info',
+          title: 'MT5 Account Assigned',
+          message: `Your MT5 trading account has been assigned for your ${challenge.accountSize} challenge. You can now start trading.`
+        }).save();
+        
+        // Send real-time notification
+        if (global.notificationStreams && global.notificationStreams.has(challenge.userId.toString())) {
+          const stream = global.notificationStreams.get(challenge.userId.toString());
+          stream.write(`data: ${JSON.stringify(notification)}\n\n`);
+        }
+      }
     }
     challenge.needsMT5 = false;
     await challenge.save();
@@ -1890,6 +2136,25 @@ const mapDiditStatusToKYC = (sessionData, user) => {
     kycStatus = 'verified';
     if (!user.kycData) user.kycData = {};
     user.kycData.verifiedAt = new Date();
+    
+    // Create KYC verified notification
+    User.findById(user._id).then(userForNotif => {
+      if (userForNotif && userForNotif.notificationPreferences?.kyc !== false) {
+        const notification = new Notification({
+          userId: user._id,
+          type: 'success',
+          title: 'KYC Verified',
+          message: 'Your identity verification has been completed successfully.'
+        });
+        notification.save().then(savedNotification => {
+          // Send real-time notification
+          if (global.notificationStreams && global.notificationStreams.has(user._id.toString())) {
+            const stream = global.notificationStreams.get(user._id.toString());
+            stream.write(`data: ${JSON.stringify(savedNotification)}\n\n`);
+          }
+        });
+      }
+    });
   } else if (sessionData.status === 'Declined') {
     kycStatus = 'rejected';
     let rejectionReason = 'Verification declined';
@@ -1907,6 +2172,25 @@ const mapDiditStatusToKYC = (sessionData, user) => {
     }
     if (!user.kycData) user.kycData = {};
     user.kycData.rejectionReason = rejectionReason;
+    
+    // Create KYC rejected notification
+    User.findById(user._id).then(userForNotif2 => {
+      if (userForNotif2 && userForNotif2.notificationPreferences?.kyc !== false) {
+        const notification = new Notification({
+          userId: user._id,
+          type: 'error',
+          title: 'KYC Verification Failed',
+          message: `Your identity verification was declined. ${rejectionReason}`
+        });
+        notification.save().then(savedNotification => {
+          // Send real-time notification
+          if (global.notificationStreams && global.notificationStreams.has(user._id.toString())) {
+            const stream = global.notificationStreams.get(user._id.toString());
+            stream.write(`data: ${JSON.stringify(savedNotification)}\n\n`);
+          }
+        });
+      }
+    });
   } else if (sessionData.status === 'In Review' || sessionData.status === 'Pending Review') {
     kycStatus = 'in_progress';
   }

@@ -6,7 +6,6 @@ import {
   TrendingUp, 
   Wallet, 
   User, 
-  Bell, 
   Sun,
   Moon
 } from 'lucide-react';
@@ -14,6 +13,7 @@ import { useTheme } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CurrencyProvider } from './contexts/CurrencyContext';
 import { FontSizeProvider } from './contexts/FontSizeContext';
+import { NotificationProvider, NotificationContainer, NotificationButton } from './notifications';
 import { apiUrl } from './utils/api';
 import LandingFlow from './pages/landing/LandingFlow';
 import AuthFlow from './pages/auth/AuthFlow';
@@ -22,7 +22,7 @@ import ChallengeFlow from './pages/challenges/ChallengeFlow';
 import PayoutFlow from './pages/payout/PayoutFlow';
 import HubFlow from './pages/hub/HubFlow';
 import AccountFlow from './pages/account/AccountFlow';
-import NotificationPage from './pages/NotificationPage';
+import NotificationPage from './notifications/pages/NotificationPage';
 import KYCCallbackPage from './pages/account/KYCCallbackPage';
 
 import AdminRoutes from './pages/admin/AdminRoutes';
@@ -192,7 +192,7 @@ function AdminApp({ platformName }) {
               <button onClick={toggleTheme} className={`p-2.5 rounded-xl ${isDark ? 'bg-white/5 border-white/10 text-white/50' : 'bg-gray-100 border-gray-200 text-gray-500'} border`}>
                 {isDark ? <Sun size={18} /> : <Moon size={18} />}
               </button>
-              <button onClick={() => setActiveTab('notifications')} className={`p-2.5 rounded-xl ${isDark ? 'bg-white/5 border-white/10 text-white/50' : 'bg-gray-100 border-gray-200 text-gray-500'} border`}><Bell size={18} /></button>
+              <NotificationButton onNotificationClick={() => setActiveTab('notifications')} />
               <button 
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
                 className={`lg:hidden p-2.5 rounded-xl ${isDark ? 'bg-white/5 border-white/10 text-white/50' : 'bg-gray-100 border-gray-200 text-gray-500'} border`}
@@ -361,7 +361,7 @@ function UserApp({ platformName }) {
               <button onClick={toggleTheme} className={`p-2.5 rounded-xl ${isDark ? 'bg-white/5 border-white/10 text-white/50' : 'bg-gray-100 border-gray-200 text-gray-500'} border`}>
                 {isDark ? <Sun size={18} /> : <Moon size={18} />}
               </button>
-              <button onClick={() => setActiveTab('notifications')} className={`p-2.5 rounded-xl ${isDark ? 'bg-white/5 border-white/10 text-white/50' : 'bg-gray-100 border-gray-200 text-gray-500'} border`}><Bell size={18} /></button>
+              <NotificationButton onNotificationClick={() => setActiveTab('notifications')} />
             </div>
           </header>
 
@@ -411,7 +411,10 @@ export default function App() {
     <AuthProvider>
       <CurrencyProvider>
         <FontSizeProvider>
-          <AppContent />
+          <NotificationProvider>
+            <AppContent />
+            <NotificationContainer />
+          </NotificationProvider>
         </FontSizeProvider>
       </CurrencyProvider>
     </AuthProvider>

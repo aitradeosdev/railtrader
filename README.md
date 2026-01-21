@@ -1,6 +1,6 @@
 # RailTrader - Proprietary Trading Firm Platform
 
-A comprehensive prop trading platform built with React and Node.js, featuring challenge management, MT5 integration, and admin controls.
+A comprehensive prop trading platform built with React and Node.js, featuring challenge management, MT5 integration, admin controls, and real-time notifications.
 
 ## 🚀 Live Demo
 
@@ -13,6 +13,7 @@ A comprehensive prop trading platform built with React and Node.js, featuring ch
 - **Database**: MongoDB Atlas
 - **Deployment**: Vercel (Full-stack)
 - **Authentication**: JWT + 2FA
+- **Real-time**: Server-Sent Events (SSE)
 
 ## 🔧 Local Development
 
@@ -42,6 +43,10 @@ cd backend && npm install
 
 4. **Run development**
 ```bash
+# Frontend (from root)
+npm start
+
+# Backend (from backend folder)
 npm run dev
 ```
 
@@ -63,6 +68,11 @@ npm run dev
    JWT_SECRET=your_jwt_secret
    FMP_API_KEY=your_fmp_api_key
    ENCRYPTION_KEY=your_encryption_key
+   DIDIT_API_KEY=your_didit_api_key
+   DIDIT_WORKFLOW_ID=your_didit_workflow_id
+   BRYMIX_API_KEY=your_brymix_api_key
+   BRYMIX_WEBHOOK_SECRET=your_brymix_webhook_secret
+   PAYSTACK_API_URL=https://api.paystack.co
    ```
 
 3. **Deploy**
@@ -76,6 +86,10 @@ railtrader/
 ├── src/                    # React frontend
 │   ├── components/         # Reusable components
 │   ├── contexts/          # React contexts
+│   ├── notifications/     # Notification system
+│   │   ├── components/    # Toast & button components
+│   │   ├── contexts/      # Notification state management
+│   │   └── pages/         # Notification pages
 │   ├── pages/             # Page components
 │   └── App.js             # Main app component
 ├── backend/               # Node.js backend
@@ -94,13 +108,24 @@ railtrader/
 - **MT5 Integration**: Account management & credentials
 - **Payouts**: Request withdrawals with multiple payment methods
 - **Dashboard**: Real-time statistics and progress tracking
+- **KYC Verification**: Identity verification with Didit integration
+- **Notifications**: Real-time notifications with preferences
 
 ### Admin Features
 - **User Management**: CRUD operations for users
 - **Challenge Management**: Configure and monitor challenges
 - **Payout Processing**: Approve/reject withdrawal requests
 - **MT5 Assignment**: Assign trading accounts to users
+- **KYC Management**: Review and manage identity verifications
 - **Platform Settings**: Global configuration management
+- **Analytics**: User activity and platform statistics
+
+### Notification System
+- **Real-time Delivery**: Server-Sent Events for instant notifications
+- **5 Notification Types**: Payouts, Challenges, KYC, Account Security, Marketing
+- **User Preferences**: Granular control over notification types
+- **Toast Notifications**: In-app popup notifications
+- **Unread Badges**: Visual indicators for new notifications
 
 ## 🛡️ Security
 
@@ -109,10 +134,12 @@ railtrader/
 - AES-256-CBC encryption for sensitive data
 - 2FA with TOTP
 - Environment variable protection
+- Secure API endpoints with middleware
 
 ## 📊 Database Schema
 
-- **Users**: User profiles with encrypted MT5 credentials
+- **Users**: User profiles with encrypted MT5 credentials and notification preferences
+- **Notifications**: Real-time notification system
 - **Challenges**: Trading challenge configurations
 - **PayoutRequests**: Withdrawal request management
 - **ChallengeRequests**: User challenge applications
@@ -129,11 +156,22 @@ railtrader/
 - `GET /api/user` - User profile
 - `POST /api/user/payout` - Submit payout request
 - `GET /api/user/mt5` - MT5 credentials
+- `GET /api/user/notifications` - Get notifications
+- `GET /api/user/notifications/stream` - SSE notification stream
+- `PUT /api/user/notification-preferences` - Update notification settings
 
 ### Admin Protected
 - `GET /api/admin/users` - User management
 - `GET /api/admin/challenges` - Challenge management
 - `PUT /api/admin/payouts/:id` - Process payouts
+- `PUT /api/admin/challenges/:id/assign-mt5` - Assign MT5 accounts
+
+## 🔄 Real-time Features
+
+- **Server-Sent Events**: Real-time notification delivery
+- **Live Updates**: Instant status changes without refresh
+- **Preference Filtering**: Respects user notification settings
+- **Connection Management**: Automatic reconnection handling
 
 ## 🤝 Contributing
 
