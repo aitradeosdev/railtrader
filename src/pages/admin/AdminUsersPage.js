@@ -21,7 +21,11 @@ const AdminUsersFlow = () => {
 
   switch (currentPage) {
     case 'user-details':
-      return <UserDetailsPage onBack={handleBack} userId={selectedUserId} />;
+      return <UserDetailsPage 
+        onBack={handleBack} 
+        userId={selectedUserId} 
+        onNavigateToEdit={(userId) => handleNavigate('edit-user', userId)}
+      />;
     case 'edit-user':
       return <EditUserPage onBack={handleBack} userId={selectedUserId} />;
     case 'create-user':

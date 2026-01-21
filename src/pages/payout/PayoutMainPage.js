@@ -47,8 +47,11 @@ const PayoutMainPage = ({ onSelectMethod }) => {
   };
 
   const handleContinue = () => {
+    if (user?.isSuspended) {
+      return; // Prevent action for suspended users
+    }
     if (selectedMethod) {
-      onSelectMethod(selectedMethod, user.accountBalance);
+      onSelectMethod(selectedMethod, user?.accountBalance || 0);
     }
   };
 
@@ -59,10 +62,26 @@ const PayoutMainPage = ({ onSelectMethod }) => {
         <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} text-sm md:text-lg`}>Withdraw your trading profits</p>
       </div>
 
+      {user?.isSuspended && (
+        <GlassCard className="p-6 border border-red-500/20 bg-red-500/5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 rounded-full bg-red-500/20">
+              <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Account Suspended</h3>
+          </div>
+          <p className={`${isDark ? 'text-white/70' : 'text-gray-600'} text-sm`}>
+            Payout requests are not available while your account is suspended. Please contact support for assistance.
+          </p>
+        </GlassCard>
+      )}
+
       <GlassCard className="p-6 md:p-8">
         <div className="text-center mb-8">
           <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} text-sm mb-2`}>Available Balance</p>
-          <div className="text-4xl md:text-6xl font-black text-emerald-400">{currency}{user.accountBalance.toLocaleString()}</div>
+          <div className="text-4xl md:text-6xl font-black text-emerald-400">{currency}{(user?.accountBalance || 0).toLocaleString()}</div>
         </div>
 
         <div className="space-y-6">
@@ -107,9 +126,9 @@ const PayoutMainPage = ({ onSelectMethod }) => {
 
         <button
           onClick={handleContinue}
-          disabled={!selectedMethod}
+          disabled={!selectedMethod || user?.isSuspended}
           className={`w-full mt-8 py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 ${
-            selectedMethod
+            selectedMethod && !user?.isSuspended
               ? 'bg-blue-600 text-white hover:bg-blue-700'
               : (isDark ? 'bg-white/10 text-white/40' : 'bg-gray-100 text-gray-400')
           }`}

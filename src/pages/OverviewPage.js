@@ -84,8 +84,24 @@ const OverviewPage = () => {
     <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 md:pb-0">
       <div className="flex flex-col gap-2">
         <h1 className={`text-3xl md:text-5xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} tracking-tighter`}>Welcome, {user.firstName}</h1>
-        <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} text-sm md:text-lg`}>Account Status: <span className="text-blue-400">Active</span></p>
+        <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} text-sm md:text-lg`}>Account Status: <span className={user?.isSuspended ? 'text-red-400' : 'text-blue-400'}>{user?.isSuspended ? 'Suspended' : 'Active'}</span></p>
       </div>
+
+      {user?.isSuspended && (
+        <GlassCard className="p-6 border border-red-500/20 bg-red-500/5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 rounded-full bg-red-500/20">
+              <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Account Suspended</h3>
+          </div>
+          <p className={`${isDark ? 'text-white/70' : 'text-gray-600'} text-sm`}>
+            Your account has been suspended. You cannot use trading features, make payouts, or purchase challenges. Please contact support for assistance.
+          </p>
+        </GlassCard>
+      )}
 
     <div className="flex overflow-x-auto pb-4 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 no-scrollbar">
       <div className="min-w-[280px] md:min-w-0 flex-shrink-0">
@@ -97,9 +113,9 @@ const OverviewPage = () => {
           color="blue" 
         />
       </div>
-      <div className="min-w-[280px] md:min-w-0 flex-shrink-0"><MetricCard label="Total Profit" value={`${currency}${user.totalProfit.toLocaleString()}`} trend={0} subValue="All Time" color="emerald" /></div>
-      <div className="min-w-[280px] md:min-w-0 flex-shrink-0"><MetricCard label="Total Loss" value={`${currency}${user.totalLoss.toLocaleString()}`} trend={0} subValue="All Time" color="rose" /></div>
-      <div className="min-w-[280px] md:min-w-0 flex-shrink-0"><MetricCard label="Win Rate" value={`${user.winRate}%`} trend={0} subValue="Historical" color="purple" /></div>
+      <div className="min-w-[280px] md:min-w-0 flex-shrink-0"><MetricCard label="Total Profit" value={`${currency}${(user.totalProfit || 0).toLocaleString()}`} trend={0} subValue="All Time" color="emerald" /></div>
+      <div className="min-w-[280px] md:min-w-0 flex-shrink-0"><MetricCard label="Total Loss" value={`${currency}${(user.totalLoss || 0).toLocaleString()}`} trend={0} subValue="All Time" color="rose" /></div>
+      <div className="min-w-[280px] md:min-w-0 flex-shrink-0"><MetricCard label="Win Rate" value={`${user.winRate || 0}%`} trend={0} subValue="Historical" color="purple" /></div>
     </div>
 
     {challengeBalances.length > 0 && (

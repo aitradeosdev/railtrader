@@ -37,6 +37,16 @@ export const AuthProvider = ({ children }) => {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
+      } else if (response.status === 403) {
+        const errorData = await response.json();
+        if (errorData.suspended && errorData.user) {
+          // Set the full user data with suspension flag
+          setUser({ ...errorData.user, isSuspended: true });
+          return;
+        }
+        // Other 403 errors should log out
+        localStorage.removeItem('token');
+        setToken(null);
       } else {
         localStorage.removeItem('token');
         setToken(null);

@@ -33,6 +33,10 @@ import AdminPayoutsPage from './pages/admin/AdminPayoutsPage';
 import MT5Flow from './pages/admin/mt5/MT5Flow';
 import AdminChallengeConfig from './pages/admin/AdminChallengeConfig';
 import KYCManagementFlow from './pages/admin/kyc/KYCManagementFlow';
+import { AdminNotificationProvider } from './pages/admin/notifications/AdminNotificationContext';
+import AdminNotificationContainer from './pages/admin/notifications/AdminNotificationContainer';
+import AdminNotificationButton from './pages/admin/notifications/AdminNotificationButton';
+import AdminNotificationPage from './pages/admin/notifications/AdminNotificationPage';
 
 function AppContent() {
   const [showAuth, setShowAuth] = useState(false);
@@ -87,7 +91,12 @@ function AppContent() {
 
   // Admin gets separate interface
   if (user?.isAdmin) {
-    return <AdminApp platformName={platformName} />;
+    return (
+      <AdminNotificationProvider>
+        <AdminApp platformName={platformName} />
+        <AdminNotificationContainer />
+      </AdminNotificationProvider>
+    );
   }
 
   // Regular user interface
@@ -192,7 +201,7 @@ function AdminApp({ platformName }) {
               <button onClick={toggleTheme} className={`p-2.5 rounded-xl ${isDark ? 'bg-white/5 border-white/10 text-white/50' : 'bg-gray-100 border-gray-200 text-gray-500'} border`}>
                 {isDark ? <Sun size={18} /> : <Moon size={18} />}
               </button>
-              <NotificationButton onNotificationClick={() => setActiveTab('notifications')} />
+              <AdminNotificationButton onClick={() => setActiveTab('notifications')} />
               <button 
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
                 className={`lg:hidden p-2.5 rounded-xl ${isDark ? 'bg-white/5 border-white/10 text-white/50' : 'bg-gray-100 border-gray-200 text-gray-500'} border`}
@@ -236,7 +245,7 @@ function AdminApp({ platformName }) {
               {activeTab === 'payouts' && <AdminPayoutsPage />}
               {activeTab === 'trading' && <MT5Flow />}
               {activeTab === 'settings' && <AdminRoutes />}
-              {activeTab === 'notifications' && <NotificationPage />}
+              {activeTab === 'notifications' && <AdminNotificationPage onBack={() => setActiveTab('overview')} />}
             </div>
           </main>
 
@@ -278,6 +287,9 @@ function UserApp({ platformName }) {
       setActiveTab(tab);
     }
   }, [searchParams]);
+
+  // Check if user is suspended - allow access but show messages on individual pages
+  // Removed full-screen suspension block
 
   // Check if this is a KYC callback
   const isKYCCallback = window.location.pathname === '/kyc/callback';

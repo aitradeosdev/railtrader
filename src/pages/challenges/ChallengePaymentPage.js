@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, X } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -13,6 +13,7 @@ const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
   const { currency } = useCurrency();
   const [processing, setProcessing] = useState(false);
   const [paystackConfig, setPaystackConfig] = useState(null);
+  const [suspensionError, setSuspensionError] = useState(false);
 
   useEffect(() => {
     fetchPaystackConfig();
@@ -55,7 +56,11 @@ const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
       
       if (!response.ok) {
         console.error('Payment initialization failed:', paymentData);
-        alert(`Payment initialization failed: ${paymentData.message || 'Unknown error'}`);
+        if (paymentData.message && paymentData.message.includes('suspended')) {
+          setSuspensionError(true);
+        } else {
+          alert(`Payment initialization failed: ${paymentData.message || 'Unknown error'}`);
+        }
         return;
       }
       
@@ -139,6 +144,37 @@ const ChallengePaymentPage = ({ challenge, config, onBack, onSuccess }) => {
       </GlassCard>
 
       <Footer />
+      
+      {/* Suspension Error Modal */}
+      {suspensionError && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`max-w-md w-full p-6 rounded-2xl ${isDark ? 'bg-gray-900 border border-white/10' : 'bg-white border border-gray-200'} shadow-2xl`}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-red-500/20">
+                  <AlertTriangle className="text-red-400" size={24} />
+                </div>
+                <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Account Suspended</h3>
+              </div>
+              <button 
+                onClick={() => setSuspensionError(false)}
+                className={`p-1 rounded-lg ${isDark ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
+              >
+                <X className={isDark ? 'text-white/60' : 'text-gray-600'} size={20} />
+              </button>
+            </div>
+            <p className={`${isDark ? 'text-white/70' : 'text-gray-600'} mb-6`}>
+              Your account has been suspended. Please contact support for assistance.
+            </p>
+            <button 
+              onClick={() => setSuspensionError(false)}
+              className="w-full py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

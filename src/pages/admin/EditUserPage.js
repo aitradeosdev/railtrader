@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Save, User, Mail, DollarSign, TrendingUp, Shield, Smartphone, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Save, User, DollarSign, TrendingUp, Shield, CheckCircle } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -12,6 +12,10 @@ const EditUserPage = ({ onBack, userId }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [resetPasswordResult, setResetPasswordResult] = useState(null);
+  const [showSuspendModal, setSuspendModal] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -21,7 +25,8 @@ const EditUserPage = ({ onBack, userId }) => {
     totalLoss: 0,
     winRate: 0,
     isAdmin: false,
-    twoFactorEnabled: false
+    twoFactorEnabled: false,
+    isSuspended: false
   });
 
   useEffect(() => {
@@ -46,7 +51,8 @@ const EditUserPage = ({ onBack, userId }) => {
           totalLoss: foundUser.totalLoss,
           winRate: foundUser.winRate,
           isAdmin: foundUser.isAdmin,
-          twoFactorEnabled: foundUser.twoFactorEnabled
+          twoFactorEnabled: foundUser.twoFactorEnabled,
+          isSuspended: foundUser.isSuspended || false
         });
       }
     } catch (error) {
@@ -88,6 +94,55 @@ const EditUserPage = ({ onBack, userId }) => {
       console.error('Error updating user:', error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleResetPassword = () => {
+    setShowPasswordModal(true);
+  };
+
+  const submitPasswordReset = async () => {
+    if (!newPassword.trim()) return;
+    
+    try {
+      const response = await fetch(`${apiUrl()}/api/admin/users/${userId}/reset-password`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ newPassword })
+      });
+      const data = await response.json();
+      setResetPasswordResult(data);
+      setShowPasswordModal(false);
+      setNewPassword('');
+    } catch (error) {
+      console.error('Error resetting password:', error);
+    }
+  };
+
+  const handleSuspendAccount = () => {
+    setSuspendModal(true);
+  };
+
+  const submitSuspendAccount = async () => {
+    try {
+      const response = await fetch(`${apiUrl()}/api/admin/users/${userId}/suspend`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ suspend: !formData.isSuspended })
+      });
+      
+      if (response.ok) {
+        setFormData(prev => ({ ...prev, isSuspended: !prev.isSuspended }));
+        setSuspendModal(false);
+      }
+    } catch (error) {
+      console.error('Error suspending account:', error);
     }
   };
 
@@ -332,17 +387,10 @@ const EditUserPage = ({ onBack, userId }) => {
           </div>
 
           <div className="space-y-4">
-            <button className="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-left">
-              <div className="flex items-center gap-3">
-                <Mail size={20} />
-                <div>
-                  <p className="font-semibold">Send Email Notification</p>
-                  <p className="text-sm text-blue-200">Notify user of account changes</p>
-                </div>
-              </div>
-            </button>
-
-            <button className="w-full px-4 py-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors text-left">
+            <button 
+              onClick={handleResetPassword}
+              className="w-full px-4 py-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors text-left"
+            >
               <div className="flex items-center gap-3">
                 <Shield size={20} />
                 <div>
@@ -352,22 +400,19 @@ const EditUserPage = ({ onBack, userId }) => {
               </div>
             </button>
 
-            <button className="w-full px-4 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors text-left">
-              <div className="flex items-center gap-3">
-                <Smartphone size={20} />
-                <div>
-                  <p className="font-semibold">Reset 2FA</p>
-                  <p className="text-sm text-purple-200">Disable and reset two-factor authentication</p>
-                </div>
-              </div>
-            </button>
-
-            <button className="w-full px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors text-left">
+            <button 
+              onClick={handleSuspendAccount}
+              className={`w-full px-4 py-3 text-white rounded-xl transition-colors text-left ${
+                formData.isSuspended ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'
+              }`}
+            >
               <div className="flex items-center gap-3">
                 <User size={20} />
                 <div>
-                  <p className="font-semibold">Suspend Account</p>
-                  <p className="text-sm text-red-200">Temporarily disable user access</p>
+                  <p className="font-semibold">{formData.isSuspended ? 'Unsuspend Account' : 'Suspend Account'}</p>
+                  <p className={`text-sm ${formData.isSuspended ? 'text-emerald-200' : 'text-red-200'}`}>
+                    {formData.isSuspended ? 'Restore user access' : 'Temporarily disable user access'}
+                  </p>
                 </div>
               </div>
             </button>
@@ -392,6 +437,105 @@ const EditUserPage = ({ onBack, userId }) => {
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
+
+      {/* Set Password Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <GlassCard className="p-6 w-full max-w-md mx-4">
+            <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
+              Set New Password
+            </h3>
+            
+            <p className={`${isDark ? 'text-white/70' : 'text-gray-600'} mb-4`}>
+              Enter a new password for {user.firstName} {user.lastName}
+            </p>
+            
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password"
+              className={`w-full p-3 rounded-lg mb-4 ${isDark ? 'bg-white/10 text-white placeholder-white/50' : 'bg-gray-100 text-gray-900'}`}
+            />
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  setNewPassword('');
+                }}
+                className="flex-1 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitPasswordReset}
+                disabled={!newPassword.trim()}
+                className="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                Set Password
+              </button>
+            </div>
+          </GlassCard>
+        </div>
+      )}
+
+      {/* Suspend Account Modal */}
+      {showSuspendModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <GlassCard className="p-6 w-full max-w-md mx-4">
+            <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
+              {formData.isSuspended ? 'Unsuspend Account' : 'Suspend Account'}
+            </h3>
+            
+            <p className={`${isDark ? 'text-white/70' : 'text-gray-600'} mb-4`}>
+              {formData.isSuspended 
+                ? `Are you sure you want to restore access for ${user.firstName} ${user.lastName}?`
+                : `Are you sure you want to suspend ${user.firstName} ${user.lastName}'s account? They will not be able to access any features.`
+              }
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSuspendModal(false)}
+                className="flex-1 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitSuspendAccount}
+                className={`flex-1 py-2 text-white rounded-lg transition-colors ${
+                  formData.isSuspended ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'
+                }`}
+              >
+                {formData.isSuspended ? 'Unsuspend' : 'Suspend'}
+              </button>
+            </div>
+          </GlassCard>
+        </div>
+      )}
+
+      {/* Password Reset Result Modal */}
+      {resetPasswordResult && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <GlassCard className="p-6 w-full max-w-md mx-4">
+            <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
+              Password Updated
+            </h3>
+            
+            <p className={`${isDark ? 'text-white/70' : 'text-gray-600'} mb-4`}>
+              {resetPasswordResult.message}
+            </p>
+            
+            <button
+              onClick={() => setResetPasswordResult(null)}
+              className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Close
+            </button>
+          </GlassCard>
+        </div>
+      )}
     </div>
   );
 };

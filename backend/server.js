@@ -13,6 +13,10 @@ const app = express();
 
 // Brymix webhook endpoint - MUST be before any body parser middleware
 app.post('/api/webhook/challenge-result', express.raw({type: 'application/json'}), async (req, res) => {
+  // Additional CSRF protection: Check Content-Type and User-Agent
+  if (req.get('Content-Type') !== 'application/json') {
+    return res.status(400).json({error: 'Invalid content type'});
+  }
   try {
     const signature = req.headers['x-signature'];
     const payload = req.body.toString('utf8');
@@ -196,6 +200,7 @@ const userSchema = new mongoose.Schema({
     account: { type: Boolean, default: true },
     marketing: { type: Boolean, default: false }
   },
+  isSuspended: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -212,6 +217,17 @@ const notificationSchema = new mongoose.Schema({
 });
 
 const Notification = mongoose.model('Notification', notificationSchema);
+
+// Admin Notification Schema
+const adminNotificationSchema = new mongoose.Schema({
+  type: { type: String, enum: ['payout', 'challenge', 'kyc', 'user', 'system'], required: true },
+  title: { type: String, required: true },
+  message: { type: String, required: true },
+  read: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const AdminNotification = mongoose.model('AdminNotification', adminNotificationSchema);
 
 // Challenge Plan Schema
 const challengePlanSchema = new mongoose.Schema({
@@ -380,8 +396,38 @@ const authenticateToken = (req, res, next) => {
     return res.sendStatus(401);
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+  jwt.verify(token, process.env.JWT_SECRET, async (err, user) => {
     if (err) return res.sendStatus(403);
+    
+    // Check if user is suspended
+    try {
+      const userData = await User.findById(user.userId);
+      if (userData && userData.isSuspended) {
+        return res.status(403).json({ 
+          message: 'Your account has been suspended. Please contact support.', 
+          suspended: true,
+          user: {
+            _id: userData._id,
+            email: userData.email,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            dateOfBirth: userData.dateOfBirth,
+            accountBalance: userData.accountBalance || 0,
+            totalProfit: userData.totalProfit || 0,
+            totalLoss: userData.totalLoss || 0,
+            winRate: userData.winRate || 0,
+            twoFactorEnabled: userData.twoFactorEnabled,
+            kycStatus: userData.kycStatus,
+            paymentMethods: userData.paymentMethods || [],
+            notificationPreferences: userData.notificationPreferences,
+            isSuspended: true
+          }
+        });
+      }
+    } catch (error) {
+      // Continue if user lookup fails
+    }
+    
     req.user = user;
     next();
   });
@@ -482,6 +528,19 @@ app.post('/api/register', checkMaintenanceMode, checkRegistrationEnabled, async 
 
     await user.save();
 
+    // Create admin notification for new user registration
+    const adminNotification = await new AdminNotification({
+      type: 'user',
+      title: 'New User Registration',
+      message: `${firstName} ${lastName} (${email}) registered a new account`
+    }).save();
+    
+    // Send real-time notification to admin
+    if (global.adminNotificationStreams && global.adminNotificationStreams.has('admin')) {
+      const stream = global.adminNotificationStreams.get('admin');
+      stream.write(`data: ${JSON.stringify(adminNotification)}\n\n`);
+    }
+
     // Generate token
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
@@ -538,6 +597,33 @@ app.post('/api/login', checkMaintenanceMode, async (req, res) => {
       if (!verified) {
         return res.status(400).json({ message: 'Invalid 2FA code' });
       }
+    }
+
+    // Check if user is suspended after successful authentication
+    if (user.isSuspended) {
+      // Generate token but return user data with suspension flag
+      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
+      
+      return res.json({
+        token,
+        user: {
+          id: user._id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          dateOfBirth: user.dateOfBirth,
+          accountBalance: user.accountBalance || 0,
+          totalProfit: user.totalProfit || 0,
+          totalLoss: user.totalLoss || 0,
+          winRate: user.winRate || 0,
+          twoFactorEnabled: user.twoFactorEnabled,
+          kycStatus: user.kycStatus,
+          paymentMethods: user.paymentMethods || [],
+          notificationPreferences: user.notificationPreferences,
+          isSuspended: true,
+          isAdmin: user.isAdmin || false
+        }
+      });
     }
 
     // Create login notification
@@ -809,6 +895,19 @@ app.post('/api/user/payout', authenticateToken, async (req, res) => {
     
     await payoutRequest.save();
     
+    // Create admin notification
+    const adminNotification = await new AdminNotification({
+      type: 'payout',
+      title: 'New Payout Request',
+      message: `${user.firstName} ${user.lastName} submitted a payout request for $${amount}`
+    }).save();
+    
+    // Send real-time notification to admin
+    if (global.adminNotificationStreams && global.adminNotificationStreams.has('admin')) {
+      const stream = global.adminNotificationStreams.get('admin');
+      stream.write(`data: ${JSON.stringify(adminNotification)}\n\n`);
+    }
+    
     // Create notification
     if (user.notificationPreferences?.payouts !== false) {
       const notification = await new Notification({
@@ -865,6 +964,19 @@ app.post('/api/user/challenge', authenticateToken, async (req, res) => {
     });
     
     await challengeRequest.save();
+    
+    // Create admin notification
+    const adminNotification = await new AdminNotification({
+      type: 'challenge',
+      title: 'New Challenge Application',
+      message: `${user.firstName} ${user.lastName} applied for ${accountSize} ${challengeType} challenge`
+    }).save();
+    
+    // Send real-time notification to admin
+    if (global.adminNotificationStreams && global.adminNotificationStreams.has('admin')) {
+      const stream = global.adminNotificationStreams.get('admin');
+      stream.write(`data: ${JSON.stringify(adminNotification)}\n\n`);
+    }
     res.json({ message: 'Challenge request submitted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -1843,6 +1955,19 @@ app.post('/api/payment/verify', authenticateToken, async (req, res) => {
     const challengeRequest = new ChallengeRequest(challengeData);
     await challengeRequest.save();
     
+    // Create admin notification for challenge purchase
+    const adminNotification = await new AdminNotification({
+      type: 'challenge',
+      title: 'Challenge Purchased',
+      message: `${challengeData.userInfo.firstName} ${challengeData.userInfo.lastName} purchased ${challengeData.accountSize} ${challengeData.challengeType} challenge for $${challengeData.amount}`
+    }).save();
+    
+    // Send real-time notification to admin
+    if (global.adminNotificationStreams && global.adminNotificationStreams.has('admin')) {
+      const stream = global.adminNotificationStreams.get('admin');
+      stream.write(`data: ${JSON.stringify(adminNotification)}\n\n`);
+    }
+    
     res.json({
       success: true,
       message: 'Payment verified and challenge created',
@@ -2013,6 +2138,19 @@ app.post('/api/user/kyc/initiate', authenticateToken, async (req, res) => {
       startedAt: new Date()
     };
     await user.save();
+
+    // Create admin notification for KYC initiation
+    const adminNotification = await new AdminNotification({
+      type: 'kyc',
+      title: 'KYC Verification Started',
+      message: `${user.firstName} ${user.lastName} started KYC verification process`
+    }).save();
+    
+    // Send real-time notification to admin
+    if (global.adminNotificationStreams && global.adminNotificationStreams.has('admin')) {
+      const stream = global.adminNotificationStreams.get('admin');
+      stream.write(`data: ${JSON.stringify(adminNotification)}\n\n`);
+    }
 
     res.json({
       sessionId: diditResponse.data.session_id,
@@ -2287,6 +2425,137 @@ app.get('/api/admin/kyc/rejected', authenticateAdmin, async (req, res) => {
       .select('firstName lastName email dateOfBirth kycData')
       .sort({ 'kycData.startedAt': -1 });
     res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Admin notification endpoints
+app.get('/api/admin/notifications', authenticateAdmin, async (req, res) => {
+  try {
+    const notifications = await AdminNotification.find({})
+      .sort({ createdAt: -1 })
+      .limit(50);
+    res.json(notifications);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.get('/api/admin/notifications/stream', async (req, res) => {
+  const token = req.query.token;
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+    
+    if (!user || !user.isAdmin) {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+    
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*'
+    });
+    
+    // Store connection for admin
+    if (!global.adminNotificationStreams) {
+      global.adminNotificationStreams = new Map();
+    }
+    global.adminNotificationStreams.set('admin', res);
+    
+    // Keep connection alive
+    const keepAlive = setInterval(() => {
+      res.write('data: {"type":"ping"}\n\n');
+    }, 30000);
+    
+    req.on('close', () => {
+      clearInterval(keepAlive);
+      global.adminNotificationStreams.delete('admin');
+    });
+    
+  } catch (error) {
+    res.status(401).json({ message: 'Invalid token' });
+  }
+});
+
+app.put('/api/admin/notifications/:id/read', authenticateAdmin, async (req, res) => {
+  try {
+    await AdminNotification.findByIdAndUpdate(req.params.id, { read: true });
+    res.json({ message: 'Notification marked as read' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.put('/api/admin/notifications/read-all', authenticateAdmin, async (req, res) => {
+  try {
+    await AdminNotification.updateMany({}, { read: true });
+    res.json({ message: 'All notifications marked as read' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.delete('/api/admin/notifications/:id', authenticateAdmin, async (req, res) => {
+  try {
+    await AdminNotification.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Notification deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Admin user management endpoints
+app.post('/api/admin/users/:id/suspend', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { suspend } = req.body;
+    
+    await User.findByIdAndUpdate(id, { isSuspended: suspend });
+    
+    res.json({ 
+      message: suspend ? 'User suspended successfully' : 'User unsuspended successfully'
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.post('/api/admin/users/:id/reset-password', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+    
+    if (!newPassword || newPassword.trim().length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    }
+    
+    const hashedPassword = await bcrypt.hash(newPassword.trim(), 10);
+    
+    await User.findByIdAndUpdate(id, { password: hashedPassword });
+    
+    res.json({ 
+      message: 'Password updated successfully'
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.get('/api/admin/users/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password -twoFactorSecret');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

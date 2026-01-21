@@ -7,7 +7,7 @@ import { apiUrl } from '../../utils/api';
 
 const ChallengeDashboard = ({ onBuyNew }) => {
   const { isDark } = useTheme();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reviewingChallenges, setReviewingChallenges] = useState(new Set());
@@ -21,10 +21,24 @@ const ChallengeDashboard = ({ onBuyNew }) => {
       const response = await fetch(`${apiUrl()}/api/user/challenges`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const data = await response.json();
-      setChallenges(data);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setChallenges(Array.isArray(data) ? data : []);
+      } else {
+        // Handle error responses (like 403 for suspended users)
+        setChallenges([]);
+        if (response.status === 403) {
+          const errorData = await response.json();
+          if (errorData.suspended) {
+            // User is suspended, challenges will be empty
+            console.log('User is suspended, cannot fetch challenges');
+          }
+        }
+      }
     } catch (error) {
       console.error('Error fetching challenges:', error);
+      setChallenges([]);
     } finally {
       setLoading(false);
     }
@@ -148,7 +162,12 @@ const ChallengeDashboard = ({ onBuyNew }) => {
           <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} mb-4`}>Purchase a challenge to get started with your trading journey.</p>
           <button
             onClick={onBuyNew}
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+            disabled={user?.isSuspended}
+            className={`px-6 py-3 rounded-xl transition-colors ${
+              user?.isSuspended 
+                ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
           >
             Buy Challenge
           </button>
@@ -159,13 +178,18 @@ const ChallengeDashboard = ({ onBuyNew }) => {
             <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Active Challenges</h2>
             <button
               onClick={onBuyNew}
-              className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+              disabled={user?.isSuspended}
+              className={`px-4 py-2 rounded-xl transition-colors ${
+                user?.isSuspended 
+                  ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
             >
               Buy New Challenge
             </button>
           </div>
           <div className="space-y-4">
-          {challenges.map(challenge => (
+          {Array.isArray(challenges) && challenges.map(challenge => (
             <GlassCard key={challenge._id} className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>

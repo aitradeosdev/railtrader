@@ -6,7 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { apiUrl } from '../../utils/api';
 
-const UserDetailsPage = ({ onBack, userId }) => {
+const UserDetailsPage = ({ onBack, userId, onNavigateToEdit }) => {
   const { isDark } = useTheme();
   const { token } = useAuth();
   const { currency } = useCurrency();
@@ -44,6 +44,10 @@ const UserDetailsPage = ({ onBack, userId }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditUser = () => {
+    onNavigateToEdit(userId);
   };
 
   if (loading) {
@@ -244,12 +248,19 @@ const UserDetailsPage = ({ onBack, userId }) => {
             <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
               <div className="flex items-center justify-between mb-2">
                 <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Account Status</span>
-                <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded">
-                  Active
+                <span className={`px-2 py-1 text-xs rounded ${
+                  user.isSuspended 
+                    ? 'bg-red-500/20 text-red-400' 
+                    : 'bg-emerald-500/20 text-emerald-400'
+                }`}>
+                  {user.isSuspended ? 'Suspended' : 'Active'}
                 </span>
               </div>
               <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>
-                Account is active and in good standing
+                {user.isSuspended 
+                  ? 'Account access is suspended' 
+                  : 'Account is active and in good standing'
+                }
               </p>
             </div>
 
@@ -309,16 +320,10 @@ const UserDetailsPage = ({ onBack, userId }) => {
       {/* Action Buttons */}
       <div className="flex justify-center gap-4">
         <button 
-          onClick={() => window.location.href = `mailto:${user.email}`}
-          className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+          onClick={handleEditUser}
+          className="px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
         >
-          Send Email
-        </button>
-        <button className="px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors">
           Edit User
-        </button>
-        <button className="px-6 py-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors">
-          Reset Password
         </button>
       </div>
     </div>

@@ -152,6 +152,22 @@ const PaymentMethodsPage = ({ onBack }) => {
         </div>
       </div>
 
+      {user?.isSuspended && (
+        <GlassCard className="p-6 border border-red-500/20 bg-red-500/5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 rounded-full bg-red-500/20">
+              <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Account Suspended</h3>
+          </div>
+          <p className={`${isDark ? 'text-white/70' : 'text-gray-600'} text-sm`}>
+            You cannot add or modify payout methods while your account is suspended. Please contact support for assistance.
+          </p>
+        </GlassCard>
+      )}
+
       <div className="flex gap-2">
         <button
           onClick={() => setActiveTab('bank')}
@@ -185,7 +201,12 @@ const PaymentMethodsPage = ({ onBack }) => {
                 setShowAddForm(true);
                 setResolutionError('');
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium"
+              disabled={user?.isSuspended}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium ${
+                user?.isSuspended 
+                  ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                  : 'bg-blue-600 text-white'
+              }`}
             >
               <Plus size={16} />
               Add Bank Account
@@ -302,7 +323,12 @@ const PaymentMethodsPage = ({ onBack }) => {
                 setShowAddForm(true);
                 setResolutionError('');
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium"
+              disabled={user?.isSuspended}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium ${
+                user?.isSuspended 
+                  ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                  : 'bg-blue-600 text-white'
+              }`}
             >
               <Plus size={16} />
               Add Wallet
