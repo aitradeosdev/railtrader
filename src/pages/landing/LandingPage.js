@@ -5,6 +5,7 @@ import { GlassCard } from '../../components/UIComponents';
 import Footer from '../../components/Footer';
 import { useState, useEffect } from 'react';
 import { apiUrl } from '../../utils/api';
+import { formatLargeNumber } from '../../utils/numberFormat';
 
 const LandingPage = ({ onGetStarted, onNavigate }) => {
   const { isDark } = useTheme();
@@ -32,7 +33,7 @@ const LandingPage = ({ onGetStarted, onNavigate }) => {
           const maxAccount = Math.max(...challengeData.map(c => c.accountSize));
           const maxSplit = Math.max(...challengeData.map(c => c.phases['2']?.profitSplit || 0));
           
-          setMaxFunding(maxAccount / 1000);
+          setMaxFunding(maxAccount);
           setMaxProfitSplit(maxSplit);
         }
       }
@@ -47,8 +48,8 @@ const LandingPage = ({ onGetStarted, onNavigate }) => {
     { 
       icon: TrendingUp, 
       title: 'Funded Accounts', 
-      desc: maxFunding ? `Get up to ${currency}${maxFunding}K in trading capital` : 'Loading...',
-      details: maxFunding ? `Start with our evaluation challenge and unlock trading capital up to ${currency}${(maxFunding * 1000).toLocaleString()}. No personal risk - trade with our money and keep the majority of profits you generate.` : 'Loading...'
+      desc: maxFunding ? `Get up to ${currency}${formatLargeNumber(maxFunding)} in trading capital` : 'Loading...',
+      details: maxFunding ? `Start with our evaluation challenge and unlock trading capital up to ${currency}${maxFunding.toLocaleString()}. No personal risk - trade with our money and keep the majority of profits you generate.` : 'Loading...'
     },
     { 
       icon: Shield, 
@@ -74,7 +75,7 @@ const LandingPage = ({ onGetStarted, onNavigate }) => {
     { value: '2.5K+', label: 'Funded Traders' },
     { value: `${currency}${(platformBalance/1000000).toFixed(0)}M+`, label: 'Capital Deployed' },
     { value: maxProfitSplit ? `${maxProfitSplit}%` : '...', label: 'Payout Rate' },
-    { value: maxFunding ? `${currency}${maxFunding}K` : '...', label: 'Max Funding' }
+    { value: maxFunding ? `${currency}${formatLargeNumber(maxFunding)}` : '...', label: 'Max Funding' }
   ];
 
   if (loading) {
@@ -154,7 +155,7 @@ const LandingPage = ({ onGetStarted, onNavigate }) => {
                   Get <span className="text-blue-500">Funded</span>
                 </h1>
                 <p className={`text-xl ${isDark ? 'text-white/60' : 'text-gray-600'} mb-8`}>
-                  Join RailTrader's proprietary trading firm. Pass our evaluation challenge and trade with {maxFunding ? `up to ${currency}${maxFunding}K` : '...'} while keeping {maxProfitSplit ? `up to ${maxProfitSplit}%` : '...'} of profits.
+                  Join RailTrader's proprietary trading firm. Pass our evaluation challenge and trade with {maxFunding ? `up to ${currency}${formatLargeNumber(maxFunding)}` : '...'} while keeping {maxProfitSplit ? `up to ${maxProfitSplit}%` : '...'} of profits.
                 </p>
                 <button 
                   onClick={onGetStarted}
