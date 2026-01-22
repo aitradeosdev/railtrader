@@ -13,10 +13,16 @@ const app = express();
 
 // Brymix webhook endpoint - MUST be before any body parser middleware
 app.post('/api/webhook/challenge-result', express.raw({type: 'application/json'}), async (req, res) => {
-  // Additional CSRF protection: Check Content-Type and User-Agent
+  // Webhook-specific CSRF protection
   if (req.get('Content-Type') !== 'application/json') {
     return res.status(400).json({error: 'Invalid content type'});
   }
+  // Verify request origin for webhook security
+  const userAgent = req.get('User-Agent');
+  // Allow requests from localhost for development or remove User-Agent check entirely
+  // if (!userAgent || !userAgent.includes('Brymix')) {
+  //   return res.status(403).json({error: 'Invalid request origin'});
+  // }
   try {
     const signature = req.headers['x-signature'];
     const payload = req.body.toString('utf8');
@@ -32,6 +38,13 @@ app.post('/api/webhook/challenge-result', express.raw({type: 'application/json'}
     }
     
     const result = JSON.parse(payload);
+    
+    // Validate required fields to prevent malicious payloads
+    if (!result || typeof result !== 'object' || 
+        typeof result.challenge_id !== 'string' || 
+        typeof result.status !== 'string') {
+      return res.status(400).json({error: 'Invalid payload structure'});
+    }
     const { challenge_id, status, violations, metrics } = result;
     
     const challenge = await ChallengeRequest.findById(challenge_id);
@@ -58,6 +71,10 @@ app.post('/api/webhook/challenge-result', express.raw({type: 'application/json'}
       }
     } else {
       challenge.status = 'rejected';
+      // Deactivate all MT5 accounts when challenge is rejected
+      if (challenge.mt5Accounts && challenge.mt5Accounts.length > 0) {
+        challenge.mt5Accounts.forEach(acc => acc.active = false);
+      }
     }
     
     await challenge.save();
@@ -490,6 +507,33 @@ const checkRegistrationEnabled = async (req, res, next) => {
     next();
   }
 };
+// CSRF protection middleware
+const csrfProtection = (req, res, next) => {
+  // Skip CSRF for GET requests and public endpoints
+  if (req.method === 'GET' || 
+      req.path === '/api/challenge-plans' ||
+      req.path === '/api/platform-settings') {
+    return next();
+  }
+
+  const origin = req.get('Origin');
+  const referer = req.get('Referer');
+  const allowedOrigins = process.env.NODE_ENV === 'production' 
+    ? [process.env.FRONTEND_URL_PROD] 
+    : [process.env.FRONTEND_URL_DEV];
+
+  // Verify Origin or Referer header
+  if (!origin && !referer) {
+    return res.status(403).json({ message: 'Missing origin header' });
+  }
+
+  const requestOrigin = origin || (referer && new URL(referer).origin);
+  if (!allowedOrigins.includes(requestOrigin)) {
+    return res.status(403).json({ message: 'Invalid origin' });
+  }
+
+  next();
+};
 const authenticateAdmin = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -542,7 +586,7 @@ const rateLimitRegistration = (req, res, next) => {
 };
 
 // Routes
-app.post('/api/register', checkMaintenanceMode, checkRegistrationEnabled, rateLimitRegistration, async (req, res) => {
+app.post('/api/register', checkMaintenanceMode, checkRegistrationEnabled, csrfProtection, rateLimitRegistration, async (req, res) => {
   try {
     const { email, password, firstName, lastName, dateOfBirth } = req.body;
 
@@ -632,7 +676,7 @@ const rateLimitEmailCheck = (req, res, next) => {
 };
 
 // Check if email exists
-app.post('/api/check-email', checkMaintenanceMode, rateLimitEmailCheck, async (req, res) => {
+app.post('/api/check-email', checkMaintenanceMode, csrfProtection, rateLimitEmailCheck, async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
@@ -642,7 +686,7 @@ app.post('/api/check-email', checkMaintenanceMode, rateLimitEmailCheck, async (r
   }
 });
 
-app.post('/api/login', checkMaintenanceMode, async (req, res) => {
+app.post('/api/login', checkMaintenanceMode, csrfProtection, async (req, res) => {
   try {
     const { email, password, twoFactorCode } = req.body;
 
@@ -752,7 +796,7 @@ app.get('/api/user', checkMaintenanceMode, authenticateToken, async (req, res) =
   }
 });
 
-app.put('/api/user/profile', checkMaintenanceMode, authenticateToken, async (req, res) => {
+app.put('/api/user/profile', checkMaintenanceMode, csrfProtection, authenticateToken, async (req, res) => {
   try {
     const { firstName, lastName, email, dateOfBirth } = req.body;
     const user = await User.findById(req.user.userId);
@@ -781,7 +825,7 @@ app.put('/api/user/profile', checkMaintenanceMode, authenticateToken, async (req
   }
 });
 
-app.put('/api/user/password', authenticateToken, async (req, res) => {
+app.put('/api/user/password', csrfProtection, authenticateToken, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     const user = await User.findById(req.user.userId);
@@ -800,7 +844,7 @@ app.put('/api/user/password', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/user/2fa/setup', authenticateToken, async (req, res) => {
+app.post('/api/user/2fa/setup', csrfProtection, authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
     
@@ -822,7 +866,7 @@ app.post('/api/user/2fa/setup', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/user/2fa/verify', authenticateToken, async (req, res) => {
+app.post('/api/user/2fa/verify', csrfProtection, authenticateToken, async (req, res) => {
   try {
     const { token } = req.body;
     const user = await User.findById(req.user.userId);
@@ -862,7 +906,7 @@ app.post('/api/user/2fa/verify', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/user/2fa/disable', authenticateToken, async (req, res) => {
+app.post('/api/user/2fa/disable', csrfProtection, authenticateToken, async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.user.userId, { 
       twoFactorEnabled: false,
@@ -932,7 +976,7 @@ app.get('/api/user/mt5', authenticateToken, async (req, res) => {
 });
 
 // Submit payout request
-app.post('/api/user/payout', authenticateToken, async (req, res) => {
+app.post('/api/user/payout', csrfProtection, authenticateToken, async (req, res) => {
   try {
     const { amount, paymentMethod, paymentDetails } = req.body;
     const user = await User.findById(req.user.userId);
@@ -1018,7 +1062,7 @@ app.get('/api/user/payouts', authenticateToken, async (req, res) => {
 });
 
 // Submit challenge request
-app.post('/api/user/challenge', authenticateToken, async (req, res) => {
+app.post('/api/user/challenge', csrfProtection, authenticateToken, async (req, res) => {
   try {
     const { challengeType, accountSize, amount } = req.body;
     const user = await User.findById(req.user.userId);
@@ -1131,7 +1175,7 @@ app.put('/api/user/notifications/read-all', authenticateTokenAllowSuspended, asy
   }
 });
 
-app.delete('/api/user/notifications/:id', authenticateTokenAllowSuspended, async (req, res) => {
+app.delete('/api/user/notifications/:id', csrfProtection, authenticateTokenAllowSuspended, async (req, res) => {
   try {
     await Notification.findOneAndDelete({
       _id: req.params.id,
@@ -1183,7 +1227,7 @@ app.get('/api/user/notifications/stream', async (req, res) => {
 });
 
 // Submit evaluation review
-app.post('/api/user/challenge/:id/review', authenticateToken, async (req, res) => {
+app.post('/api/user/challenge/:id/review', csrfProtection, authenticateToken, async (req, res) => {
   try {
     const challenge = await ChallengeRequest.findById(req.params.id);
     
@@ -1244,7 +1288,7 @@ app.post('/api/user/challenge/:id/review', authenticateToken, async (req, res) =
 
 
 // Add payment method
-app.post('/api/user/payment-methods', authenticateToken, async (req, res) => {
+app.post('/api/user/payment-methods', csrfProtection, authenticateToken, async (req, res) => {
   try {
     const { type, name, accountName, bankName, bankCode, accountNumber, walletAddress } = req.body;
     const user = await User.findById(req.user.userId);
@@ -1259,7 +1303,7 @@ app.post('/api/user/payment-methods', authenticateToken, async (req, res) => {
 });
 
 // Delete payment method
-app.delete('/api/user/payment-methods/:id', authenticateToken, async (req, res) => {
+app.delete('/api/user/payment-methods/:id', csrfProtection, authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
     if (!user) {
@@ -1303,7 +1347,7 @@ app.put('/api/admin/users/:id', authenticateAdmin, async (req, res) => {
   }
 });
 
-app.delete('/api/admin/users/:id', authenticateAdmin, async (req, res) => {
+app.delete('/api/admin/users/:id', csrfProtection, authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     await User.findByIdAndDelete(id);
@@ -2623,7 +2667,7 @@ app.delete('/api/admin/notifications/:id', authenticateAdmin, async (req, res) =
 });
 
 // Admin user management endpoints
-app.post('/api/admin/users/:id/suspend', authenticateAdmin, async (req, res) => {
+app.post('/api/admin/users/:id/suspend', csrfProtection, authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { suspend } = req.body;
