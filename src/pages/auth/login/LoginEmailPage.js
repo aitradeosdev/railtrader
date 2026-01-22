@@ -1,15 +1,41 @@
 import { useState } from 'react';
 import { Mail, ArrowRight } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { apiUrl } from '../../../utils/api';
 
 const LoginEmailPage = ({ onContinue, onSwitchToRegister }) => {
   const { isDark } = useTheme();
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (email) {
-      onContinue({ email });
+    if (!email) return;
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${apiUrl()}/api/check-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      
+      const data = await response.json();
+      
+      if (response.status === 429) {
+        setError(data.message);
+      } else if (data.exists) {
+        onContinue({ email });
+      } else {
+        setError('No account found with this email address.');
+      }
+    } catch (error) {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -25,6 +51,12 @@ const LoginEmailPage = ({ onContinue, onSwitchToRegister }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="p-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+          
           <div>
             <label className={`block text-sm font-medium ${isDark ? 'text-white/70' : 'text-gray-700'} mb-2`}>Email Address</label>
             <div className="relative">
@@ -36,16 +68,24 @@ const LoginEmailPage = ({ onContinue, onSwitchToRegister }) => {
                 className={`w-full pl-12 pr-4 py-4 text-lg rounded-xl border ${isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900'} placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 placeholder="Enter your email"
                 required
+                disabled={loading}
               />
             </div>
           </div>
 
           <button
             type="submit"
-            className="w-full py-4 bg-gradient-to-r from-blue-500/90 to-blue-600/90 backdrop-blur-xl text-white rounded-2xl font-medium hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 shadow-2xl shadow-blue-500/30 border border-white/20"
+            disabled={loading}
+            className="w-full py-4 bg-gradient-to-r from-blue-500/90 to-blue-600/90 backdrop-blur-xl text-white rounded-2xl font-medium hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 shadow-2xl shadow-blue-500/30 border border-white/20 disabled:opacity-50 disabled:hover:scale-100"
           >
-            Continue
-            <ArrowRight size={20} />
+            {loading ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+            ) : (
+              <>
+                Continue
+                <ArrowRight size={20} />
+              </>
+            )}
           </button>
         </form>
 

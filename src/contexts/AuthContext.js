@@ -52,7 +52,6 @@ export const AuthProvider = ({ children }) => {
         setToken(null);
       }
     } catch (error) {
-      console.error('Error fetching user:', error);
       localStorage.removeItem('token');
       setToken(null);
     } finally {
@@ -87,7 +86,8 @@ export const AuthProvider = ({ children }) => {
           success: false, 
           message: data.message,
           registrationDisabled: data.registrationDisabled,
-          maintenanceMode: data.maintenanceMode
+          maintenanceMode: data.maintenanceMode,
+          rateLimited: response.status === 429
         };
       }
     } catch (error) {

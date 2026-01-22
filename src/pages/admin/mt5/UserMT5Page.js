@@ -78,9 +78,20 @@ const UserMT5Page = ({ userId, onBack }) => {
           message: 'MT5 credentials assigned successfully!'
         });
         setTimeout(() => setNotification(null), 3000);
+      } else {
+        const errorData = await response.json();
+        setNotification({
+          type: 'error',
+          message: errorData.message || 'Failed to assign MT5 credentials'
+        });
+        setTimeout(() => setNotification(null), 3000);
       }
     } catch (error) {
-      console.error('Error assigning MT5 to challenge:', error);
+      setNotification({
+        type: 'error',
+        message: 'Failed to assign MT5 credentials'
+      });
+      setTimeout(() => setNotification(null), 3000);
     }
   };
 

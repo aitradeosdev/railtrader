@@ -51,9 +51,15 @@ const ChallengeDetailPage = ({ challengeId, onBack }) => {
           message: 'Trading Hub notified - MT5 assignment needed'
         });
         setTimeout(() => setNotification(null), 3000);
+      } else {
+        const errorData = await response.json();
+        setNotification({
+          type: 'error',
+          message: errorData.message || 'Failed to notify Trading Hub'
+        });
+        setTimeout(() => setNotification(null), 3000);
       }
     } catch (error) {
-      console.error('Error notifying MT5 needed:', error);
       setNotification({
         type: 'error',
         message: 'Failed to notify Trading Hub'
@@ -79,9 +85,15 @@ const ChallengeDetailPage = ({ challengeId, onBack }) => {
           message: 'Trading Hub notified - Live account assignment needed'
         });
         setTimeout(() => setNotification(null), 3000);
+      } else {
+        const errorData = await response.json();
+        setNotification({
+          type: 'error',
+          message: errorData.message || 'Failed to notify Trading Hub for live account'
+        });
+        setTimeout(() => setNotification(null), 3000);
       }
     } catch (error) {
-      console.error('Error notifying live account needed:', error);
       setNotification({
         type: 'error',
         message: 'Failed to notify Trading Hub for live account'
@@ -109,9 +121,20 @@ const ChallengeDetailPage = ({ challengeId, onBack }) => {
           message: 'Challenge status updated successfully'
         });
         setTimeout(() => setNotification(null), 3000);
+      } else {
+        const errorData = await response.json();
+        setNotification({
+          type: 'error',
+          message: errorData.message || 'Failed to update challenge status'
+        });
+        setTimeout(() => setNotification(null), 3000);
       }
     } catch (error) {
-      console.error('Error updating challenge:', error);
+      setNotification({
+        type: 'error',
+        message: 'Failed to update challenge status'
+      });
+      setTimeout(() => setNotification(null), 3000);
     }
   };
 
@@ -181,7 +204,11 @@ const ChallengeDetailPage = ({ challengeId, onBack }) => {
             Challenge Details
           </h1>
           <p className={`${isDark ? 'text-white/60' : 'text-gray-600'} text-sm`}>
-            {challenge.userInfo?.firstName || challenge.userId?.firstName || 'User'} {challenge.userInfo?.lastName || challenge.userId?.lastName || ''} - {challenge.accountSize} {challenge.challengeType.toUpperCase()}
+            {challenge.userId?.isDeleted ? (
+              <span className="text-red-400">[DELETED] {challenge.userId.firstName} {challenge.userId.lastName}</span>
+            ) : (
+              `${challenge.userId?.firstName || 'User'} ${challenge.userId?.lastName || ''}`
+            )} - {challenge.accountSize} {challenge.challengeType.toUpperCase()}
           </p>
         </div>
       </div>
@@ -195,11 +222,16 @@ const ChallengeDetailPage = ({ challengeId, onBack }) => {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Name:</span>
-              <span className={isDark ? 'text-white' : 'text-gray-900'}>{challenge.userInfo?.firstName || challenge.userId?.firstName || 'N/A'} {challenge.userInfo?.lastName || challenge.userId?.lastName || ''}</span>
+              <span className={`${isDark ? 'text-white' : 'text-gray-900'} ${challenge.userId?.isDeleted ? 'text-red-400' : ''}`}>
+                {challenge.userId?.isDeleted && '[DELETED] '}
+                {challenge.userId?.firstName || 'N/A'} {challenge.userId?.lastName || ''}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Email:</span>
-              <span className={isDark ? 'text-white' : 'text-gray-900'}>{challenge.userInfo?.email || challenge.userId?.email || 'N/A'}</span>
+              <span className={`${isDark ? 'text-white' : 'text-gray-900'} ${challenge.userId?.isDeleted ? 'text-red-400' : ''}`}>
+                {challenge.userId?.email || 'N/A'}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className={isDark ? 'text-white/60' : 'text-gray-600'}>Created:</span>
@@ -318,8 +350,9 @@ const ChallengeDetailPage = ({ challengeId, onBack }) => {
             <div className="space-y-4 mb-6">
               <div className="flex justify-between">
                 <span className={isDark ? 'text-white/60' : 'text-gray-600'}>User:</span>
-                <span className={isDark ? 'text-white' : 'text-gray-900'}>
-                  {challenge.userInfo?.firstName || challenge.userId?.firstName || 'N/A'} {challenge.userInfo?.lastName || challenge.userId?.lastName || ''}
+                <span className={`${isDark ? 'text-white' : 'text-gray-900'} ${challenge.userId?.isDeleted ? 'text-red-400' : ''}`}>
+                  {challenge.userId?.isDeleted && '[DELETED] '}
+                  {challenge.userId?.firstName || 'N/A'} {challenge.userId?.lastName || ''}
                 </span>
               </div>
               <div className="flex justify-between">

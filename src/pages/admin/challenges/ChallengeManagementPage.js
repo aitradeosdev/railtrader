@@ -46,12 +46,12 @@ const ChallengeManagementPage = ({ onNavigateToChallenge }) => {
   };
 
   const filteredChallenges = challenges.filter(challenge => {
-    const userInfo = challenge.userInfo || challenge.userId;
+    const user = challenge.userId;
     return (
-      (userInfo && (
-        userInfo.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        userInfo.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        userInfo.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      (user && (
+        user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase())
       )) ||
       challenge.accountSize?.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -114,9 +114,22 @@ const ChallengeManagementPage = ({ onNavigateToChallenge }) => {
                   </div>
                   <div>
                     <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {challenge.userInfo ? `${challenge.userInfo.firstName} ${challenge.userInfo.lastName}` : 
-                       (challenge.userId ? `${challenge.userId.firstName} ${challenge.userId.lastName}` : 'Deleted User')}
+                      {challenge.userId?.isDeleted ? (
+                        <span className="flex items-center gap-2">
+                          <span className="text-red-400">[DELETED]</span>
+                          {challenge.userId.firstName} {challenge.userId.lastName}
+                        </span>
+                      ) : (
+                        challenge.userId ? `${challenge.userId.firstName} ${challenge.userId.lastName}` : 'Unknown User'
+                      )}
                     </h3>
+                    <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>
+                      {challenge.userId?.isDeleted ? (
+                        <span className="text-red-400">{challenge.userId.email}</span>
+                      ) : (
+                        challenge.userId?.email || 'No email'
+                      )}
+                    </p>
                     <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'}`}>
                       {challenge.accountSize} {challenge.challengeType?.toUpperCase() || 'UNKNOWN'} - {currency}{challenge.amount} (Phase {challenge.currentPhase})
                     </p>

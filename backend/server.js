@@ -63,7 +63,6 @@ app.post('/api/webhook/challenge-result', express.raw({type: 'application/json'}
     await challenge.save();
     res.json({status: 'received'});
   } catch (error) {
-    console.error('Brymix webhook error:', error);
     res.status(500).json({error: 'Internal server error'});
   }
 });
@@ -134,18 +133,13 @@ mongoose.connect(process.env.MONGODB_URI, {
 })
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => {
-    console.error('MongoDB connection error:', err.message);
-    console.log('Retrying connection in 5 seconds...');
     setTimeout(() => {
       mongoose.connect(process.env.MONGODB_URI, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
-      }).catch(retryErr => {
-        console.error('MongoDB retry failed:', retryErr.message);
-        console.log('Server will continue without database connection');
-      });
+      }).catch(retryErr => {});
     }, 5000);
   });
 
@@ -364,7 +358,7 @@ const getChallengeRules = async (challengeType, accountSize, currentPhase) => {
       }
     }
   } catch (error) {
-    console.error('Error getting challenge rules:', error);
+    // Default rules if plan not found
   }
   
   // Default rules if plan not found
@@ -519,8 +513,36 @@ const authenticateAdmin = async (req, res, next) => {
   }
 };
 
+// Rate limiting for registration
+const registrationAttempts = new Map();
+
+const rateLimitRegistration = (req, res, next) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  const now = Date.now();
+  const windowMs = 60 * 60 * 1000; // 1 hour
+  const maxAttempts = 3;
+  
+  if (!registrationAttempts.has(ip)) {
+    registrationAttempts.set(ip, []);
+  }
+  
+  const attempts = registrationAttempts.get(ip);
+  const recentAttempts = attempts.filter(time => now - time < windowMs);
+  
+  if (recentAttempts.length >= maxAttempts) {
+    const timeLeft = Math.ceil((windowMs - (now - Math.min(...recentAttempts))) / 60000);
+    return res.status(429).json({ 
+      message: `Too many registration attempts. Please try again in ${timeLeft} minutes.` 
+    });
+  }
+  
+  recentAttempts.push(now);
+  registrationAttempts.set(ip, recentAttempts);
+  next();
+};
+
 // Routes
-app.post('/api/register', checkMaintenanceMode, checkRegistrationEnabled, async (req, res) => {
+app.post('/api/register', checkMaintenanceMode, checkRegistrationEnabled, rateLimitRegistration, async (req, res) => {
   try {
     const { email, password, firstName, lastName, dateOfBirth } = req.body;
 
@@ -576,6 +598,45 @@ app.post('/api/register', checkMaintenanceMode, checkRegistrationEnabled, async 
         isAdmin: user.isAdmin || false
       }
     });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Rate limiting for email checks
+const emailCheckAttempts = new Map();
+
+const rateLimitEmailCheck = (req, res, next) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000; // 15 minutes
+  const maxAttempts = 10;
+  
+  if (!emailCheckAttempts.has(ip)) {
+    emailCheckAttempts.set(ip, []);
+  }
+  
+  const attempts = emailCheckAttempts.get(ip);
+  const recentAttempts = attempts.filter(time => now - time < windowMs);
+  
+  if (recentAttempts.length >= maxAttempts) {
+    const timeLeft = Math.ceil((windowMs - (now - Math.min(...recentAttempts))) / 60000);
+    return res.status(429).json({ 
+      message: `Too many requests. Please try again in ${timeLeft} minutes.` 
+    });
+  }
+  
+  recentAttempts.push(now);
+  emailCheckAttempts.set(ip, recentAttempts);
+  next();
+};
+
+// Check if email exists
+app.post('/api/check-email', checkMaintenanceMode, rateLimitEmailCheck, async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    res.json({ exists: !!user });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -891,7 +952,7 @@ app.post('/api/user/payout', authenticateToken, async (req, res) => {
         };
         encryptedMT5Data = encrypt(JSON.stringify(mt5Data));
       } catch (encryptError) {
-        console.error('Encryption error:', encryptError);
+        // Encryption failed
       }
     }
     
@@ -942,7 +1003,6 @@ app.post('/api/user/payout', authenticateToken, async (req, res) => {
     
     res.json({ message: 'Payout request submitted successfully' });
   } catch (error) {
-    console.error('Payout request error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -1177,7 +1237,6 @@ app.post('/api/user/challenge/:id/review', authenticateToken, async (req, res) =
       jobId: response.data.job_id
     });
   } catch (error) {
-    console.error('Review submission error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -1440,7 +1499,6 @@ app.get('/api/admin/payouts', authenticateAdmin, async (req, res) => {
             mt5Data = JSON.parse(decryptedData);
           }
         } catch (error) {
-          console.error('Error decrypting MT5 data for payout:', payout._id, error.message);
           mt5Data = { error: 'Failed to decrypt MT5 data' };
         }
       }
@@ -1523,13 +1581,23 @@ app.get('/api/admin/mt5-requests', authenticateAdmin, async (req, res) => {
 // Notify MT5 needed
 app.put('/api/admin/challenges/:id/notify-mt5', authenticateAdmin, async (req, res) => {
   try {
+    const challenge = await ChallengeRequest.findById(req.params.id).populate('userId');
+    
+    if (!challenge) {
+      return res.status(404).json({ message: 'Challenge not found' });
+    }
+    
+    if (!challenge.userId) {
+      return res.status(400).json({ message: 'Cannot notify MT5 for deleted user' });
+    }
+    
     const { phase, needsMT5 } = req.body;
-    const challenge = await ChallengeRequest.findByIdAndUpdate(
+    const updatedChallenge = await ChallengeRequest.findByIdAndUpdate(
       req.params.id,
       { needsMT5, phase },
       { new: true }
     );
-    res.json(challenge);
+    res.json(updatedChallenge);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -1538,12 +1606,22 @@ app.put('/api/admin/challenges/:id/notify-mt5', authenticateAdmin, async (req, r
 // Notify live account needed
 app.put('/api/admin/challenges/:id/notify-live-account', authenticateAdmin, async (req, res) => {
   try {
-    const challenge = await ChallengeRequest.findByIdAndUpdate(
+    const challenge = await ChallengeRequest.findById(req.params.id).populate('userId');
+    
+    if (!challenge) {
+      return res.status(404).json({ message: 'Challenge not found' });
+    }
+    
+    if (!challenge.userId) {
+      return res.status(400).json({ message: 'Cannot notify live account for deleted user' });
+    }
+    
+    const updatedChallenge = await ChallengeRequest.findByIdAndUpdate(
       req.params.id,
       { needsLiveAccount: true, needsMT5: true, status: 'pending_funding' },
       { new: true }
     );
-    res.json(challenge);
+    res.json(updatedChallenge);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -1553,7 +1631,24 @@ app.get('/api/admin/challenges', authenticateAdmin, async (req, res) => {
     const challenges = await ChallengeRequest.find({})
       .populate('userId', 'firstName lastName email')
       .sort({ createdAt: -1 });
-    res.json(challenges);
+    
+    // Handle deleted users by adding fallback data
+    const challengesWithUserInfo = challenges.map(challenge => {
+      const challengeObj = challenge.toObject();
+      if (!challengeObj.userId) {
+        // User was deleted, use stored userInfo
+        challengeObj.userId = {
+          _id: null,
+          firstName: challengeObj.userInfo?.firstName || 'Deleted',
+          lastName: challengeObj.userInfo?.lastName || 'User',
+          email: challengeObj.userInfo?.email || 'deleted@user.com',
+          isDeleted: true
+        };
+      }
+      return challengeObj;
+    });
+    
+    res.json(challengesWithUserInfo);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -1567,10 +1662,14 @@ app.put('/api/admin/challenges/:id/assign-mt5', authenticateAdmin, async (req, r
       return res.status(400).json({ message: 'Server, login, and password are required' });
     }
     
-    const challenge = await ChallengeRequest.findById(req.params.id);
+    const challenge = await ChallengeRequest.findById(req.params.id).populate('userId');
     
     if (!challenge) {
       return res.status(404).json({ message: 'Challenge not found' });
+    }
+    
+    if (!challenge.userId) {
+      return res.status(400).json({ message: 'Cannot assign MT5 account to deleted user' });
     }
     
     // Initialize mt5Accounts array if it doesn't exist
@@ -1636,7 +1735,6 @@ app.put('/api/admin/challenges/:id/assign-mt5', authenticateAdmin, async (req, r
     
     res.json({ message: 'MT5 account assigned successfully' });
   } catch (error) {
-    console.error('MT5 assignment error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -1684,10 +1782,14 @@ app.put('/api/admin/challenges/:id/update-type', authenticateAdmin, async (req, 
 app.put('/api/admin/challenges/:id/update-status', authenticateAdmin, async (req, res) => {
   try {
     const { action } = req.body;
-    const challenge = await ChallengeRequest.findById(req.params.id);
+    const challenge = await ChallengeRequest.findById(req.params.id).populate('userId');
     
     if (!challenge) {
       return res.status(404).json({ message: 'Challenge not found' });
+    }
+    
+    if (!challenge.userId) {
+      return res.status(400).json({ message: 'Cannot update status for deleted user' });
     }
     
     if (action === 'next_phase') {
@@ -1717,7 +1819,6 @@ app.put('/api/admin/challenges/:id/update-status', authenticateAdmin, async (req
     await challenge.save();
     res.json({ message: 'Challenge status updated successfully' });
   } catch (error) {
-    console.error('Update status error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -1728,7 +1829,6 @@ app.get('/api/admin/challenge-plans', authenticateAdmin, async (req, res) => {
     const plans = await ChallengePlan.find({ active: true }).sort({ tier: 1 });
     res.json(plans);
   } catch (error) {
-    console.error('Challenge plans error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -1767,7 +1867,6 @@ app.get('/api/challenge-plans', checkMaintenanceMode, async (req, res) => {
     const plans = await ChallengePlan.find({ active: true }).sort({ tier: 1 });
     res.json(plans);
   } catch (error) {
-    console.error('Public challenge plans error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -1901,7 +2000,6 @@ app.post('/api/payment/initialize', authenticateToken, async (req, res) => {
     
     res.json(response.data);
   } catch (error) {
-    console.error('Paystack initialization error:', error.response?.data || error.message);
     res.status(500).json({ message: 'Payment initialization failed', error: error.message });
   }
 });
@@ -2070,7 +2168,6 @@ app.post('/api/payment/resolve-account', authenticateToken, async (req, res) => 
     
     res.json(response.data);
   } catch (error) {
-    console.error('Account resolution error:', error.response?.data || error.message);
     
     // Handle specific Paystack errors
     if (error.response?.data?.message?.includes('daily limit')) {
@@ -2173,7 +2270,6 @@ app.post('/api/user/kyc/initiate', authenticateToken, async (req, res) => {
       verificationUrl: diditResponse.data.url
     });
   } catch (error) {
-    console.error('KYC initiation error:', error.response?.data || error.message);
     res.status(500).json({ message: 'Failed to initiate KYC verification' });
   }
 });
@@ -2230,7 +2326,6 @@ app.post('/api/user/kyc/refresh', authenticateToken, async (req, res) => {
       rejectionReason: user.kycData?.rejectionReason
     });
   } catch (error) {
-    console.error('KYC refresh error:', error.response?.data || error.message);
     
     // Handle specific API errors
     if (error.response?.status === 404) {
@@ -2408,7 +2503,6 @@ app.post('/api/admin/kyc/refresh-all', authenticateAdmin, async (req, res) => {
       errors
     });
   } catch (error) {
-    console.error('Bulk KYC refresh error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -2578,9 +2672,7 @@ app.get('/api/admin/users/:id', authenticateAdmin, async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Auto-refresh KYC statuses every 5 minutes
 let isAutoRefreshing = false;

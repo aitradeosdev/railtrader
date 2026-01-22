@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Save, User, DollarSign, TrendingUp, Shield, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Save, User, TrendingUp, Shield, CheckCircle } from 'lucide-react';
 import { GlassCard } from '../../components/UIComponents';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,10 +20,6 @@ const EditUserPage = ({ onBack, userId }) => {
     firstName: '',
     lastName: '',
     email: '',
-    accountBalance: 0,
-    totalProfit: 0,
-    totalLoss: 0,
-    winRate: 0,
     isAdmin: false,
     twoFactorEnabled: false,
     isSuspended: false
@@ -35,23 +31,18 @@ const EditUserPage = ({ onBack, userId }) => {
 
   const fetchUser = async () => {
     try {
-      const response = await fetch(`${apiUrl()}/api/admin/users`, {
+      const response = await fetch(`${apiUrl()}/api/admin/users/${userId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const users = await response.json();
-      const foundUser = users.find(u => u._id === userId);
-      if (foundUser) {
+      const foundUser = await response.json();
+      if (foundUser && !foundUser.message) {
         setUser(foundUser);
         setFormData({
-          firstName: foundUser.firstName,
-          lastName: foundUser.lastName,
-          email: foundUser.email,
-          accountBalance: foundUser.accountBalance,
-          totalProfit: foundUser.totalProfit,
-          totalLoss: foundUser.totalLoss,
-          winRate: foundUser.winRate,
-          isAdmin: foundUser.isAdmin,
-          twoFactorEnabled: foundUser.twoFactorEnabled,
+          firstName: foundUser.firstName || '',
+          lastName: foundUser.lastName || '',
+          email: foundUser.email || '',
+          isAdmin: foundUser.isAdmin || false,
+          twoFactorEnabled: foundUser.twoFactorEnabled || false,
           isSuspended: foundUser.isSuspended || false
         });
       }
@@ -256,77 +247,7 @@ const EditUserPage = ({ onBack, userId }) => {
           </div>
         </GlassCard>
 
-        {/* Financial Settings */}
-        <GlassCard className="p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <DollarSign className="text-emerald-400" size={24} />
-            <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Financial Settings</h2>
-          </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Account Balance ($)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.accountBalance}
-                onChange={(e) => handleInputChange('accountBalance', parseFloat(e.target.value) || 0)}
-                className={`w-full p-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none`}
-              />
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Total Profit ($)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.totalProfit}
-                onChange={(e) => handleInputChange('totalProfit', parseFloat(e.target.value) || 0)}
-                className={`w-full p-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none`}
-              />
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Total Loss ($)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.totalLoss}
-                onChange={(e) => handleInputChange('totalLoss', parseFloat(e.target.value) || 0)}
-                className={`w-full p-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none`}
-              />
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Win Rate (%)
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                step="0.1"
-                value={formData.winRate}
-                onChange={(e) => handleInputChange('winRate', parseFloat(e.target.value) || 0)}
-                className={`w-full p-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none`}
-              />
-            </div>
-
-            {/* Net P&L Display */}
-            <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
-              <p className={`text-sm ${isDark ? 'text-white/60' : 'text-gray-600'} mb-2`}>Net Profit/Loss</p>
-              <p className={`text-xl font-bold ${formData.totalProfit - formData.totalLoss >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                ${(formData.totalProfit - formData.totalLoss).toLocaleString()}
-              </p>
-            </div>
-          </div>
-        </GlassCard>
 
         {/* Account Permissions */}
         <GlassCard className="p-6">
