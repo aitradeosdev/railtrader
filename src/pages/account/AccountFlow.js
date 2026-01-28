@@ -6,7 +6,6 @@ import PersonalInfoPage from './PersonalInfoPage';
 import AccountSettingsPage from './AccountSettingsPage';
 import ChangePasswordPage from './ChangePasswordPage';
 import TwoFactorSetupPage from './TwoFactorSetupPage';
-import DocumentsPage from './DocumentsPage';
 import NotificationPreferencesPage from './NotificationPreferencesPage';
 import KYCVerificationPage from './KYCVerificationPage';
 
@@ -40,8 +39,6 @@ const AccountFlow = () => {
       return <TwoFactorSetupPage onBack={handleBack} />;
     case 'kycVerification':
       return <KYCVerificationPage onBack={handleBack} />;
-    case 'documents':
-      return <DocumentsPage onBack={handleBack} />;
     case 'notifications':
       return <NotificationPreferencesPage onBack={handleBack} />;
     default:

@@ -240,7 +240,7 @@ const UserDashboard = ({ onNavigate }) => {
             />
           </div>
           
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
@@ -271,8 +271,16 @@ const UserDashboard = ({ onNavigate }) => {
             </select>
 
             <button 
+              onClick={() => onNavigate('certificate-config')}
+              className="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors flex items-center gap-2 whitespace-nowrap"
+            >
+              <Shield size={20} />
+              Certificates
+            </button>
+
+            <button 
               onClick={() => onNavigate('create-user')}
-              className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors flex items-center gap-2"
+              className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors flex items-center gap-2 whitespace-nowrap"
             >
               <Plus size={20} />
               Add User

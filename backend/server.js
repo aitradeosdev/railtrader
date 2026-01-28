@@ -342,76 +342,6 @@ const platformSettingsSchema = new mongoose.Schema({
 
 const PlatformSettings = mongoose.model('PlatformSettings', platformSettingsSchema);
 
-// Certificate Settings Schema
-const certificateSettingsSchema = new mongoose.Schema({
-  templateName: { type: String, default: 'Certification.png' },
-  fields: [{
-    id: { type: String, required: true },
-    type: { type: String, enum: ['name', 'date', 'certId'], required: true },
-    x: { type: Number, default: 100 },
-    y: { type: Number, default: 100 },
-    width: { type: Number, default: 200 },
-    height: { type: Number, default: 40 },
-    fontSize: { type: Number, default: 24 },
-    fontFamily: { type: String, default: 'Arial' },
-    fontWeight: { type: String, default: 'normal' },
-    color: { type: String, default: '#000000' },
-    align: { type: String, enum: ['left', 'center', 'right'], default: 'center' },
-    rotation: { type: Number, default: 0 }
-  }],
-  updatedAt: { type: Date, default: Date.now }
-});
-
-const CertificateSettings = mongoose.model('CertificateSettings', certificateSettingsSchema);
-
-// Certificate Schema
-const certificateSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  challengeId: { type: mongoose.Schema.Types.ObjectId, ref: 'ChallengeRequest', required: true },
-  certificateId: { type: String, required: true, unique: true },
-  userName: { type: String, required: true },
-  completionDate: { type: Date, required: true },
-  generatedAt: { type: Date, default: Date.now }
-});
-
-const Certificate = mongoose.model('Certificate', certificateSchema);
-
-// Helper function to generate certificate
-const generateCertificate = async (userId, challengeId, challengeData) => {
-  try {
-    const user = await User.findById(userId);
-    if (!user) return;
-    
-    // Check if certificate already exists for this challenge
-    const existingCert = await Certificate.findOne({ challengeId });
-    if (existingCert) return; // Don't create duplicate certificates
-    
-    let certificateId;
-    let exists = true;
-    
-    // Keep generating until we get a unique ID
-    while (exists) {
-      const randomNum = Math.floor(Math.random() * 90000) + 10000;
-      certificateId = `RT-FUNDED-${randomNum}`;
-      const existingCert = await Certificate.findOne({ certificateId });
-      exists = !!existingCert;
-    }
-    
-    const certificate = new Certificate({
-      userId,
-      challengeId,
-      certificateId,
-      userName: `${user.firstName} ${user.lastName}`,
-      completionDate: new Date()
-    });
-    
-    await certificate.save();
-    console.log(`Certificate generated: ${certificateId} for user ${user.firstName} ${user.lastName}`);
-  } catch (error) {
-    console.error('Certificate generation error:', error);
-  }
-};
-
 // Helper functions for Brymix integration
 const parseAccountSize = (accountSize) => {
   if (!accountSize) return 10000;
@@ -1405,6 +1335,18 @@ app.get('/api/admin/users', authenticateAdmin, async (req, res) => {
   }
 });
 
+app.get('/api/admin/users/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password -twoFactorSecret');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 app.put('/api/admin/users/:id', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
@@ -1808,9 +1750,7 @@ app.put('/api/admin/challenges/:id/assign-mt5', authenticateAdmin, async (req, r
       challenge.status = 'funded';
       challenge.needsLiveAccount = false;
       
-      // Generate certificate when challenge becomes funded
-      await generateCertificate(challenge.userId, challenge._id, challenge);
-      
+
       // Create notification for funded account
       const challengeUser = await User.findById(challenge.userId);
       if (challengeUser.notificationPreferences?.challenges !== false) {
@@ -2739,48 +2679,6 @@ app.delete('/api/admin/notifications/:id', authenticateAdmin, async (req, res) =
   }
 });
 
-// Certificate management endpoints
-app.get('/api/admin/certificate-settings', authenticateAdmin, async (req, res) => {
-  try {
-    let settings = await CertificateSettings.findOne();
-    if (!settings) {
-      settings = new CertificateSettings();
-      await settings.save();
-    }
-    res.json(settings);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-app.put('/api/admin/certificate-settings', authenticateAdmin, async (req, res) => {
-  try {
-    let settings = await CertificateSettings.findOne();
-    if (!settings) {
-      settings = new CertificateSettings();
-    }
-    
-    Object.assign(settings, req.body);
-    settings.updatedAt = new Date();
-    await settings.save();
-    
-    res.json(settings);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-app.get('/api/user/certificates', authenticateToken, async (req, res) => {
-  try {
-    const certificates = await Certificate.find({ userId: req.user.userId })
-      .populate('challengeId', 'accountSize challengeType')
-      .sort({ generatedAt: -1 });
-    res.json(certificates);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
 // Admin user management endpoints
 app.post('/api/admin/users/:id/suspend', csrfProtection, authenticateAdmin, async (req, res) => {
   try {
@@ -2812,154 +2710,6 @@ app.post('/api/admin/users/:id/reset-password', authenticateAdmin, async (req, r
     
     res.json({ 
       message: 'Password updated successfully'
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-app.get('/api/user/certificates/:id/download', authenticateToken, async (req, res) => {
-  try {
-    const certificate = await Certificate.findOne({
-      _id: req.params.id,
-      userId: req.user.userId
-    });
-    
-    if (!certificate) {
-      return res.status(404).json({ message: 'Certificate not found' });
-    }
-    
-    const settings = await CertificateSettings.findOne() || { fields: [] };
-    const Canvas = require('canvas');
-    const fs = require('fs');
-    const path = require('path');
-    
-    const templatePath = path.join(__dirname, '../public/Certification.png');
-    const canvas = Canvas.createCanvas(800, 600);
-    const ctx = canvas.getContext('2d');
-    
-    // Load and draw template
-    const template = await Canvas.loadImage(templatePath);
-    ctx.drawImage(template, 0, 0, 800, 600);
-    
-    // Draw certificate fields
-    settings.fields.forEach(field => {
-      let text = '';
-      switch (field.type) {
-        case 'name':
-          text = certificate.userName;
-          break;
-        case 'date':
-          text = certificate.completionDate.toLocaleDateString();
-          break;
-        case 'certId':
-          text = certificate.certificateId;
-          break;
-      }
-      
-      ctx.save();
-      ctx.translate(field.x + field.width/2, field.y + field.height/2);
-      ctx.rotate((field.rotation * Math.PI) / 180);
-      ctx.font = `${field.fontWeight || 'normal'} ${field.fontSize}px ${field.fontFamily}`;
-      ctx.fillStyle = field.color;
-      ctx.textAlign = field.align;
-      ctx.textBaseline = 'middle';
-      ctx.fillText(text, 0, 0);
-      ctx.restore();
-    });
-    
-    const buffer = canvas.toBuffer('image/png');
-    
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Content-Disposition', `attachment; filename="certificate-${certificate.certificateId}.png"`);
-    res.send(buffer);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Clean up and regenerate certificates with correct format
-app.post('/api/admin/certificates/regenerate', authenticateAdmin, async (req, res) => {
-  try {
-    // Find all certificates with wrong format (not starting with RT-FUNDED-)
-    const wrongFormatCerts = await Certificate.find({
-      certificateId: { $not: /^RT-FUNDED-\d{5}$/ }
-    });
-    
-    let regenerated = 0;
-    
-    for (const cert of wrongFormatCerts) {
-      try {
-        // Generate new certificate ID with correct format
-        let newCertificateId;
-        let exists = true;
-        
-        while (exists) {
-          const randomNum = Math.floor(Math.random() * 90000) + 10000;
-          newCertificateId = `RT-FUNDED-${randomNum}`;
-          const existingCert = await Certificate.findOne({ certificateId: newCertificateId });
-          exists = !!existingCert;
-        }
-        
-        // Update the certificate with new ID
-        await Certificate.findByIdAndUpdate(cert._id, {
-          certificateId: newCertificateId
-        });
-        
-        regenerated++;
-      } catch (error) {
-        console.error(`Error regenerating certificate ${cert._id}:`, error);
-      }
-    }
-    
-    res.json({
-      message: `Regenerated ${regenerated} certificates with correct format`,
-      totalFound: wrongFormatCerts.length,
-      regenerated
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Clean up and regenerate certificates with correct format
-app.post('/api/admin/certificates/regenerate', authenticateAdmin, async (req, res) => {
-  try {
-    // Find all certificates with wrong format (not starting with RT-FUNDED-)
-    const wrongFormatCerts = await Certificate.find({
-      certificateId: { $not: /^RT-FUNDED-\d{5}$/ }
-    });
-    
-    let regenerated = 0;
-    
-    for (const cert of wrongFormatCerts) {
-      try {
-        // Generate new certificate ID with correct format
-        let newCertificateId;
-        let exists = true;
-        
-        while (exists) {
-          const randomNum = Math.floor(Math.random() * 90000) + 10000;
-          newCertificateId = `RT-FUNDED-${randomNum}`;
-          const existingCert = await Certificate.findOne({ certificateId: newCertificateId });
-          exists = !!existingCert;
-        }
-        
-        // Update the certificate with new ID
-        await Certificate.findByIdAndUpdate(cert._id, {
-          certificateId: newCertificateId
-        });
-        
-        regenerated++;
-      } catch (error) {
-        console.error(`Error regenerating certificate ${cert._id}:`, error);
-      }
-    }
-    
-    res.json({
-      message: `Regenerated ${regenerated} certificates with correct format`,
-      totalFound: wrongFormatCerts.length,
-      regenerated
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
