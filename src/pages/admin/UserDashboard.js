@@ -240,51 +240,56 @@ const UserDashboard = ({ onNavigate }) => {
             />
           </div>
           
-          <div className="flex flex-wrap gap-3">
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className={`px-4 py-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none`}
-            >
-              <option value="all">All Users</option>
-              <option value="admin">Admins</option>
-              <option value="user">Regular Users</option>
-              <option value="2fa">2FA Enabled</option>
-              <option value="no2fa">No 2FA</option>
-            </select>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 flex-1">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className={`px-4 py-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none`}
+              >
+                <option value="all">All Users</option>
+                <option value="admin">Admins</option>
+                <option value="user">Regular Users</option>
+                <option value="2fa">2FA Enabled</option>
+                <option value="no2fa">No 2FA</option>
+              </select>
 
-            <select
-              value={`${sortBy}-${sortOrder}`}
-              onChange={(e) => {
-                const [field, order] = e.target.value.split('-');
-                setSortBy(field);
-                setSortOrder(order);
-              }}
-              className={`px-4 py-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none`}
-            >
-              <option value="createdAt-desc">Newest First</option>
-              <option value="createdAt-asc">Oldest First</option>
-              <option value="name-asc">Name A-Z</option>
-              <option value="name-desc">Name Z-A</option>
-              <option value="accountBalance-desc">Highest Balance</option>
-              <option value="accountBalance-asc">Lowest Balance</option>
-            </select>
+              <select
+                value={`${sortBy}-${sortOrder}`}
+                onChange={(e) => {
+                  const [field, order] = e.target.value.split('-');
+                  setSortBy(field);
+                  setSortOrder(order);
+                }}
+                className={`px-4 py-3 rounded-xl ${isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'} border-none outline-none`}
+              >
+                <option value="createdAt-desc">Newest First</option>
+                <option value="createdAt-asc">Oldest First</option>
+                <option value="name-asc">Name A-Z</option>
+                <option value="name-desc">Name Z-A</option>
+                <option value="accountBalance-desc">Highest Balance</option>
+                <option value="accountBalance-asc">Lowest Balance</option>
+              </select>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button 
+                onClick={() => onNavigate('certificate-config')}
+                className="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+              >
+                <Shield size={20} />
+                <span className="hidden sm:inline">Certificates</span>
+                <span className="sm:hidden">Certs</span>
+              </button>
 
-            <button 
-              onClick={() => onNavigate('certificate-config')}
-              className="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors flex items-center gap-2 whitespace-nowrap"
-            >
-              <Shield size={20} />
-              Certificates
-            </button>
-
-            <button 
-              onClick={() => onNavigate('create-user')}
-              className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors flex items-center gap-2 whitespace-nowrap"
-            >
-              <Plus size={20} />
-              Add User
-            </button>
+              <button 
+                onClick={() => onNavigate('create-user')}
+                className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+              >
+                <Plus size={20} />
+                Add User
+              </button>
+            </div>
           </div>
         </div>
 
